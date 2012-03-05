@@ -1,0 +1,11 @@
+*.dump
+RUN_OUTPUT/
+*.o
+*.S
+*.bc
+*.ro
+*.tasks
+*.obj
+*.out
+*.dot
+*.clang

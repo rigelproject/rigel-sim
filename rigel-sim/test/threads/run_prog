@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+source ../../common.sh
+${MAKE} clean && ${MAKE}
+$RIGELSIM -threads 1 threads_simple_test.tasks 1> /dev/null 2> /dev/null
+cat RUN_OUTPUT/rigelprint.out | sed 's/0x[0-9a-f]* (PC 0x[0-9a-f]*)//' > RUN_OUTPUT/compare.out
+if(diff RUN_OUTPUT/compare.out rigelprint.single.GOLD) then
+  echo "===== Passed ====="
+else
+  echo "===== Failed ====="
+fi

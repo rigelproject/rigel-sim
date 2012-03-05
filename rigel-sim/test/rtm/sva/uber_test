@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+source ../../common.sh
+${MAKE} clean && ${MAKE}
+
+echo "256" | $RIGELSIM -clusters 16 -tiles 8  -heartbeat_print_pcs 100000 sva.tasks 1> cout.out 2> cerr.out 
+cat RUN_OUTPUT/rigelprint.out | sed 's/0x[0-9a-f]* (PC 0x[0-9a-f]*)//' > RUN_OUTPUT/compare.out
+if(diff RUN_OUTPUT/compare.out rigelprint.out.GOLD) then
+  echo "===== Passed (16C 8T Full Chip) ====="
+else
+  echo "===== Failed (16C 8T Full Chip) ====="
+fi

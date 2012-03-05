@@ -1,0 +1,33 @@
+////////////////////////////////////////////////////////////////////////////////
+// Stages
+////////////////////////////////////////////////////////////////////////////////
+
+This folder contains files that implement pipeline stages. More detail on what
+goes here or belongs in the future?
+
+filename.blah
+  brief description
+
+ccache_access.cpp
+  Implements the ccache_access stage. More details?
+
+decode.cpp
+  Implements the decoder.
+
+decode_switch.h
+
+execute.cpp
+
+fetch.cpp
+
+fp_complete.cpp
+
+memory_req.cpp
+
+regfile_read.cpp
+
+syscalls.cpp
+
+writeback.cpp
+
+

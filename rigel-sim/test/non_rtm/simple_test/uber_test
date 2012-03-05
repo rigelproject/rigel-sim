@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# THIS DOES NOT WORK YET
+# NEED TO FIX the simple_test.c code to use a variable vector size
+source ../../common.sh
+${MAKE} clean && ${MAKE}
+$RIGELSIM -clusters 16 -tiles 8 simple_test.tasks 1> cout.out 2> cerr.out
+cat RUN_OUTPUT/rigelprint.out | sed 's/0x[0-9a-f]* (PC 0x[0-9a-f]*)//' > RUN_OUTPUT/compare.out
+if(diff RUN_OUTPUT/compare.out rigelprint.out.UBER.GOLD) then
+  echo "===== Passed ====="
+else
+  echo "===== Failed ====="
+fi

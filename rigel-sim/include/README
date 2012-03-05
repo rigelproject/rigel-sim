@@ -1,0 +1,47 @@
+////////////////////////////////////////////////////////////////////////////////
+// Includes
+////////////////////////////////////////////////////////////////////////////////
+
+The files in this folder are for ...
+
+Most files in this folder contain class definitions with corresponding
+implementations in the /src folder
+
+filename.blah
+  brief description
+
+arbiter.h
+  definition and implementation for a generic arbiter class
+  definition and implementation for an arbiter container class
+  definition and implementation for several derived subclasses of arbiter blocks
+  (shared bus, crossbar)
+
+autogen_isa_sim.h
+bpredict.h
+cache_model.h
+cluster.h
+core.h
+dram_model.h
+fsim.h
+  class definition and implementation for a functional simulator
+  step method executes on instruction functionally
+  compare method compares vs. the structural simulator
+  current status: unknown
+
+globalnetsim.h
+interconnect.h
+io.h
+memory_model.h
+profile.h
+reg_file.h
+scoreboard_read.h
+scoreboard_update.h
+scoreboard_write.h
+sim.h
+syscall.h
+task_queue.h
+task_queue_recent.h
+ui.h
+util.h
+verif.h
+

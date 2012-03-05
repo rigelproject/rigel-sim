@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+source ../../common.sh
+
+SIZE="0 64 64 64"
+
+${MAKE} clean && ${MAKE}
+
+echo $SIZE | $RIGELSIM -clusters 2 -tiles 1 dmm.tasks 1> cout.out 2> cerr.out 
+cat RUN_OUTPUT/rigelprint.out | sed 's/0x[0-9a-f]* (PC 0x[0-9a-f]*)//' > RUN_OUTPUT/compare.out
+if(diff RUN_OUTPUT/compare.out rigelprint.out.GOLD > diff.out) then
+  echo "===== Passed ===== (clusters 2) ===== (RTM: DMM) ====="
+else
+  echo "===== Failed ===== (clusters 2) ===== (RTM: DMM) ====="
+fi

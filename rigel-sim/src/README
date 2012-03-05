@@ -1,0 +1,53 @@
+////////////////////////////////////////////////////////////////////////////////
+// src
+////////////////////////////////////////////////////////////////////////////////
+
+Main folder for rigelsim source code. More decription about what goes here and
+belongs here in the future
+
+filename.blah
+  short description
+
+cache_model.cpp
+
+cluster_cache.cpp
+
+cluster.cpp
+
+core_caches.cpp
+
+core.cpp
+
+dram_model.cpp
+
+fsim.cpp 
+  For building a seperate functional simulator binary
+  Currentlty broken.
+
+global_cache.cpp
+
+globalnetsim.cpp
+
+instr.cpp
+
+interconnect.cpp
+
+io.cpp
+
+memory_model.cpp
+
+profile.cpp
+
+reg_file.cpp
+  Implementation of register file and special purpose (SP) register file classes
+
+sim.cpp
+  The MAIN simulator file. Simulation starts here.
+
+task_queue.cpp
+
+ui.cpp
+
+util.cpp
+
+verif.cpp

@@ -1,0 +1,8 @@
+ PRINTREG:  0x00000000 (0.000000 f) core: 0 thread: 0
+ PRINTREG:  0x00000001 (0.000000 f) core: 1 thread: 0
+ PRINTREG:  0x00000002 (0.000000 f) core: 2 thread: 0
+ PRINTREG:  0x00000003 (0.000000 f) core: 3 thread: 0
+ PRINTREG:  0x00000004 (0.000000 f) core: 4 thread: 0
+ PRINTREG:  0x00000005 (0.000000 f) core: 5 thread: 0
+ PRINTREG:  0x00000006 (0.000000 f) core: 6 thread: 0
+ PRINTREG:  0x00000007 (0.000000 f) core: 7 thread: 0

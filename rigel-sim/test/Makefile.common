@@ -1,0 +1,28 @@
+TOOLDIR=${RIGEL_INSTALL}/host/bin
+OBJDUMP=${TOOLDIR}/rigelobjdump
+
+all: benchmark
+
+# WARNING: whitespace after the BENCHMARK_NAME causes BADNESS!
+# if you have compile problems and make is using GCC, check this...
+benchmark: ${BENCHMARK_NAME}.tasks
+	${OBJDUMP} -D -mmipsrigel32 ${BENCHMARK_NAME}.tasks >${BENCHMARK_NAME}.obj
+
+STEMS_C	= $(patsubst %.f,%, $(patsubst %.c,%, $(SOURCES)))
+STEMS_ASM = $(patsubst %.f,%, $(patsubst %.S,%, $(ASM)))
+STEMS = ${STEMS_ASM} ${STEMS_C}
+OBJS = $(patsubst %,%.ro,$(STEMS))
+CLEAN_C = $(patsubst %,%.S,$(STEMS_C))
+
+include ${RIGEL_TARGETCODE}/src/Makefile.common
+
+QUEUE_TYPE="CLUSTER_LOCAL_TQ"
+
+override EXTRA_CFLAGS += -D${QUEUE_TYPE} -Wall -Wno-unused-variable
+
+clean:
+	rm -f *.i *.o *.s *.ro *.dump *.tasks *.bc *.a *.obj *.csv ${CLEAN_C} *.dot *.clang *.out
+	rm -rf RUN_OUTPUT
+
+%.tasks: $(SOURCES) $(ASM)
+	$(CLANG) $(CLANG_CFLAGS) $(EXTRA_CFLAGS) -v $(SOURCES) $(ASM) $(CLANG_LDFLAGS) $(EXTRA_LDFLAGS) -o ${BENCHMARK_NAME}.tasks 2>> cerr.clang 1>>cout.clang

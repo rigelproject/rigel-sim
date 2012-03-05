@@ -1,0 +1,45 @@
+#CC=gcc-4.5
+#CXX=g++-4.5
+
+#CC=clang
+#CXX=clang++
+
+USERNAME=$$(whoami)
+
+# get Git HEAD information
+GITREV=$$(git --git-dir=@top_srcdir@/../.git show --pretty=medium HEAD -s | perl -pi -w -e 's/\n/\\n/g; s/\"/\\\"/g; s/\r/\\r/g;')
+RULES_CFLAGS = -DDEBUG -DGIT_REV="\"${GITREV}\""
+RULES_CXXFLAGS = -DGIT_REV="\"${GITREV}\"" -DBUILD_USER="\"${USERNAME}\""
+
+#Allow users to override BUILD_ARCH if config.guess gets it wrong.
+#For instance, on FreeeBSD 9, rigel-sim guesses amd64-x-x-x, binutils uses x86_64-x-x-x.
+BUILD_ARCH=$(build)
+#BUILD_ARCH=x86_64-unknown-freebsd9.0
+
+LOCAL_BASE=${RIGEL_INSTALL}/host
+ARCH_BASE=$(LOCAL_BASE)/$(BUILD_ARCH)/mips
+
+if DEBUG
+OPTI_FLAGS=-g -O0
+else
+OPTI_FLAGS=-O3 -mtune=native -funroll-loops -finline-functions
+endif
+
+if ASSERTS
+ASSERT_FLAGS=
+else
+ASSERT_FLAGS=-DNDEBUG
+endif
+
+#Use these to link RigelSim to be used on machines where you have to transplant e.g. a modern dynamic linker and libstdc++
+#LINKER_FLAGS=-Wl,-rpath=/home/data1/<netid>/rigel/lib64 -Wl,-dynamic-linker=/home/data1/<netid>/rigel/lib64/ld-linux-x86-64.so.2
+LINKER_FLAGS=
+
+#DISABLE_ICC_WARN=-wd271,424,981,279,383,869,2259,444,1599,1572,522
+DEBUG=-g
+GPROF=
+
+AM_CXXFLAGS=$(COUCHDB_CXXFLAGS) -funroll-loops ${DEBUG} ${GPROF} -Wall -Wno-deprecated ${OPTI_FLAGS} ${ASSERT_FLAGS} ${LINKER_FLAGS} ${RULES_CXXFLAGS} -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS
+INCLUDES=-I@top_srcdir@/include -I@top_srcdir@/src/protobuf -I$(ARCH_BASE)/include -I$(LOCAL_BASE)/include -I@top_srcdir@/src/stages/include -I@top_srcdir@/src/couchdb/include
+CFLAGS_LIBS=-L@top_srcdir@ -L$(ARCH_BASE)/lib -L$(LOCAL_BASE)/lib -L$(LOCAL_BASE)/lib32
+LDADD=$(CFLAGS_LIBS)

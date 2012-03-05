@@ -1,0 +1,11 @@
+printf() works
+sprintf() gets a string
+fprintf() to stdout
+scanf() read int: 123456
+scanf() read float: 3.141590
+scanf() read string: HelloFromSTDIN
+testing file output
+testing file input
+123456
+3.141590
+HelloFromSTDIN

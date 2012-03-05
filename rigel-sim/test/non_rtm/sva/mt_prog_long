@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+source ../../common.sh
+
+${MAKE} clean && ${MAKE}
+
+SIZE=1024
+
+echo "$SIZE" | $RIGELSIM -threads 1 sva.tasks 2> threads_1.out 1> cerr.out 
+cat RUN_OUTPUT/rigelprint.out | sed 's/0x[0-9a-f]* (PC 0x[0-9a-f]*)//' > RUN_OUTPUT/compare.out
+if(diff RUN_OUTPUT/compare.out rigelprint.out.${SIZE}.GOLD) then
+  echo "===== Passed 1 Thread ====="
+else
+  echo "===== Failed ====="
+fi
+
+echo "$SIZE" | $RIGELSIM -tiles 4 -clusters 4 -threads 8 sva.tasks 2> threads_2.out 1> cerr.out 
+cat RUN_OUTPUT/rigelprint.out | sed 's/0x[0-9a-f]* (PC 0x[0-9a-f]*)//' > RUN_OUTPUT/compare.out
+if(diff RUN_OUTPUT/compare.out rigelprint.out.${SIZE}.GOLD) then
+  echo "===== Passed 2 Threads ====="
+else
+  echo "===== Failed ====="
+fi
+
+echo "$SIZE" | $RIGELSIM -threads 4 sva.tasks 2> threads_4.out 1> cerr.out 
+cat RUN_OUTPUT/rigelprint.out | sed 's/0x[0-9a-f]* (PC 0x[0-9a-f]*)//' > RUN_OUTPUT/compare.out
+if(diff RUN_OUTPUT/compare.out rigelprint.out.${SIZE}.GOLD) then
+  echo "===== Passed 4 Threads ====="
+else
+  echo "===== Failed ====="
+fi
+grep TIMER *

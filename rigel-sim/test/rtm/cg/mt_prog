@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+source ../../common.sh
+
+${MAKE} clean && ${MAKE}
+
+BENCHMARK=cg
+NAME_STRING="$BENCHMARK (RTM)"
+INPUT="0 test.bin"
+ARGS="-heartbeat_print_pcs 100000 -model-contention-off"
+
+THREADS=2
+CLUSTERS=2
+TEST_STRING="$THREADS threads $CLUSTERS clusters"
+echo "${INPUT}" | $RIGELSIM -threads $THREADS -clusters $CLUSTERS ${ARGS} ${BENCHMARK}.tasks 1> cout${THREADS}.out 2> cerr${THREADS}.out 
+cat RUN_OUTPUT/rigelprint.out | sed 's/0x[0-9a-f]* (PC 0x[0-9a-f]*).*(\(.*\)[0-9]\{2\} f).*/\1/' > RUN_OUTPUT/compare.out
+if(diff RUN_OUTPUT/compare.out rigelprint.out.GOLD > mtdiff.out) then
+  echo "===== Passed ($NAME_STRING $TEST_STRING) ====="
+else
+  echo "===== Failed ($NAME_STRING $TEST_STRING) ====="
+fi
+
+rm -rf RUN_OUTPUT
+
+THREADS=4
+CLUSTERS=4
+TILES=2
+TEST_STRING="$THREADS threads $CLUSTERS clusters $TILES tiles"
+echo "${INPUT}" | $RIGELSIM -threads $THREADS -clusters $CLUSTERS -tiles $TILES ${ARGS} ${BENCHMARK}.tasks 1> cout.out 2> cerr.out 
+cat RUN_OUTPUT/rigelprint.out | sed 's/0x[0-9a-f]* (PC 0x[0-9a-f]*).*(\(.*\)[0-9]\{2\} f).*/\1/' > RUN_OUTPUT/compare.out
+if(diff RUN_OUTPUT/compare.out rigelprint.out.GOLD > mtdiff.out) then
+  echo "===== Passed ($NAME_STRING $TEST_STRING) ====="
+else
+  echo "===== Failed ($NAME_STRING $TEST_STRING) ====="
+fi
+
+

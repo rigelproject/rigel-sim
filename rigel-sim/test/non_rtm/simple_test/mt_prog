@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+
+source ../../common.sh
+
+${MAKE} clean && ${MAKE}
+
+BENCHMARK=mvm.tasks
+NAME_STRING="SimpleTest (non_rtm)"
+ARGS="" # FIXME: remove this later when contention fixed
+
+THREADS=2
+CLUSTERS=2
+TEST_STRING="threads: ${THREADS} clusters: ${CLUSTERS}"
+$RIGELSIM $ARGS -threads $THREADS -clusters $CLUSTERS simple_test.tasks 1> cout.out 2> cerr.out
+#cat RUN_OUTPUT/rigelprint.out | sed 's/0x[0-9a-f]* (PC 0x[0-9a-f]*)//' > RUN_OUTPUT/compare.out
+cat RUN_OUTPUT/rigelprint.out | sed 's/0x[0-9a-f]* (PC 0x[0-9a-f]*)//' | sed 's/ thread: [0-9]*//' > RUN_OUTPUT/compare.out ;
+if(diff RUN_OUTPUT/compare.out rigelprint.out.GOLD) then
+  echo "===== Passed =====($NAME_STRING,$TEST_STRING, $ARGS)"
+else
+  echo "===== Failed =====($NAME_STRING,$TEST_STRING, $ARGS)"
+fi
+
+
+THREADS=4
+CLUSTERS=1
+TEST_STRING="threads: ${THREADS} clusters: ${CLUSTERS}"
+$RIGELSIM $ARGS -threads $THREADS -clusters $CLUSTERS simple_test.tasks 1> cout.out 2> cerr.out
+#cat RUN_OUTPUT/rigelprint.out | sed 's/0x[0-9a-f]* (PC 0x[0-9a-f]*)//' > RUN_OUTPUT/compare.out
+cat RUN_OUTPUT/rigelprint.out | sed 's/0x[0-9a-f]* (PC 0x[0-9a-f]*)//' | sed 's/ thread: [0-9]*//' > RUN_OUTPUT/compare.out ;
+if(diff RUN_OUTPUT/compare.out rigelprint.out.GOLD) then
+  echo "===== Passed =====($NAME_STRING,$TEST_STRING, $ARGS)"
+else
+  echo "===== Failed =====($NAME_STRING,$TEST_STRING, $ARGS)"
+fi

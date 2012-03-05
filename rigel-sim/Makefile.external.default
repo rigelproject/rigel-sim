@@ -1,0 +1,13 @@
+## this file is empty by default 
+## it is ** .gitignored ** from the main repository
+##
+## sources outside the main tree may be added here
+## 
+## if you wish to maintain a private source repository,
+## consider replacing this with a symlink to your revision-controlled
+## external.am file
+## 
+## for external sources
+external_SOURCES +=
+external_INCLUDES +=
+

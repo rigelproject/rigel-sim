@@ -1,0 +1,130 @@
+// Generated for each user to allow for person setting to not go to the
+// repository on every check in
+
+#ifndef __USER_CONFIG__
+#define __USER_CONFIG__
+
+#define RIGEL_ENABLE 1
+#define RIGEL_DISABLE 0
+
+// 1 for LEGACY classic rigelsim
+// 2 for NEW stuff (in development, experimental)
+#define RIGEL_CFG_NUM 1
+
+// typedefs for polymorphism
+
+  // ClusterType
+  class ClusterBase;
+  class ClusterLegacy;
+  class ClusterSimple;
+  #define CLUSTER_TYPE RIGEL_CFG_NUM
+namespace rigel {
+  #if CLUSTER_TYPE == 1
+    typedef ClusterLegacy ClusterType;
+  #elif CLUSTER_TYPE == 2
+    typedef ClusterSimple ClusterType;
+  #else
+    #error invalid value for CLUSTER_TYPE
+  #endif
+}
+  
+  // MemoryTimingType
+  //class SimpleMemoryTiming;
+  //class BlockedMemoryTiming;
+  class MemoryTimingDRAM;
+  #define MEMORY_TIMING_TYPE 1
+namespace rigel {
+  #if MEMORY_TIMING_TYPE == 1
+    typedef MemoryTimingDRAM MemoryTimingType;
+  #else
+    #error invalid value for MEMORY_TIMING_TYPE
+  #endif
+}
+  // FIXME Should some of the template parameters be unsigned int instead of size_t?
+  // size_t technically comes from stddef.h/cstddef.
+  // GlobalBackingStoreType
+  #include <stddef.h> //Bring in size_t, use stddef.h instead of cstddef because it puts size_t in the global namespace (FIXME)
+  #include <stdint.h> //Bring in uint32_t
+  template <size_t ADDRESS_SPACE_BITS, size_t RADIX_SHIFT, typename ADDR_T, typename WORD_T, size_t WORDS_PER_CHUNK_SHIFT> class BackingStore;
+ namespace rigel {
+  typedef BackingStore<32, 10, uint32_t, uint32_t, 10> GlobalBackingStoreType;
+}
+
+  // Arbiter
+  class BusArbiter;
+  class XBarArbiter;
+  #define ARB_L2_TYPE 1
+namespace rigel {
+  #if ARB_L2_TYPE == 1
+    typedef BusArbiter ArbL2Type;
+    typedef BusArbiter ArbL2IType;
+  #else
+    #error invalid ARB_2_TYPE
+  #endif
+}
+
+  // GlobalNetworkType
+  class GlobalNetworkNew;
+  class GlobalNetworkIdeal;
+  #define GLOBAL_NETWORK_TYPE 1
+namespace rigel {
+  #if GLOBAL_NETWORK_TYPE == 1
+    typedef GlobalNetworkNew GlobalNetworkType;
+  #elif GLOBAL_NETWORK_TYPE == 2
+    typedef GlobalNetworkIdeal GlobalNetworkType;
+  #else
+    #error invalid GLOBAL_NETWORK_TYPE
+  #endif
+}
+
+  // Tile
+  class TileLegacy;
+  class TileNew;
+  #define TILE_TYPE RIGEL_CFG_NUM
+namespace rigel {
+  #if TILE_TYPE == 1
+    typedef TileLegacy TileType;
+  #elif TILE_TYPE == 2
+    typedef TileNew TileType;
+  #else
+    #error invalid TILE_TYPE
+  #endif
+}
+
+
+// Dump Memory at the end of the RigelSim run. (default: Disabled)
+#define CONFIG_DUMP_MEMORY RIGEL_DISABLE
+// Cluster cache configuration (default: 256 sets, 8 ways [64 KiB])
+#define EXTERN_L2D_SETS 256
+#define EXTERN_L2D_WAYS 8
+// Enable the line buffer (default: ENABLED)
+#define EXTERN_L1D_ENABLED RIGEL_ENABLE
+// First-level ICache configuration (default: 32 sets, 2 ways [2 KiB])
+#define EXTERN_L1I_SETS 32
+#define EXTERN_L1I_WAYS 2
+// Second level ICache configuration (default: 64 sets, 2 ways [4 KiB], but
+// turned off via EXTERN_USE_L2I_CACHE_SEPARATE)
+#define EXTERN_L2I_SETS 64
+#define EXTERN_L2I_WAYS 2
+// Enable L1I's backed by the cluster cache.  If disabled, ICache misses go
+// straight to the interconnect. (default: Enabled)
+#define EXTERN_USE_L2I_CACHE_UNIFIED RIGEL_ENABLE
+// Enable shared L2 I$ (separate from the cluster cache).  Experimental feature for
+// John/Matt's ECE598SP project.  (default: Disabled)
+#define EXTERN_USE_L2I_CACHE_SEPARATE RIGEL_DISABLE
+// Force fetch to align to 64-bits.  There is a loss of efficiency for branches
+// to unaligned targets with this enabled.  The mode also enables static branch
+// prediction.  This mode is the planned mode for Rigel.  With it disabled, a
+// fairly agressive gshare predictor is used which predicts brach targets for each
+// slot at fetch independently, i.e., it can do two predictions a cycle. 
+// (default: Enabled)
+#define TWO_WIDE_IFETCH RIGEL_ENABLE
+// Enable verification debugging output to be printed. (default: Disabled)
+#define ENABLE_VERIF RIGEL_DISABLE
+// Model contention for cache ports.  With it disabled, the simulator provides
+// infinite bandwidth at most levels of the cache.  (Default: enabled)
+
+// Modify size of the line buffer.  This feature will be removed soon. (Defeault: 1s1w)
+#define EXTERN_L1D_SETS 1
+#define EXTERN_L1D_WAYS 1
+#endif

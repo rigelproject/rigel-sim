@@ -1,0 +1,55 @@
+# $Id: 350809c2f5cb88c02133cb775d350edfd7fecc35 $
+#
+# Configure RandomLib
+#
+# Set
+#  RANDOMLIB_FOUND = TRUE
+#  RandomLib_INCLUDE_DIRS = /usr/local/include
+#  RandomLib_LIBRARIES = Random
+#  RandomLib_LIBRARY_DIRS = /usr/local/lib
+#  RandomLib_VERSION = 1.0 (for example)
+
+message (STATUS "Reading ${CMAKE_CURRENT_LIST_FILE}")
+set (RandomLib_VERSION "@RandomLib_VERSION@")
+message (STATUS "RandomLib configuration, version "
+  ${RandomLib_VERSION})
+
+# Tell the user project where to find our headers and libraries
+get_filename_component (_DIR ${CMAKE_CURRENT_LIST_FILE} PATH)
+if (IS_ABSOLUTE "@RANDOMLIB_ROOT_DIR@")
+  # This is an uninstalled package (still in the build tree)
+  set (RANDOMLIB_ROOT_DIR "@RANDOMLIB_ROOT_DIR@")
+  set (RandomLib_INCLUDE_DIRS "@RandomLib_INCLUDE_DIRS@")
+  set (RandomLib_LIBRARY_DIRS "${RANDOMLIB_ROOT_DIR}/src")
+else (IS_ABSOLUTE "@RANDOMLIB_ROOT_DIR@")
+  # This is an installed package; figure out the paths relative to the
+  # current directory.
+  get_filename_component (RANDOMLIB_ROOT_DIR
+    "${_DIR}/@RANDOMLIB_ROOT_DIR@" ABSOLUTE)
+  set (RandomLib_INCLUDE_DIRS "${RANDOMLIB_ROOT_DIR}/include")
+  set (RandomLib_LIBRARY_DIRS "${RANDOMLIB_ROOT_DIR}/lib")
+endif (IS_ABSOLUTE "@RANDOMLIB_ROOT_DIR@")
+
+# Do a sanity check by looking for include/RandomLib/Config.h
+foreach (p ${RandomLib_INCLUDE_DIRS})
+  # Only check first include dir
+  if (NOT EXISTS "${p}/RandomLib/Config.h")
+    unset (RandomLib_INCLUDE_DIRS)
+    unset (RandomLib_LIBRARY_DIRS)
+    unset (RandomLib_VERSION)
+  endif (NOT EXISTS "${p}/RandomLib/Config.h")
+  break (p ${RandomLib_INCLUDE_DIRS})
+endforeach (p ${RandomLib_INCLUDE_DIRS})
+
+# Read in the exported definition of the library
+if (DEFINED RandomLib_INCLUDE_DIRS)
+  include ("${_DIR}/RandomLibDepends.cmake")
+  set (RandomLib_LIBRARIES Random)
+endif (DEFINED RandomLib_INCLUDE_DIRS)
+
+# Boiler plate check
+include (FindPackageHandleStandardArgs)
+find_package_handle_standard_args (RandomLib DEFAULT_MSG
+  RandomLib_LIBRARY_DIRS RandomLib_LIBRARIES RandomLib_INCLUDE_DIRS)
+mark_as_advanced (RandomLib_LIBRARY_DIRS RandomLib_LIBRARIES
+  RandomLib_INCLUDE_DIRS)

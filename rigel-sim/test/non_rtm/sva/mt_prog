@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+source ../../common.sh
+
+${MAKE} clean && ${MAKE}
+
+BENCHMARK=sva.tasks
+NAME_STRING="SVA (non_rtm)"
+ARGS=""
+
+THREADS=2
+CLUSTERS=1
+TEST_STRING="$THREADS threads $CLUSTERS cluster"
+rm -rf RUN_OUTPUT/rigelprint.out RUN_OUTPUT/compare.out
+echo "128" | $RIGELSIM $ARGS -threads $THREADS -clusters $CLUSTERS $BENCHMARK 2> threads_${THREADS}.out 1> cerr.out 
+cat RUN_OUTPUT/rigelprint.out | sed 's/0x[0-9a-f]* (PC 0x[0-9a-f]*)//' > RUN_OUTPUT/compare.out
+if(diff RUN_OUTPUT/compare.out rigelprint.out.GOLD > mt2diff.out ) then
+  echo "===== Passed ($NAME_STRING $TEST_STRING) ====="
+else
+  echo "===== Failed ($NAME_STRING $TEST_STRING)====="
+fi
+
+rm -rf RUN_OUTPUT
+
+THREADS=4
+CLUSTERS=1
+TEST_STRING="$THREADS $ARGS threads $CLUSTERS cluster"
+rm -rf RUN_OUTPUT/rigelprint.out RUN_OUTPUT/compare.out
+echo "128" | $RIGELSIM $ARGS -threads $THREADS -clusters $CLUSTERS $BENCHMARK 2> threads_${THREADS}.out 1> cerr.out 
+cat RUN_OUTPUT/rigelprint.out | sed 's/0x[0-9a-f]* (PC 0x[0-9a-f]*)//' > RUN_OUTPUT/compare.out
+if(diff RUN_OUTPUT/compare.out rigelprint.out.GOLD > mt4diff.out ) then
+  echo "===== Passed ($NAME_STRING $TEST_STRING) ====="
+else
+  echo "===== Failed ($NAME_STRING $TEST_STRING) ====="
+fi

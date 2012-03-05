@@ -1,0 +1,149 @@
+// See README.txt for information and build instructions.
+
+package rigelsim;
+
+message DataBlock {
+  required uint32 startaddr = 1;
+  repeated uint32 words = 2; //word data
+}
+
+message MemoryState {
+  repeated DataBlock data = 1;
+}
+
+message CacheLineState {
+  required fixed32 startaddr = 1;
+  required uint32 length = 2; //length in bytes
+  repeated bool bytevalid = 3 [packed=true]; //bitvector of valid bytes in the line
+  repeated bool bytedirty = 4 [packed=true]; //bitvector of dirty bytes in the line
+  optional uint32 frame = 5; //which set/way in the cache is this line in?
+  optional uint32 data = 6;
+}
+
+message ThreadState {
+  //FIXME Why do threads have IDs but not cores, clusters, etc?
+  optional uint32 tid = 1;
+  repeated fixed32 rf = 2 [packed = true];
+  //SPRF and AccRF use uint32 instead of fixed32
+  //because they are likely to contain small values.
+  repeated uint32 sprf = 3 [packed = true];
+  repeated uint32 accrf = 4 [packed = true];
+  optional uint32 pc = 5;
+  optional bool halted = 6;
+}
+
+message CacheState {
+  repeated CacheLineState lines = 1;
+  optional uint32 sets = 2;
+  optional uint32 ways = 3;
+  optional uint32 associativity = 4;
+  enum ReplacementPolicy {
+    LRU = 0;
+    LFU = 1;
+    MRU = 2;
+    RANDOM = 3;
+  }
+  optional ReplacementPolicy replacementpolicy = 5 [default=LRU];
+} 
+
+message CoreState {
+  repeated ThreadState threads = 1;
+  //FIXME This approach is not compatible with SMT,
+  //wherein multiple threads may be active in a cycle.
+  optional uint32 activetid = 2;
+  //Put per-core frequency and cycle counters to allow DVFS.
+  optional uint64 frequency = 3;
+  optional uint64 cycle = 4;
+  optional CacheState l1i = 6;
+  optional CacheState l1d = 7;
+}
+
+message LinkBit {
+  optional uint32 tid = 1;
+  optional fixed32 address = 2;
+}
+
+message ClusterState {
+  repeated CoreState cores = 1;
+  optional CacheState l2d = 2;
+  optional CacheState l2i = 3;
+  repeated LinkBit linkbits = 4;
+}
+
+message SingleBroadcastState {
+  enum BroadcastOp {
+    UPDATE = 0;
+    INVALIDATE = 1;
+  }
+  optional BroadcastOp op = 1 [default = UPDATE];
+  optional uint32 address = 2;
+  repeated uint32 new_value = 3;
+  optional uint32 source_cluster = 4;
+  repeated bool clusters_reached = 5 [packed = true];
+}
+
+message Broadcasts {
+  repeated SingleBroadcastState broadcasts = 1;
+}
+
+message TargetFileDescriptorState {
+  optional int32 fd = 1;
+  optional string path = 2;
+  //The following flags were taken from http://pubs.opengroup.org/onlinepubs/000095399/functions/open.html ()
+  enum AccessMode {
+    TFDS_O_RDONLY = 0; //Read-only
+    TFDS_O_WRONLY = 1; //Write-only
+    TFDS_O_RDWR = 2;   //Read/Write
+  }
+  optional AccessMode access_mode = 3 [default = TFDS_O_RDONLY];
+  optional uint64 offset = 4;
+  optional bool O_APPEND = 5;
+  optional bool O_CREAT = 6;
+  optional bool O_DSYNC = 7;
+  optional bool O_EXCL = 8;
+  optional bool O_NOCTTY = 9;
+  optional bool O_NONBLOCK = 10;
+  optional bool O_RSYNC = 11;
+  optional bool O_SYNC = 12;
+  optional bool O_TRUNC = 13;
+  enum FileType {
+    TFDS_S_IFBLK = 0; //Block device
+    TFDS_S_IFCHR = 1; //Character device
+    TFDS_S_IFIFO = 2; //Pipe
+    TFDS_S_IFREG = 3; //Regular file
+    TFDS_S_IFDIR = 4; //Directory
+    TFDS_S_IFLNK = 5; //Symlink
+    TFDS_S_IFSOCK= 6; //Socket
+  }
+  optional FileType file_type = 14 [default = TFDS_S_IFREG];
+  optional bool S_IRUSR = 15;
+  optional bool S_IWUSR = 16;
+  optional bool S_IXUSR = 17;
+  optional bool S_IRGRP = 18;
+  optional bool S_IWGRP = 19;
+  optional bool S_IXGRP = 20;
+  optional bool S_IROTH = 21;
+  optional bool S_IWOTH = 22;
+  optional bool S_IXOTH = 23;
+  optional bool S_ISUID = 24; //setuid bit
+  optional bool S_ISGID = 25; //setgid bit
+  optional bool S_ISVTX = 26; //sticky bit (for directories only)
+}
+
+message RNGState {
+  optional string state = 1;
+}
+
+message HostState {
+  optional string current_working_dir = 1;
+  repeated TargetFileDescriptorState files = 2;
+  optional RNGState host_rng = 3;
+  optional RNGState target_rng = 4;
+}
+
+message ChipState {
+  repeated ClusterState clusters = 1;
+  optional MemoryState memory = 2;
+  optional Broadcasts broadcasts = 3;
+  optional HostState host = 4; 
+}

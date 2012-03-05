@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+source ../../common.sh
+
+${MAKE} clean && ${MAKE}
+
+NAME_STRING="SVA (RTM)"
+SIZE=256
+
+THREADS=2
+CLUSTERS=1
+TEST_STRING="$THREADS threads $CLUSTERS clusters"
+echo "${SIZE}" | $RIGELSIM -threads $THREADS -clusters $CLUSTERS sva.tasks 1> cout${THREADS}.out 2> cerr${THREADS}.out 
+cat RUN_OUTPUT/rigelprint.out | sed 's/0x[0-9a-f]* (PC 0x[0-9a-f]*)//' > RUN_OUTPUT/compare.out
+if(diff RUN_OUTPUT/compare.out rigelprint.out.GOLD > mtdiff.out) then
+  echo "===== Passed ($NAME_STRING $TEST_STRING) ====="
+else
+  echo "===== Failed ($NAME_STRING $TEST_STRING) ====="
+fi
+
+# THREADS=4
+# CLUSTERS=1
+# TEST_STRING="$THREADS threads $CLUSTERS clusters"
+# echo "${SIZE}" | /$RIGELSIM -threads $THREADS -clusters $CLUSTERS sva.tasks 1> cout${THREADS}.out 2> cerr${THREADS}.out 
+# cat RUN_OUTPUT/rigelprint.out | sed 's/0x[0-9a-f]* (PC 0x[0-9a-f]*)//' > RUN_OUTPUT/compare.out
+# if(diff RUN_OUTPUT/compare.out rigelprint.out.GOLD > mtdiff.out) then
+#   echo "===== Passed ($NAME_STRING $TEST_STRING) ====="
+# else
+#   echo "===== Failed ($NAME_STRING $TEST_STRING) ====="
+# fi

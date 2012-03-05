@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+source ../../common.sh
+
+make clean && make
+
+BENCHMARK="trivial"
+PARAMS="${INTERACTIVE}" #"-heartbeat_print_pcs 1000"
+
+THREADS=2
+$RIGELSIM -threads $THREADS $ARGS $BENCHMARK.tasks 1> cout.out 2> cerr.out
+cat RUN_OUTPUT/rigelprint.out | sed 's/0x[0-9a-f]* (PC 0x[0-9a-f]*)//' | sed 's/ thread: [0-9]*//' > RUN_OUTPUT/compare.out ;
+if(diff RUN_OUTPUT/compare.out rigelprint.threads.GOLD) then
+  echo "===== Passed $BENCHMARK (MT) ====="
+else
+  echo "===== Failed $BENCHMARK (MT) ====="
+fi

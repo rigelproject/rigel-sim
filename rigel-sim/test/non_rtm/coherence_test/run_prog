@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+source ../../common.sh
+
+function test_cerr {
+ if (grep -q SIM_CYCLE cerr.out) then
+   echo "===== Passed ===== (Benchmark: Coherence cl: $1 tiles: $2 Run: $3)"
+ else
+   echo "===== FAILED ===== (Benchmark: Coherence cl: $1 tiles: $2 Run: $3)"
+ fi
+ rm cerr.out
+}
+
+function run_config_dir_wp {
+  $RIGELSIM \
+    -cc-prefetch 2 \
+    -clusters $1 \
+    -tiles $2 \
+    --directory-sets $3 \
+    --directory-ways $4 \
+    --overflow-directory \
+    coherence.tasks 1> cout.out 2> cerr.out
+}
+
+function run_config_dir_nowp {
+  $RIGELSIM \
+    -cc-prefetch 2 \
+    -clusters $1 \
+    -tiles $2 \
+    --directory-sets $3 \
+    --directory-ways $4 \
+    coherence.tasks 1> cout.out 2> cerr.out
+}
+
+#rm -f cerr.out
+run_config_dir_nowp 1 1 8 8
+test_cerr 1 1 "No WayPoint"
+run_config_dir_nowp 1 1 8 8
+test_cerr 1 8 "No WayPoint"
+
+run_config_dir_wp 1 1 8 8
+test_cerr 1 1 "With WayPoint"
+run_config_dir_wp 1 1 8 8
+test_cerr 1 8 "With WayPoint"

@@ -1,0 +1,23 @@
+Running the build.sh script should run the autotools, configure, and make, leaving you
+with a rigelsim binary in ${RIGEL_SIM}/rigel-sim/build/rigelsim.
+
+RigelSim depends on libelf (the version included in the repository), libz,
+and libraries produced by building binutils-2.18 in the repository
+(libiberty, libbfd, libopcodes).
+
+If you want CouchDB support (RigelSim can dump all simulation results and statistics
+into a user-specified CouchDB instance for later analysis), pass --enable-couchdb
+to the configure script.  You'll need:
+1) libcurlpp, a C++ wrapper around libcurl, for making HTTP requests.
+   - Unfortunately, there isn't a package for it in the Ubuntu repos as of 10.10, so
+     you'll have to build it from source.
+2) libuuid, for generating UUIDs for CouchDB records
+3) libcurl
+4) libgssapi_krb5, for using CRHC's Kerberos 5-based authentication scheme.
+
+The commands necessary to build the simulator are all in the 'build.sh' shell
+script.  You will need aclocal, autoconf, and automake to build the makefiles.
+The instructions on how to set up the build environment are in the documentation
+directory.
+
+  -MRJ 2011-03-07

@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+source ../../common.sh
+
+${MAKE} clean && ${MAKE}
+
+$RIGELSIM rfdump.tasks 1> /dev/null 2> /dev/null
+if(diff rf.dump rf.dump.GOLD) then
+  echo "===== Passed ====="
+else
+  echo "===== Failed ====="
+fi

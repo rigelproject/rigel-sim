@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+source ../../common.sh
+${MAKE} clean && ${MAKE}
+echo "2 Thread/Core, 1 Clusters"
+echo "128" | $RIGELSIM -threads 2 -clusters 1 sva.tasks 1> cout.out 2> cerr.out 
+cat RUN_OUTPUT/rigelprint.out | sed 's/0x[0-9a-f]* (PC 0x[0-9a-f]*)//' > RUN_OUTPUT/compare.out
+if(diff RUN_OUTPUT/compare.out rigelprint.out.GOLD) then
+  echo "===== Passed ====="
+else
+  echo "===== Failed ====="
+fi
+echo "1 Thread/Core, 2 Clusters"
+echo "128" | $RIGELSIM -threads 1 -clusters 2 sva.tasks 1> cout.out 2> cerr.out 
+cat RUN_OUTPUT/rigelprint.out | sed 's/0x[0-9a-f]* (PC 0x[0-9a-f]*)//' > RUN_OUTPUT/compare.out
+if(diff RUN_OUTPUT/compare.out rigelprint.out.GOLD) then
+  echo "===== Passed ====="
+else
+  echo "===== Failed ====="
+fi
+echo "2 Thread/Core, 2 Clusters"
+echo "128" | $RIGELSIM -threads 2 -clusters 2 sva.tasks 1> cout.out 2> cerr.out 
+cat RUN_OUTPUT/rigelprint.out | sed 's/0x[0-9a-f]* (PC 0x[0-9a-f]*)//' > RUN_OUTPUT/compare.out
+if(diff RUN_OUTPUT/compare.out rigelprint.out.GOLD) then
+  echo "===== Passed ====="
+else
+  echo "===== Failed ====="
+fi
+echo "4 Thread/Core, 2 Clusters"
+echo "128" | $RIGELSIM -threads 4 -clusters 2 sva.tasks 1> cout.out 2> cerr.out 
+cat RUN_OUTPUT/rigelprint.out | sed 's/0x[0-9a-f]* (PC 0x[0-9a-f]*)//' > RUN_OUTPUT/compare.out
+if(diff RUN_OUTPUT/compare.out rigelprint.out.GOLD) then
+  echo "===== Passed ====="
+else
+  echo "===== Failed ====="
+fi

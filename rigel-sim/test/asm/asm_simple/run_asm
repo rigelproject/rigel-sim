@@ -1,0 +1,12 @@
+
+TESTFILE="asm_simple"
+if [ $# -ne 0 ]
+then
+	TESTFILE=$1;
+fi
+
+rm *.tasks *.rigel *.obj *.dump
+
+rigelas ${TESTFILE}.asm -EL -march=mipsrigel32 -o ${TESTFILE}.obj
+rigelld -EL -Ttext=0 ${TESTFILE}.obj -o ${TESTFILE}.tasks
+rm *.csv
