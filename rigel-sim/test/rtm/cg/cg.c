@@ -353,7 +353,7 @@ CGMain(int threadnum, int numthreads,  ElemType rho) {
         local_alpha = local_rho / reduceval_1;
         // Calc x[i+1] and Calc r[i+1]
         Task_VecScaleAdd(local_alpha, &p[start], &x[start], &x[start], count);
-        Task_VecScaleAdd(-1.0 * local_alpha, &q[start], &res[start], &res[start], count);
+        Task_VecScaleAdd(-1.0f * local_alpha, &q[start], &res[start], &res[start], count);
         Task_VecDot(&res[start], &res[start], count, &reduceval); 
         ReduceVals[threadnum] += reduceval;
 
