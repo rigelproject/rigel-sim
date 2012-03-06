@@ -13,12 +13,8 @@
 class CoreInOrderLegacy;
 
 ////////////////////////////////////////////////////////////////////////////////
-/* CLASS NAME: UserInterface
- * 
- * DESCRIPTON
- * Class is used for diplaying core pipeline state to the screen
- *
- */
+/// UserInterface
+/// Class is used for diplaying core pipeline state to the screen
 ////////////////////////////////////////////////////////////////////////////////
 class UserInterfaceLegacy
 {

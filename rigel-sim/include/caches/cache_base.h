@@ -15,16 +15,12 @@
 #include "mshr.h"
 
 ////////////////////////////////////////////////////////////////////////////////
-/* CLASS NAME: CacheBase
- *
- * DESCRIPTON
- * All of the caches are derived from CacheBase include L1I, L1D, L2D, L2I, and
- * the global caches.  The only methods that generally have to be specialized
- * are the Fill(), PerCycle(), evict(), pend(), and Schedule() methods.  The
- * get_set() method is virtual to allow it to be specialized for the global
- * cache.
- *
- */
+/// CacheBase
+/// All of the caches are derived from CacheBase include L1I, L1D, L2D, L2I, and
+/// the global caches.  The only methods that generally have to be specialized
+/// are the Fill(), PerCycle(), evict(), pend(), and Schedule() methods.  The
+/// get_set() method is virtual to allow it to be specialized for the global
+/// cache.
 ////////////////////////////////////////////////////////////////////////////////
 
 class InstrLegacy;

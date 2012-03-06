@@ -12,13 +12,9 @@
 
 class L2ICache;
 
-/* CLASS NAME: L1ICache
- * 
- * DESCRIPTON
- * Core-level instruction cache.  Sometimes referred to as the instruction
- * buffer.
- *
- */
+/// L1ICache
+/// Core-level instruction cache.  Sometimes referred to as the instruction
+/// buffer.
 class L1ICache : public CacheBase< 
   L1I_WAYS, L1I_SETS, LINESIZE, 
   L1I_OUTSTANDING_MISSES, CACHE_WRITE_THROUGH, L1I_EVICTION_BUFFER_SIZE

@@ -246,13 +246,9 @@ namespace directory
 // End of namespace 'directory'.
 
 
-/* CLASS NAME: CacheDirectory
- * 
- * DESCRIPTON
- * Base class for directory.  There is one directory per global cache bank which
- * services coherence requests from that bank.  Re
- *
- */
+/// CacheDirectory
+/// Base class for directory.  There is one directory per global cache bank which
+/// services coherence requests from that bank.  Re
 class CacheDirectory
 {
   public:

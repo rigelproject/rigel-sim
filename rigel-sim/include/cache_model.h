@@ -49,13 +49,10 @@ namespace rigel {
   }
 }
 
-/* CLASS NAME: CacheModel
- * 
- * DESCRIPTON
- * Wrapper class for holding all of the caches that are associated with a
- * cluster.
- *
- */
+/// CacheModel
+/// 
+/// Wrapper class for holding all of the caches that are associated with a
+/// cluster.
 class CacheModel 
 {
   public: 

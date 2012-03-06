@@ -23,12 +23,9 @@
 //       issues that a user may need to be aware of.  
 
 ////////////////////////////////////////////////////////////////////////////////
-/* CLASS NAME: StyleGuide
- * 
- * DESCRIPTON
- * This is an example class used for the RigelSim style guide.
- *
- */
+/// StyleGuide
+///  
+///  This is an example class used for the RigelSim style guide.
 ////////////////////////////////////////////////////////////////////////////////
 class StyleGuide
 {

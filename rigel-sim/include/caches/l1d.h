@@ -14,11 +14,8 @@
 class L2Cache;
 
 ////////////////////////////////////////////////////////////////////////////////
-/* CLASS NAME: L1DCache
- *
- * DESCRIPTON
- * Core-level data cache.  Usually referred to internally as a line buffer.
- */
+/// L1DCache
+/// Core-level data cache.  Usually referred to internally as a line buffer.
 ////////////////////////////////////////////////////////////////////////////////
 class L1DCache : public CacheBase<
   L1D_WAYS, L1D_SETS, LINESIZE,
@@ -76,12 +73,9 @@ class L1DCache : public CacheBase<
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-/* CLASS NAME: NoL1DCache
- *
- * DESCRIPTON
- * Stub for handling a core with no first-level cache, i.e., all requests go to
- * the cluster cache.
- */
+/// NoL1DCache
+/// Stub for handling a core with no first-level cache, i.e., all requests go to
+/// the cluster cache.
 ////////////////////////////////////////////////////////////////////////////////
 class NoL1DCache
 {

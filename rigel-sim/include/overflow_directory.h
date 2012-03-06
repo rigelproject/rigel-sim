@@ -146,20 +146,17 @@ namespace directory
 
 }
 
-/* CLASS NAME: OverflowCacheDirectory
- * 
- * DESCRIPTON
- * Overflow/L2 direectory structure.  Used as a backing store for the
- * CacheDirectory.
- *
- * TIMING MODELING
- * We can model timing by performing the functional part of the operation using
- * the calls in OverflowCacheDirectory which will each return a number of steps
- * and a list of addresses that each call traversed.  The timing model can then
- * perform those operations and hold back returning the result until all of
- * those lines have been read from the cache model.
- *
- */
+/// OverflowCacheDirectory
+/// 
+/// Overflow/L2 direectory structure.  Used as a backing store for the
+/// CacheDirectory.
+///
+/// TIMING MODELING
+/// We can model timing by performing the functional part of the operation using
+/// the calls in OverflowCacheDirectory which will each return a number of steps
+/// and a list of addresses that each call traversed.  The timing model can then
+/// perform those operations and hold back returning the result until all of
+/// those lines have been read from the cache model.
 class OverflowCacheDirectory
 {
   public:

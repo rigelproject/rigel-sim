@@ -11,17 +11,12 @@
 #ifndef __CACHES__L2I_H__
 #define __CACHES__L2I_H__
 
-/* CLASS NAME: L2ICache
- * 
- * DESCRIPTON
- * Cluster-level instruction cache definition.  Enabled with
- * USE_L2I_CACHE_SEPARATE.  Otherwise, a unified approach is used and all
- * instructions are cached in the L2D (cluster) cache.
- * 
- */
-
 class ClusterLegacy;
 
+/// L2ICache
+/// Cluster-level instruction cache definition.  Enabled with
+/// USE_L2I_CACHE_SEPARATE.  Otherwise, a unified approach is used and all
+/// instructions are cached in the L2D (cluster) cache.
 class L2ICache : public CacheBase< 
   L2I_WAYS, L2I_SETS, LINESIZE,
   L2I_OUTSTANDING_MISSES, CACHE_WRITE_THROUGH, L2I_EVICTION_BUFFER_SIZE
