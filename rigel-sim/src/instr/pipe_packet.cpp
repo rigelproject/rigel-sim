@@ -408,6 +408,7 @@ StaticDecodeInfo::isDREGSrc() const {
     case I_BCAST_UPDATE:
     case I_ATOMXCHG:
     case I_ATOMCAS:
+    case I_FMADD: // NOTE: HACK: this encoding is unstable, FIXME when FMADD finalized
     // these should be re-encoded to use the proper sreg_t and not read DREG...
     case I_PRINTREG:
     case I_SYSCALL:

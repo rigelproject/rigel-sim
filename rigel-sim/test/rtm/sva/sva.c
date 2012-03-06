@@ -43,8 +43,8 @@ volatile int VECSIZE;
 void DoTask( TQ_TaskDesc *task ) {
   int i;
 	for( i = task->begin; i < task->end; i++ ){
-    result_float[i] = vec1_float[i] + vec2_float[i];
-    result_int[i] = vec1_int[i] + vec2_int[i];
+    result_float[i] = 1.5f*vec1_float[i] + 0.5f*vec2_float[i];
+    result_int[i] = 2*vec1_int[i] + 3*vec2_int[i];
   }
 }
 

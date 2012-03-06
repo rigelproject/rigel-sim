@@ -1,5 +1,5 @@
-SUBDIRS=trivial nosynch float malloc barrier simple_test coherence_test sva mvm syscalls
-DSUBDIRS=trivial nosynch float malloc barrier simple_test sva mvm syscalls
+SUBDIRS=trivial nosynch float fmadd malloc barrier simple_test coherence_test sva mvm syscalls
+DSUBDIRS=trivial nosynch float fmadd malloc barrier simple_test sva mvm syscalls
 MAKE=make
 
 test:
