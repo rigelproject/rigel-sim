@@ -352,6 +352,9 @@ CoreFunctional::execute( PipePacket* instr ) {
       case I_FABS: temp_result = float(fabs(sreg_t.f32()));        break;
       case I_FRCP: temp_result = float(1.0 / sreg_t.f32());        break;
       case I_FRSQ: temp_result = float(1.0 / sqrtf(sreg_t.f32())); break;
+      case I_FMADD:
+        temp_result = instr->regval(DREG).f32() + (sreg_t.f32() * sreg_s.f32());
+        break;
       // conversion (this could be a separate class)
       case I_I2F:  temp_result = float(sreg_t.i32()); break;
       case I_F2I:  temp_result = int(sreg_t.f32());   break;
@@ -363,7 +366,6 @@ CoreFunctional::execute( PipePacket* instr ) {
       case I_FMRS:  // UNIMPLEMENTED! (status?)
       case I_FMOV:  // UNIMPLEMENTED! (status?)
       case I_FMSUB: // UNIMPLEMENTED! (status?)
-      case I_FMADD: // UNIMPLEMENTED! (status?)
       default:
         instr->Dump();
         assert(0 && "unknown FPUOP");
