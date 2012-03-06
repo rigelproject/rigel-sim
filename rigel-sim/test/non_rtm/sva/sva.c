@@ -44,8 +44,8 @@ volatile int VECSIZE;
 
 // simple task, add the specified ranges
 void DoTask(int i) {
-  result_float[i] = vec1_float[i] + vec2_float[i];
-  result_int[i] = vec1_int[i] + vec2_int[i];
+  result_float[i] = 1.5f*vec1_float[i] + .5f*vec2_float[i];
+  result_int[i] = 2*vec1_int[i] + 3*vec2_int[i];
 }
 
 
