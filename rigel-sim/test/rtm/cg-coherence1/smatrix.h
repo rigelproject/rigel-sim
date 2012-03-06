@@ -229,7 +229,7 @@ void
 Task_VecScaleAdd(const ElemType scale, const ElemType *a, const ElemType *b, ElemType *out, int dim)
 {
 	int i = 0;
-	ElemType foo = 0.0;
+	ElemType foo = 0.0f;
 
 	while (i < dim - 8) {
 		ElemType a0 = a[i+0] * scale;

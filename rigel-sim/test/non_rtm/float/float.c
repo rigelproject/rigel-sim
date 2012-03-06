@@ -26,7 +26,7 @@ int main() {
     RigelPrint(0x1333beef);
 
     // volatile...because the compiler is too darn clever with constants!
-    volatile float a = 2.0;
+    volatile float a = 2.0f;
     volatile float b = 1.0f / a;
     float c = sqrt(a);
     float d = a + b;
