@@ -4,12 +4,16 @@
 #include "cluster/cluster_cache_base.h"
 #include "util/util.h"
 
+
+// forward declarations
+template<class T> class InPortBase;
+template<class T> class OutPortBase;
+//class Packet;
+
 namespace rigel {
 	class ConstructionPayload;
 	class ComponentCount;
 }
-
-//class Packet;
 
 
 class ClusterCacheFunctional : public ClusterCacheBase {
@@ -25,14 +29,23 @@ class ClusterCacheFunctional : public ClusterCacheBase {
     void Dump();
     void Heartbeat();
 
-    /// cluster cache interface
-    int sendRequest(PacketPtr ptr);
-    int recvResponse(PacketPtr ptr);
 
-    uint32_t doLocalAtomic(PacketPtr p, int tid);
+    /// REMOVE ME: FIXME TODO HACK -- replace this with proper generic
+    //connections
+    InPortBase<Packet*>*  getInPort(int p)   { return ins[p]; }
+    OutPortBase<Packet*>* getOutPort(int p)  { return outs[p]; }
 
   private:
+
+    void doLocalAtomic(PacketPtr p);
+    void doMemoryAccess(PacketPtr p);
+  
+    void FunctionalMemoryRequest(Packet* p);
+
     std::vector<clustercache::LDLSTC_entry_t> LinkTable;
+
+    std::vector< InPortBase<Packet*>* > ins;
+    std::vector< OutPortBase<Packet*>* > outs;
 
 };
 

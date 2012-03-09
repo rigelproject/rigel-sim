@@ -10,10 +10,8 @@ CLUSTERS=1
 TEST_STRING="$CLUSTERS cluster"
 STDIN_INPUT="123456 3.14159 HelloFromSTDIN"
 STDOUT_FILE="syscalls.stdout.out"
-ARGS="-stdout $STDOUT_FILE.tmp"
+ARGS="-tstdout $STDOUT_FILE"
 echo "$STDIN_INPUT" | $RIGELSIM $ARGS -clusters $CLUSTERS $BENCHMARK 2> cout.out 1> cerr.out 
-cat $STDOUT_FILE.tmp | head -n 11 > $STDOUT_FILE
-rm $STDOUT_FILE.tmp
 if (diff $STDOUT_FILE syscalls.stdout.out.GOLD > diff.out) then
    echo "===== Passed ($NAME_STRING $TEST_STRING) ====="
 else

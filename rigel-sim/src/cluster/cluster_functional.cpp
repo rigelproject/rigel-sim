@@ -24,7 +24,10 @@ ClusterSimple::ClusterSimple(
     cp.core_state = cp.cluster_state->add_cores();
     cp.component_index = i;
     cores[i] = new CoreFunctional(cp,ccache);     
+    ccache->getInPort(i)->attach( cores[i]->getOutPort() );
+    cores[i]->getInPort()->attach( ccache->getOutPort(i) );
   }
+
 };
 
 /// destructor

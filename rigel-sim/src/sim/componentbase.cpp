@@ -34,7 +34,7 @@ ComponentBase::ComponentBase(
 /// pretty-print the object hierarchy
 void 
 ComponentBase::printHierarchy( int indent ) {
-  fprintf(stderr,"%*sI am %s[%d] (global component %d)\n",indent,"",name_.c_str(),id_,component_id);
+  fprintf(stderr,"%*s%s[%d] (global component %d)\n",indent,"",name_.c_str(),id_,component_id);
   indent+=2;
   for(size_t i=0; i<children_.size(); ++i) {
     children_[i]->printHierarchy(indent);

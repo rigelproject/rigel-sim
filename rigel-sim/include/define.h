@@ -213,7 +213,8 @@ typedef enum {
   IC_MSG_LDL_REQ,   // 77
   IC_MSG_LDL_REPLY, // 78
   IC_MSG_STC_REQ,   // 79
-  IC_MSG_STC_REPLY  // 80
+  IC_MSG_STC_REPLY_ACK,  // 80
+  IC_MSG_STC_REPLY_NACK  // 81
 } icmsg_type_t;
 // Instruction profile information.  (used by profile.cpp)
 typedef std::map<RIGEL_ADDR_T, uint64_t> InstrProfType;

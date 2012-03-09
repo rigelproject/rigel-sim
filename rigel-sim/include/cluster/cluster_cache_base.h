@@ -41,8 +41,8 @@ class ClusterCacheBase : public ComponentBase {
     virtual void Heartbeat() = 0;
 
     // extended required interface 
-    virtual int sendRequest(PacketPtr ptr) = 0;
-    virtual int recvResponse(PacketPtr ptr) = 0;
+    //virtual int sendRequest(PacketPtr ptr) = 0;
+    //virtual int recvResponse(PacketPtr ptr) = 0;
 
   protected:
 

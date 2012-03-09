@@ -5,10 +5,15 @@
 #include "corebase.h"
 #include "core/regfile.h"
 #include "sim.h"
+#include "port.h"
+
 
 // forward declarations
 class PipePacket;
 class RegisterFile;
+class Packet;
+template<class T> class InPortBase;
+template<class T> class OutPortBase;
 namespace rigel {
     class ConstructionPayload;
 }
@@ -56,6 +61,10 @@ class CoreFunctional : public CoreBase {
     /// accessors 
     uint32_t pc(int tid)     { return thread_state[tid]->pc_; } 
 
+    /// FIXME TODO REMOVE ME HACK: replace with general connection interface
+    OutPortBase<Packet*>* getOutPort() {return &to_ccache;}
+    InPortBase<Packet*>*  getInPort()  { return &from_ccache; }
+
   private:
    
     int width;      /// issue width
@@ -84,6 +93,9 @@ class CoreFunctional : public CoreBase {
 
     // TODO FIXME: this should be a core base class member...
     Syscall* syscall_handler;
+
+    OutPortBase<Packet*> to_ccache;
+    InPortBase<Packet*>  from_ccache;
 
     std::vector<CoreFunctionalThreadState*> thread_state;
 

@@ -27,7 +27,8 @@
 
 #define CF_WIDTH 1
 
-#define LOCALID id()%rigel::CORES_PER_CLUSTER * numthreads
+#define LOCALID ( id()%rigel::CORES_PER_CLUSTER * numthreads )
+#define GTID(localtid) ( id() * numthreads + localtid )
 
 ///////////////////////////////////////////////////////////////////////////////
 /// constructor
@@ -45,6 +46,8 @@ CoreFunctional::CoreFunctional(
   current_tid(0),
   ccache(ccache),
   syscall_handler(cp.syscall),
+  to_ccache(),
+  from_ccache(),
   thread_state(numthreads)
 {
   cp.parent = this;
@@ -390,22 +393,49 @@ CoreFunctional::execute( PipePacket* instr ) {
         case I_LDL: {
           target_addr = sreg_t.u32();
           // perform a regular LDW, but also set a link bit
-          // temp_result = mem_backing_store->read_word(target_addr);
-          Packet p(IC_MSG_LDL_REQ,target_addr,0);
-          temp_result = ccache->doLocalAtomic(&p, LOCALID + instr->tid()); // FIXME localID
+          Packet p(IC_MSG_LDL_REQ,target_addr,0,id(),GTID(instr->tid()));
+          port_status_t status;
+          status = to_ccache.sendMsg(&p);
+          Packet* reply;
+          if (status == ACK) {
+            reply = from_ccache.read();
+            DPRINT(DB_CF_LDL,"got LDL reply! %d\n", reply->msgType());
+            temp_result = reply->data();
+          } else {
+            throw ExitSim("unhandled path LDL");
+          }
+          //temp_result = ccache->doLocalAtomic(&p, LOCALID + instr->tid()); // FIXME localID
           DPRINT(DB_CF_LDL,"load-linked: %08x from %08x\n",temp_result.u32(), target_addr);
           break;
         }
         case I_STC: {
           target_addr = sreg_t.u32();
           // perform a store only if the link bit is set
-          Packet p(IC_MSG_STC_REQ,target_addr,sreg_s.u32());
-          temp_result = ccache->doLocalAtomic(&p, LOCALID + instr->tid()); // FIXME localID
-          if (temp_result.u32() == 0) {
-            DPRINT(DB_CF_STC,"[fail]");
+          Packet p(IC_MSG_STC_REQ,target_addr,sreg_s.u32(),id(),GTID(instr->tid()));
+          port_status_t status;
+          status = to_ccache.sendMsg(&p);
+          Packet* reply;
+          if (status == ACK) {
+            reply = from_ccache.read();
+            DPRINT(DB_CF_STC,"got STC reply! %d\n", reply->msgType());
+            temp_result = reply->data();
           } else {
-            DPRINT(DB_CF_STC,"[success]");
+            throw ExitSim("unhandled path STC");
           }
+          if (reply->msgType()==IC_MSG_STC_REPLY_NACK) {
+            DPRINT(DB_CF_STC,"[fail]");
+          } else if (reply->msgType()==IC_MSG_STC_REPLY_ACK) {
+            DPRINT(DB_CF_STC,"[success]");
+          }else {
+            throw ExitSim("Invalid response to STC request!\n");
+          }
+          // old fast path
+          //temp_result = ccache->doLocalAtomic(&p, LOCALID + instr->tid()); // FIXME localID
+          //if (temp_result.u32() == 0) {
+          //  DPRINT(DB_CF_STC,"[fail]");
+          //} else {
+          //  DPRINT(DB_CF_STC,"[success]");
+          //}
           DPRINT(DB_CF_STC,"store-conditional: %08x to %08x\n", temp_result.u32(), target_addr);
           break;
         }
@@ -500,7 +530,27 @@ CoreFunctional::execute( PipePacket* instr ) {
         case I_GSTW:
         case I_BCAST_UPDATE: {
           uint32_t data        = instr->regval(DREG).u32();
-          mem_backing_store->write_word(target_addr, data);
+
+          Packet p(IC_MSG_NULL,target_addr,data,id(),GTID(instr->tid()));
+
+          /// make this selection cleaner, maybe in the construction? or a
+          //helper method? p->setMsgType(instr_t)
+          if (instr->type()==I_STW) { p.msgType(IC_MSG_WRITE_REQ); }
+          else if (instr->type()==I_GSTW) { p.msgType(IC_MSG_GLOBAL_WRITE_REQ); }
+          else if (instr->type()==I_BCAST_UPDATE)  { p.msgType(IC_MSG_BCAST_UPDATE_REQ); }
+
+          port_status_t status;
+          status = to_ccache.sendMsg(&p);
+          Packet* reply;
+          if (status == ACK) {
+            reply = from_ccache.read();
+            temp_result = reply->data();
+          } else {
+            throw ExitSim("unhandled path Stores");
+          }
+
+          // old fast path
+          //mem_backing_store->write_word(target_addr, data);
           DPRINT(DB_CF_ST,"store: %08x to %08x\n",data, target_addr);
           break;
         }
@@ -514,10 +564,29 @@ CoreFunctional::execute( PipePacket* instr ) {
       DPRINT(DB_CF,"%s: isMem isLoad\n", __func__);
       switch (instr->type()) {
         case I_LDW:
-        case I_GLDW:
-          temp_result = mem_backing_store->read_word(target_addr);
+        case I_GLDW: {
+
+          Packet p(IC_MSG_NULL,target_addr,0,id(),GTID(instr->tid()));
+          /// make this selection cleaner, maybe in the construction? or a
+          //helper method? p->setMsgType(instr_t)
+          if (instr->type()==I_LDW) { p.msgType(IC_MSG_READ_REQ); }
+          else if (instr->type()==I_GLDW) { p.msgType(IC_MSG_GLOBAL_READ_REQ); }
+
+          port_status_t status;
+          status = to_ccache.sendMsg(&p);
+          Packet* reply;
+          if (status == ACK) {
+            reply = from_ccache.read();
+            temp_result = reply->data();
+          } else {
+            throw ExitSim("unhandled path Stores");
+          }
+
+          // old fast path
+          //temp_result = mem_backing_store->read_word(target_addr);
           DPRINT(DB_CF_LD,"load: %08x from %08x\n",temp_result.u32(), target_addr);
           break;
+        }
         default:
           instr->Dump();
           assert(0 && "unknown LOAD");
