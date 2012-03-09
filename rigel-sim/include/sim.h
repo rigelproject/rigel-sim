@@ -366,12 +366,20 @@ namespace rigel {
   extern std::string STDIN_STRING;
   extern std::string STDIN_STRING_FILENAME; //Used to store the temporary filename
                                             //so we can remove() it
-  // Redirect stdin from file
-  extern bool REDIRECT_STDIN;
-  // Redirect stdout to file
-  extern bool REDIRECT_STDOUT;
-  // Redirect stderr to file
-  extern bool REDIRECT_STDERR;
+  // Redirect host stdin from file
+  extern bool REDIRECT_HOST_STDIN;
+  // Redirect host stdout to file
+  extern bool REDIRECT_HOST_STDOUT;
+  // Redirect host stderr to file
+  extern bool REDIRECT_HOST_STDERR;
+  // Redirect target stdout to file
+  extern bool REDIRECT_TARGET_STDOUT;
+  // Redirect target stderr to file
+  extern bool REDIRECT_TARGET_STDERR;
+
+  extern std::string TARGET_STDOUT_FILENAME;
+  extern std::string TARGET_STDERR_FILENAME;
+
   // Enable incoherent malloc when hybridCC is turned on.
   extern bool CMDLINE_ENABLE_INCOHERENT_MALLOC;
   // Make cache accesses for RTM data free.

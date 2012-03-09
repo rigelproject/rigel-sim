@@ -289,8 +289,8 @@ static void helper_init_profiler(TileBase **tiles) {
 static void
 helper_setup_fileio(CommandLineArgs &cmdline)
 {
-  if (rigel::REDIRECT_STDIN) {
-    std::string filename = cmdline.get_val((char *)"stdin_file");
+  if (rigel::REDIRECT_HOST_STDIN) {
+    std::string filename = cmdline.get_val((char *)"host_stdin_file");
     FILE *tmp = freopen(filename.c_str(), "r", stdin);
     if(tmp == NULL)
     {
@@ -298,8 +298,8 @@ helper_setup_fileio(CommandLineArgs &cmdline)
       exit(1);
     }
   }
-  if (rigel::REDIRECT_STDOUT) {
-		std::string filename = cmdline.get_val((char*)"stdout_file");
+  if (rigel::REDIRECT_HOST_STDOUT) {
+		std::string filename = cmdline.get_val((char*)"host_stdout_file");
     FILE *tmp = freopen(filename.c_str(), "w", stdout);
     if(tmp == NULL)
     {
@@ -307,8 +307,8 @@ helper_setup_fileio(CommandLineArgs &cmdline)
       exit(1);
     }
   }
-  if (rigel::REDIRECT_STDERR) {
-		std::string filename = cmdline.get_val((char*)"stderr_file");
+  if (rigel::REDIRECT_HOST_STDERR) {
+		std::string filename = cmdline.get_val((char*)"host_stderr_file");
     FILE *tmp = freopen(filename.c_str(), "w", stderr);
     if(tmp == NULL)
     {

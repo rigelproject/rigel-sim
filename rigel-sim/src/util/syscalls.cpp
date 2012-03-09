@@ -145,7 +145,6 @@ Syscall::Syscall(rigel::GlobalBackingStoreType *mmodel) :
 
   int stdin_fd = STDIN_FILENO;
   if(rigel::STDIN_STRING_ENABLE) {
-    
     char filename_template[128] = "/tmp/rigelsim_stdin_XXXXXX";
     stdin_fd=mkstemp(filename_template);
     rigel::STDIN_STRING_FILENAME = filename_template;
@@ -154,16 +153,31 @@ Syscall::Syscall(rigel::GlobalBackingStoreType *mmodel) :
     lseek(stdin_fd, 0, SEEK_SET); //Rewind to beginning of file
   }
 
+  //FIXME Should track these files and close them in ~Syscall()
+  int stdout_fd = STDOUT_FILENO;
+  if(rigel::REDIRECT_TARGET_STDOUT) {
+    FILE *out = fopen(rigel::TARGET_STDOUT_FILENAME.c_str(), "w");
+    assert(out && "Could not open target stdout redirect file");
+    stdout_fd = fileno(out);
+  }
+
+  int stderr_fd = STDERR_FILENO;
+  if(rigel::REDIRECT_TARGET_STDERR) {
+    FILE *err = fopen(rigel::TARGET_STDERR_FILENAME.c_str(), "w");
+    assert(err && "Could not open target stderr redirect file");
+    stderr_fd = fileno(err);
+  }  
+
   //FIXME Passing in the tfds from the outside now seems a bit strange..
   //see if there's a way we can, at least sometimes, allocate it internally
   rigelsim::TargetFileDescriptorState *tfds = new rigelsim::TargetFileDescriptorState();
   TargetFileDescriptor *stdin_tfd = new TargetFileDescriptor(tfds, stdin_fd);
   target_fd_map[STDIN_FILENO] = stdin_tfd;
   tfds = new rigelsim::TargetFileDescriptorState();
-  TargetFileDescriptor *stdout_tfd = new TargetFileDescriptor(tfds, STDOUT_FILENO);
+  TargetFileDescriptor *stdout_tfd = new TargetFileDescriptor(tfds, stdout_fd);
   target_fd_map[STDOUT_FILENO] = stdout_tfd;
   tfds = new rigelsim::TargetFileDescriptorState();
-  TargetFileDescriptor *stderr_tfd = new TargetFileDescriptor(tfds, STDERR_FILENO);
+  TargetFileDescriptor *stderr_tfd = new TargetFileDescriptor(tfds, stderr_fd);
   target_fd_map[STDERR_FILENO] = stderr_tfd;
 }
 
@@ -547,7 +561,7 @@ Syscall::syscall_write(struct syscall_struct &syscall_data) {
   const int hostfd = get_hostfd(fdesc);
   uint32_t base_addr = syscall_data.arg2.i;
   int bytes_to_write = syscall_data.arg3.i;
-	if(hostfd != STDOUT_FILENO && hostfd != STDERR_FILENO) {
+	if(fdesc != STDOUT_FILENO && fdesc != STDERR_FILENO) {
 	  fprintf(stderr, "syscall_write(fd=%d target/%d host, base_addr=0x%08"PRIx32", num_bytes=%d)...",
             fdesc, hostfd, base_addr, bytes_to_write);
   }
@@ -603,7 +617,7 @@ Syscall::syscall_write(struct syscall_struct &syscall_data) {
     bytes_written += b;
   }
 
-	if(hostfd != STDOUT_FILENO && hostfd != STDERR_FILENO) {
+	if(fdesc != STDOUT_FILENO && fdesc != STDERR_FILENO) {
 	  fprintf(stderr, " wrote %d bytes\n", bytes_written);
 	}
   syscall_data.result.u = bytes_written;
@@ -630,8 +644,10 @@ Syscall::syscall_read(struct syscall_struct &syscall_data) {
   uint32_t base_addr = syscall_data.arg2.i;
   int bytes_requested = syscall_data.arg3.i;
 	int bytes_read;
+  if(fdesc != STDIN_FILENO) {
   fprintf(stderr, "syscall_read(fd=%d target/%d host, base_addr=0x%08"PRIx32", num_bytes=%d)...",
           fdesc, hostfd, base_addr, bytes_requested);
+  }
 	char *buf = new char[bytes_requested+1]; //+1 for a NULL terminator in the stdin case
   memset(buf, 0x0, bytes_requested+1);
   // Track offset into read buffer and update after every write to target's
@@ -647,7 +663,9 @@ Syscall::syscall_read(struct syscall_struct &syscall_data) {
   bytes_read = read(hostfd, buf, bytes_requested);
   assert(bytes_read >= 0 && "FIXME: handle errors from read()");
 
-	fprintf(stderr, " read %d of %d bytes\n", bytes_read, bytes_requested);
+  if(fdesc != STDIN_FILENO) {
+	  fprintf(stderr, " read %d of %d bytes\n", bytes_read, bytes_requested);
+  }
 
   // Do unaligned start
   while ( (base_addr % 4 != 0) && (bytes_read > 0) ) {

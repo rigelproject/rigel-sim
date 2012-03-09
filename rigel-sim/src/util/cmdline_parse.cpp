@@ -121,9 +121,13 @@ namespace rigel {
   bool STDIN_STRING_ENABLE;
   std::string STDIN_STRING;
   std::string STDIN_STRING_FILENAME;
-  bool REDIRECT_STDIN;
-  bool REDIRECT_STDOUT;
-  bool REDIRECT_STDERR;
+  bool REDIRECT_HOST_STDIN;
+  bool REDIRECT_HOST_STDOUT;
+  bool REDIRECT_HOST_STDERR;
+  bool REDIRECT_TARGET_STDOUT;
+  bool REDIRECT_TARGET_STDERR;
+  std::string TARGET_STDOUT_FILENAME;
+  std::string TARGET_STDERR_FILENAME;
   bool CMDLINE_ENABLE_INCOHERENT_MALLOC;
   bool CMDLINE_ENABLE_FREE_LIBPAR;
   bool CMDLINE_ENABLE_FREE_LIBPAR_ICACHE;
@@ -372,9 +376,9 @@ CommandLineArgs::CommandLineArgs(int argc, char *argv[]) {
   // Don't do TLB statistics gathering by default, it can be expensive if we're doing a design space sweep.
   rigel::ENABLE_TLB_TRACKING = false;
   // Do not redirect any streams internally by default.
-  rigel::REDIRECT_STDIN = false;
-  rigel::REDIRECT_STDOUT = false;
-  rigel::REDIRECT_STDERR = false;
+  rigel::REDIRECT_HOST_STDIN = false;
+  rigel::REDIRECT_HOST_STDOUT = false;
+  rigel::REDIRECT_HOST_STDERR = false;
   // By default, disable incoherent malloc.
   rigel::CMDLINE_ENABLE_INCOHERENT_MALLOC = false;
   // By default, pay timing costs for libpar data acesses.
@@ -1159,7 +1163,7 @@ CommandLineArgs::CommandLineArgs(int argc, char *argv[]) {
       {
         throw CommandLineError("--stdin-string <\"STRING\">");
       }
-      if(rigel::REDIRECT_STDIN) {
+      if(rigel::REDIRECT_HOST_STDIN) {
         throw CommandLineError("Cannot source target stdin from file (-stdin) and string"
           "(--stdin-string) at the same time");
       }
@@ -1169,43 +1173,65 @@ CommandLineArgs::CommandLineArgs(int argc, char *argv[]) {
       continue;
     }
     /*XXX*/
-    if (0 == key.compare("-stdin")) {
+    if (0 == key.compare("-hstdin")) {
       if(i == argList.size())
       {
-        throw CommandLineError("-stdin <FILE TO ATTACH TO STDIN>");
+        throw CommandLineError("-hstdin <FILE TO ATTACH TO HOST STDIN>");
       }
       if(rigel::STDIN_STRING_ENABLE) {
         throw CommandLineError("Cannot source target stdin from file (-stdin) and string"
           "(--stdin-string) at the same time");
       }
 			std::string stdin_file(argList[i++]);
-      rigel::REDIRECT_STDIN = true;
-      this->cmdline_table["stdin_file"] = stdin_file;
-      std::cerr << "Redirecting stdin from " << stdin_file << "\n";
+      rigel::REDIRECT_HOST_STDIN = true;
+      this->cmdline_table["host_stdin_file"] = stdin_file;
+      std::cerr << "Redirecting host stdin from " << stdin_file << "\n";
       continue;
     }
     /*XXX*/
-    if (0 == key.compare("-stdout")) {
+    if (0 == key.compare("-hstdout")) {
       if(i == argList.size())
       {
-        throw CommandLineError("-stdout <FILE TO ATTACH TO STDOUT>");
+        throw CommandLineError("-hstdout <FILE TO ATTACH TO HOST STDOUT>");
       }
 			std::string stdout_file(argList[i++]);
-      rigel::REDIRECT_STDOUT = true;
-      this->cmdline_table["stdout_file"] = stdout_file;
-      std::cerr << "Redirecting stdout to " << stdout_file << "\n";
+      rigel::REDIRECT_HOST_STDOUT = true;
+      this->cmdline_table["host_stdout_file"] = stdout_file;
+      std::cerr << "Redirecting host stdout to " << stdout_file << "\n";
       continue;
     }
     /*XXX*/
-    if (0 == key.compare("-stderr")) {
+    if (0 == key.compare("-hstderr")) {
       if(i == argList.size())
       {
-        throw CommandLineError("-stderr <FILE TO ATTACH TO STDERR>");
+        throw CommandLineError("-hstderr <FILE TO ATTACH TO HOST STDERR>");
       }
 			std::string stderr_file(argList[i++]);
-      rigel::REDIRECT_STDERR = true;
-      this->cmdline_table["stderr_file"] = stderr_file;
-      std::cerr << "Redirecting stderr to " << stderr_file << "\n";
+      rigel::REDIRECT_HOST_STDERR = true;
+      this->cmdline_table["host_stderr_file"] = stderr_file;
+      std::cerr << "Redirecting host stderr to " << stderr_file << "\n";
+      continue;
+    }
+    /*XXX*/
+    if (0 == key.compare("-tstdout")) {
+      if(i == argList.size())
+      {
+        throw CommandLineError("-tstdout <FILE TO ATTACH TO TARGET STDOUT>");
+      }
+      rigel::TARGET_STDOUT_FILENAME = argList[i++];
+      rigel::REDIRECT_TARGET_STDOUT = true;
+      std::cerr << "Redirecting target stdout to " << rigel::TARGET_STDOUT_FILENAME << "\n";
+      continue;
+    }
+    /*XXX*/
+    if (0 == key.compare("-tstderr")) {
+      if(i == argList.size())
+      {
+        throw CommandLineError("-tstderr <FILE TO ATTACH TO TARGET STDERR>");
+      }
+      rigel::TARGET_STDERR_FILENAME = argList[i++];
+      rigel::REDIRECT_TARGET_STDERR = true;
+      std::cerr << "Redirecting target stderr to " << rigel::TARGET_STDERR_FILENAME << "\n";
       continue;
     }
 		/*XXX*/
@@ -1537,12 +1563,16 @@ void CommandLineArgs::print_help() {
     << "Default: full" << "\n";
   std::cout << std::setw(40) << "  --stdin-string <\"STRING\">" << "\n" << "      "
     << "Pipe STRING into target stdin" << "\n";
-  std::cout << std::setw(40) << "  -stdin <FILE>" << "\n" << "      "
-    << "Connect FILE to stdin" << "\n";
-  std::cout << std::setw(40) << "  -stdout <FILE>" << "\n" << "      "
-    << "Redirect stdout to FILE" << "\n";
-  std::cout << std::setw(40) << "  -stderr <FILE>" << "\n" << "      "
-    << "Redirect stderr to FILE" << "\n";
+  std::cout << std::setw(40) << "  -hstdin <FILE>" << "\n" << "      "
+    << "Connect FILE to host stdin" << "\n";
+  std::cout << std::setw(40) << "  -hstdout <FILE>" << "\n" << "      "
+    << "Redirect host stdout to FILE" << "\n";
+  std::cout << std::setw(40) << "  -hstderr <FILE>" << "\n" << "      "
+    << "Redirect host stderr to FILE" << "\n";
+  std::cout << std::setw(40) << "  -tstdout <FILE>" << "\n" << "      "
+    << "Redirect target stdout to FILE" << "\n";
+  std::cout << std::setw(40) << "  -tstderr <FILE>" << "\n" << "      "
+    << "Redirect target stderr to FILE" << "\n";
   std::cout << std::setw(40) << "  --tags TAG1,TAG2,TAG3,..." << "\n" << "      "
     << "Tag this run with a comma-delimited list of identifying strings."
     << "These strings can be used by grep or CouchDB views after the fact"
