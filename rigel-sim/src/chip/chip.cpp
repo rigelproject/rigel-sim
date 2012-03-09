@@ -194,7 +194,7 @@ Chip::EndSim() {
 		}
 
   }
-#endif //#if CLUSTER_TYPE == 2
+#endif //#if CLUSTER_TYPE == 1
   // End TLB TRACKING
   
 }

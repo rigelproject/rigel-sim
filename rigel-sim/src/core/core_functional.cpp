@@ -692,7 +692,6 @@ CoreFunctional::execute( PipePacket* instr ) {
   instr->setRegVal(DREG,temp_result);
 
   //instr->Dump();
-
 }
 
 ///////////////////////////////////////////////////////////////////////////////

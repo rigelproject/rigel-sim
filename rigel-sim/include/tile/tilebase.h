@@ -31,6 +31,7 @@ class TileBase : public ComponentBase, public rigelsim::Checkpointable
 	  //Note that it's not pure virtual, so all derived classes don't *have* to override it. 
     virtual rigel::ClusterType** getClusters() const { 
 	  	assert(0 && "Sorry, your TileBase derived class didn't override getClusters()");
+			return (rigel::ClusterType**) NULL;
 	  }
     virtual void save_state() const = 0;
     virtual void restore_state() = 0;

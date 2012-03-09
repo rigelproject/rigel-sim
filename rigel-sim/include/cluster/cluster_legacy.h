@@ -48,7 +48,7 @@ class ClusterLegacy : public ClusterBase {
     void     Dump();
     int      halted();                  /// Returns 1 if halted, 0 otherwise
     void     Heartbeat();               /// print heartbeat status message
-    void     EndSim();                  /// called at termination of somulation for wrapup
+    void     EndSim();                  /// called at termination of simulation for wrapup
     void     ProfileCycles(int i);      /// 
     void     ProfileStuckBehind(int i); /// 
     uint32_t GetCorePC(int c);          ///

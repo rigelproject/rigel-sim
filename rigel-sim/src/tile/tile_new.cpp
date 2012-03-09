@@ -76,8 +76,16 @@ void TileNew::save_state() const {
 }
 
 void TileNew::restore_state() { assert(0 && "Write me!"); }
-////////////////////////////////////////////////////////////////////////////////
+
+void
+TileNew::PreSimInit() {
+  for(int cluster = 0; cluster < rigel::CLUSTERS_PER_TILE; cluster++) {
+    getClusters()[cluster]->getProfiler()->start_sim();
+  }
+};
 
 void
 TileNew::EndSim() {
+	for(int i = 0; i < numclusters; i++)
+		clusters[i]->EndSim();
 }

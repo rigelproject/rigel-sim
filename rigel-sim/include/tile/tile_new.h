@@ -23,7 +23,7 @@ class TileNew: public TileBase {
     void Dump()      { assert(0&&"unimplemented"); }
     void Heartbeat() { printf("%s unimplemented\n",__func__ ); }
     void EndSim();
-    void PreSimInit(){ printf("TileNew::PreSimInit() does nothing for now...\n"); }
+    void PreSimInit();
 
     int  halted();
 

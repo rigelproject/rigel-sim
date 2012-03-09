@@ -69,8 +69,10 @@ ClusterSimple::Dump() {
 };
 
 void 
-ClusterSimple::EndSim() { 
-  assert( 0 && "unimplemented!");
+ClusterSimple::EndSim() {
+	profiler->end_sim();
+	profiler->accumulate_stats();
+  //assert( 0 && "unimplemented!");
 };
 
 void ClusterSimple::save_state() const {
