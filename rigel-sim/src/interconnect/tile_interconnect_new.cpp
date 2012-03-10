@@ -302,7 +302,7 @@ helper_GC_to_L2(std::list<ICMsg> &from, std::list<ICMsg> &to)
   std::list<ICMsg>::iterator probe_req_iter = from.begin();
   while (from.end() != probe_req_iter) {
     if (probe_req_iter->is_ready_cycle()) {
-      probe_req_iter->set_type(ICMsg::convert(probe_req_iter->get_type()));
+      probe_req_iter->set_type(rigel::icmsg_convert(probe_req_iter->get_type()));
       DEBUG_network("TILE G2C L2 ROUTE", *probe_req_iter);
       to.push_back(*probe_req_iter);
       probe_req_iter = from.erase(probe_req_iter);

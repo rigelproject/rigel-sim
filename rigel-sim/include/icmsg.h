@@ -235,11 +235,7 @@ struct ICMsg
     static bool check_is_global_operation(icmsg_type_t msg_type);
     static bool check_is_writeback_evict(icmsg_type_t msg_type);
     static bool check_is_bcast_req(icmsg_type_t msg_type);
-    // Covnert between request/reply pairs.  IC_MSG_NULL is invalid
-    static icmsg_type_t convert(icmsg_type_t t);
     static icmsg_type_t bcast_notify_convert(icmsg_type_t t);
-    // Convert between instr_t and icmsg_type_t
-    static icmsg_type_t instr_to_icmsg(instr_t type);
 
   public: /* DATA */
     // Used by overflow directory to model timing.  The bit is set when the

@@ -4,6 +4,7 @@
 #include <map>
 #include <iostream>
 #include <stdint.h>
+#include "autogen/autogen_isa_sim.h"
 
 ///////////////////////////////////////////////////////////////
 // define.h
@@ -381,5 +382,20 @@ enum coherence_state_t {
 
 class InstrLegacy; // since InstrLegacy is defined below...
 typedef InstrLegacy* InstrSlot;
+
+
+namespace rigel {
+
+  // return an icmsg_t corresponding to the instruction that generates it
+  icmsg_type_t instr_to_icmsg(instr_t type);
+
+  // METHOD: convert()
+  // Helper routine for flipping messages around, taking requests and turing them into replies.  
+  // used for comparing returned messages to requests sitting in a request buffer.
+  // PARAMETERS: t: Type to change from REQ->REPLY or REPLY->REQ
+  // RETURNS: Takes the message and returns the inverted type.
+  // coherence probes are just passed through.
+  icmsg_type_t icmsg_convert(icmsg_type_t t);
+}
 
 #endif
