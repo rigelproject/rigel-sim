@@ -37,8 +37,9 @@ class ClusterCacheFunctional : public ClusterCacheBase {
 
   private:
 
-    void doLocalAtomic(PacketPtr p);
     void doMemoryAccess(PacketPtr p);
+    void doLocalAtomic(PacketPtr p);
+    void doGlobalAtomic(PacketPtr p);
   
     void FunctionalMemoryRequest(Packet* p);
 

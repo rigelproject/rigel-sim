@@ -384,6 +384,7 @@ CoreFunctional::execute( PipePacket* instr ) {
 
     if (instr->isAtomic()) {
       DPRINT(DB_CF,"%s: isMem isAtomic\n", __func__);
+
       // split me into Local and Global atomic sections?
       switch (instr->type()) {
 
@@ -442,76 +443,120 @@ CoreFunctional::execute( PipePacket* instr ) {
 
         // atomics that return a copy of the OLD value before atomic update
         case I_ATOMCAS: {
-          target_addr = sreg_t.u32(); // target_addr is in a register for this one
-          uint32_t oldval = mem_backing_store->read_word(target_addr);
-          if (oldval == sreg_s.u32()) { 
-            mem_backing_store->write_word(target_addr, instr->regval(DREG).u32()); 
-          };
-          temp_result = oldval;
+          uint32_t alt_target_addr = sreg_t.u32(); // target_addr is in a register for this one
+          Packet p( rigel::instr_to_icmsg(instr->type()), 
+                    alt_target_addr, instr->regval(DREG).u32() , id(), GTID(instr->tid()));
+          p.gAtomicOperand(sreg_s.u32());
+          temp_result = doGlobalAtomic(&p);
+          // old fastpath
+          // uint32_t oldval = mem_backing_store->read_word(target_addr);
+          // if (oldval == sreg_s.u32()) { 
+          //   mem_backing_store->write_word(target_addr, instr->regval(DREG).u32()); 
+          // };
+          // temp_result = oldval;
           DPRINT(DB_CF,"cas target_addr: %08x \n",target_addr);
           break;
         }
         case I_ATOMXCHG: {
-          uint32_t oldval = mem_backing_store->read_word(target_addr); 
-          mem_backing_store->write_word(target_addr, instr->regval(DREG).u32());
-          temp_result = oldval;
+          Packet p( rigel::instr_to_icmsg(instr->type()), 
+                    target_addr, instr->regval(DREG).u32(), id(), GTID(instr->tid()));
+          temp_result = doGlobalAtomic(&p);
+          // old fastpath
+          // uint32_t oldval = mem_backing_store->read_word(target_addr); 
+          // mem_backing_store->write_word(target_addr, instr->regval(DREG).u32());
+          // temp_result = oldval;
           break;
         }
         // arithmetic
         case I_ATOMINC: {
-          uint32_t oldval = mem_backing_store->read_word(target_addr); 
-          mem_backing_store->write_word(target_addr, oldval + 1);
-          temp_result = (oldval + 1);
+          Packet p( rigel::instr_to_icmsg(instr->type()), target_addr, 0, id(), GTID(instr->tid()));
+          temp_result = doGlobalAtomic(&p);
+          // old fast path
+          // uint32_t oldval = mem_backing_store->read_word(target_addr); 
+          // mem_backing_store->write_word(target_addr, oldval + 1);
+          // temp_result = (oldval + 1);
           break;
         }
         case I_ATOMDEC: {
-          uint32_t oldval = mem_backing_store->read_word(target_addr); 
-          mem_backing_store->write_word(target_addr, oldval - 1);
-          temp_result = (oldval - 1);
+          Packet p( rigel::instr_to_icmsg(instr->type()), target_addr, 0, id(), GTID(instr->tid()));
+          temp_result = doGlobalAtomic(&p);
+          // old fastpath
+          // uint32_t oldval = mem_backing_store->read_word(target_addr); 
+          // mem_backing_store->write_word(target_addr, oldval - 1);
+          // temp_result = (oldval - 1);
           break;
         }
         case I_ATOMADDU: {
-          uint32_t oldval = mem_backing_store->read_word(target_addr); 
-          mem_backing_store->write_word(target_addr, oldval + sreg_s.u32());
-          temp_result = oldval;
+          Packet p( rigel::instr_to_icmsg(instr->type()), target_addr, 0, id(), GTID(instr->tid()));
+          p.gAtomicOperand(sreg_s.u32());
+          temp_result = doGlobalAtomic(&p);
+          // old fastpath
+          // uint32_t oldval = mem_backing_store->read_word(target_addr); 
+          // mem_backing_store->write_word(target_addr, oldval + sreg_s.u32());
+          // temp_result = oldval;
           break;
         }
         // atomics that return the NEW value after atomic update
         // min,max
         case I_ATOMMIN: {
-          uint32_t oldval = mem_backing_store->read_word(sreg_t.u32());
-          uint32_t newval = std::min(oldval,sreg_s.u32());
-          mem_backing_store->write_word(sreg_t.u32(), newval);
-          temp_result = newval;
+          uint32_t alt_target_addr = sreg_t.u32();
+          Packet p( rigel::instr_to_icmsg(instr->type()), alt_target_addr, 0, id(), GTID(instr->tid()));
+          p.gAtomicOperand(sreg_s.u32());
+          temp_result = doGlobalAtomic(&p);
+          // old fastpath
+          // uint32_t oldval = mem_backing_store->read_word(sreg_t.u32());
+          // uint32_t newval = std::min(oldval,sreg_s.u32());
+          // mem_backing_store->write_word(sreg_t.u32(), newval);
+          // temp_result = newval;
           break;
         }
         case I_ATOMMAX: {
-          uint32_t oldval = mem_backing_store->read_word(sreg_t.u32());
-          uint32_t newval = std::max(oldval,sreg_s.u32());
-          mem_backing_store->write_word(sreg_t.u32(), newval);
-          temp_result = newval;
+          uint32_t alt_target_addr = sreg_t.u32();
+          Packet p( rigel::instr_to_icmsg(instr->type()), alt_target_addr, 0, id(), GTID(instr->tid()));
+          p.gAtomicOperand(sreg_s.u32());
+          temp_result = doGlobalAtomic(&p);
+          // old fastpath
+          // uint32_t oldval = mem_backing_store->read_word(sreg_t.u32());
+          // uint32_t newval = std::max(oldval,sreg_s.u32());
+          // mem_backing_store->write_word(sreg_t.u32(), newval);
+          // temp_result = newval;
           break;
         }
         // logical
         case I_ATOMAND: {
-          uint32_t oldval = mem_backing_store->read_word(sreg_t.u32());
-          uint32_t newval = oldval & sreg_s.u32();
-          mem_backing_store->write_word(sreg_t.u32(), newval);
-          temp_result = newval;
+          uint32_t alt_target_addr = sreg_t.u32();
+          Packet p( rigel::instr_to_icmsg(instr->type()), alt_target_addr, 0, id(), GTID(instr->tid()));
+          p.gAtomicOperand(sreg_s.u32());
+          temp_result = doGlobalAtomic(&p);
+          // old fastpath
+          // uint32_t oldval = mem_backing_store->read_word(sreg_t.u32());
+          // uint32_t newval = oldval & sreg_s.u32();
+          // mem_backing_store->write_word(sreg_t.u32(), newval);
+          // temp_result = newval;
           break;
         }
         case I_ATOMOR: {
-          uint32_t oldval = mem_backing_store->read_word(sreg_t.u32());
-          uint32_t newval = oldval | sreg_s.u32();
-          mem_backing_store->write_word(sreg_t.u32(), newval);
-          temp_result = newval;
+          uint32_t alt_target_addr = sreg_t.u32();
+          Packet p( rigel::instr_to_icmsg(instr->type()), alt_target_addr, 0, id(), GTID(instr->tid()));
+          p.gAtomicOperand(sreg_s.u32());
+          temp_result = doGlobalAtomic(&p);
+          // old fastpath
+          // uint32_t oldval = mem_backing_store->read_word(sreg_t.u32());
+          // uint32_t newval = oldval | sreg_s.u32();
+          // mem_backing_store->write_word(sreg_t.u32(), newval);
+          // temp_result = newval;
           break;
         }
         case I_ATOMXOR: {
-          uint32_t oldval = mem_backing_store->read_word(sreg_t.u32());
-          uint32_t newval = oldval ^ sreg_s.u32();
-          mem_backing_store->write_word(sreg_t.u32(), newval);
-          temp_result = newval;
+          uint32_t alt_target_addr = sreg_t.u32();
+          Packet p( rigel::instr_to_icmsg(instr->type()), alt_target_addr, 0, id(), GTID(instr->tid()));
+          p.gAtomicOperand(sreg_s.u32());
+          temp_result = doGlobalAtomic(&p);
+          // old fastpath
+          // uint32_t oldval = mem_backing_store->read_word(sreg_t.u32());
+          // uint32_t newval = oldval ^ sreg_s.u32();
+          // mem_backing_store->write_word(sreg_t.u32(), newval);
+          // temp_result = newval;
           break;
         }
         default:
@@ -523,7 +568,6 @@ CoreFunctional::execute( PipePacket* instr ) {
     }
     else if (instr->isStore()) {
       DPRINT(DB_CF,"%s: isMem isStore\n", __func__);
-
 
       switch (instr->type()) {
         case I_STW:
@@ -778,6 +822,24 @@ CoreFunctional::Dump() {
     ts->rf.Dump();
     ts->sprf.Dump();
   }
+}
+
+regval32_t
+CoreFunctional::doGlobalAtomic(Packet* p) {
+
+  port_status_t status;
+  Packet* reply;
+  regval32_t temp_result;
+  status = to_ccache.sendMsg(p);
+  if (status == ACK) {
+    reply = from_ccache.read();
+    temp_result = reply->data();
+  } else {
+    throw ExitSim("unhandled GlobalAtomic");
+  }
+
+  return temp_result;
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////

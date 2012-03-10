@@ -57,6 +57,9 @@ ClusterCacheFunctional::FunctionalMemoryRequest(Packet* p) {
 void
 ClusterCacheFunctional::doMemoryAccess(PacketPtr p) {
 
+  // FIXME: TODO: pre-decode the message type (Local vs. Global, atomic)
+  // to avoid these switches all over...we already need one for implementing the
+  // operation, don't use a switch to select the handler func
   switch(p->msgType()) {
 
     // loads
@@ -80,11 +83,122 @@ ClusterCacheFunctional::doMemoryAccess(PacketPtr p) {
       doLocalAtomic(p); 
       break;
 
+    case IC_MSG_ATOMDEC_REQ:
+    case IC_MSG_ATOMINC_REQ:
+    case IC_MSG_ATOMADDU_REQ:
+    case IC_MSG_ATOMCAS_REQ:
+    case IC_MSG_ATOMXCHG_REQ:
+    case IC_MSG_ATOMMIN_REQ:
+    case IC_MSG_ATOMMAX_REQ:
+    case IC_MSG_ATOMAND_REQ:
+    case IC_MSG_ATOMOR_REQ:
+    case IC_MSG_ATOMXOR_REQ:
+      doGlobalAtomic(p);
+      break;
+
     default:
       p->Dump();
       throw ExitSim("unhandled msgType()!");
   }
 
+}
+
+#include "core/regfile.h" // TODO FIXME REMOVE ME, bad, for regval32_t
+void 
+ClusterCacheFunctional::doGlobalAtomic(PacketPtr p) {
+
+  uint32_t target_addr = p->addr();
+  uint32_t temp_result;
+  regval32_t operand = p->gAtomicOperand();
+  regval32_t swapval = p->data();
+
+  switch (p->msgType()) {
+    // atomics that return a copy of the OLD value before atomic update
+    case IC_MSG_ATOMCAS_REQ: {
+      uint32_t oldval = mem_backing_store->read_word(target_addr);
+      uint32_t newval = swapval.u32();
+      if (oldval == operand.u32()) { 
+        mem_backing_store->write_word(target_addr, newval); 
+      };
+      temp_result = oldval;
+      DPRINT(false,"cas target_addr: %08x \n",target_addr);
+      break;
+    }
+    case IC_MSG_ATOMXCHG_REQ: {
+      uint32_t oldval = mem_backing_store->read_word(target_addr); 
+      uint32_t newval = swapval.u32();
+      mem_backing_store->write_word(target_addr, newval);
+      temp_result = oldval;
+      break;
+    }
+    case IC_MSG_ATOMADDU_REQ: {
+      uint32_t oldval = mem_backing_store->read_word(target_addr); 
+      uint32_t newval = oldval + operand.u32();
+      mem_backing_store->write_word(target_addr, newval);
+      temp_result = oldval;
+      break;
+    }
+    // atomics that return the NEW value after atomic update
+    // arithmetic
+    case IC_MSG_ATOMINC_REQ: {
+      uint32_t oldval = mem_backing_store->read_word(target_addr); 
+      uint32_t newval = oldval + 1;
+      mem_backing_store->write_word(target_addr, newval);
+      temp_result = newval;
+      break;
+    }
+    case IC_MSG_ATOMDEC_REQ: {
+      uint32_t oldval = mem_backing_store->read_word(target_addr); 
+      uint32_t newval = oldval - 1;
+      mem_backing_store->write_word(target_addr, newval);
+      temp_result = newval;
+      break;
+    }
+    // min,max
+    case IC_MSG_ATOMMIN_REQ: {
+      uint32_t oldval = mem_backing_store->read_word(target_addr);
+      uint32_t newval = std::min(oldval,operand.u32());
+      mem_backing_store->write_word(target_addr, newval);
+      temp_result = newval;
+      break;
+    }
+    case IC_MSG_ATOMMAX_REQ: {
+      uint32_t oldval = mem_backing_store->read_word(target_addr);
+      uint32_t newval = std::max(oldval,operand.u32());
+      mem_backing_store->write_word(target_addr, newval);
+      temp_result = newval;
+      break;
+    }
+    // logical
+    case IC_MSG_ATOMAND_REQ: {
+      uint32_t oldval = mem_backing_store->read_word(target_addr);
+      uint32_t newval = oldval & operand.u32();
+      mem_backing_store->write_word(target_addr, newval);
+      temp_result = newval;
+      break;
+    }
+    case IC_MSG_ATOMOR_REQ: {
+      uint32_t oldval = mem_backing_store->read_word(target_addr);
+      uint32_t newval = oldval | operand.u32();
+      mem_backing_store->write_word(target_addr, newval);
+      temp_result = newval;
+      break;
+    }
+    case IC_MSG_ATOMXOR_REQ: {
+      uint32_t oldval = mem_backing_store->read_word(target_addr);
+      uint32_t newval = oldval ^ operand.u32();
+      mem_backing_store->write_word(target_addr, newval);
+      temp_result = newval;
+      break;
+    }
+    default:
+      p->Dump();
+      throw ExitSim("unknown or unimplemented Global ATOMICOP");
+      break;
+  }
+  // convert the request to a reply
+  p->msgType( rigel::icmsg_convert(p->msgType()) );
+  p->data( temp_result );
 }
 
 /// side effect: updates p
