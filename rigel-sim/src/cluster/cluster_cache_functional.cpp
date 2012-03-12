@@ -48,7 +48,6 @@ ClusterCacheFunctional::Heartbeat()  {};
 /// CCFunctional specific 
 void 
 ClusterCacheFunctional::FunctionalMemoryRequest(Packet* p) {
-  //doLocalAtomic(p);
   doMemoryAccess(p);
   assert(p!=0);
   outs[p->local_coreid()]->sendMsg(p);
@@ -56,6 +55,8 @@ ClusterCacheFunctional::FunctionalMemoryRequest(Packet* p) {
 
 void
 ClusterCacheFunctional::doMemoryAccess(PacketPtr p) {
+
+  //p->Dump();
 
   // FIXME: TODO: pre-decode the message type (Local vs. Global, atomic)
   // to avoid these switches all over...we already need one for implementing the

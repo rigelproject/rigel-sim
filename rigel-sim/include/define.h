@@ -388,6 +388,7 @@ namespace rigel {
 
   // return an icmsg_t corresponding to the instruction that generates it
   icmsg_type_t instr_to_icmsg(instr_t type);
+  icmsg_type_t instr_to_icmsg_full(instr_t type);
 
   // METHOD: convert()
   // Helper routine for flipping messages around, taking requests and turing them into replies.  

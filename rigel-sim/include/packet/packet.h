@@ -19,8 +19,24 @@ class Packet {
        _data(d),
        _gcoreid(gcoreid),
        _gtid(gtid)
+    { };
+
+    /// constructor
+    Packet(icmsg_type_t m) :
+       _msgType(m),
+       _addr(0),
+       _data(0),
+       _gcoreid(-1), // invalid
+       _gtid(-1) // invalid
     {
     };
+
+    void initCorePacket(uint32_t a, uint32_t d, int gcoreid, int gtid) {
+      _addr = a;
+      _data = d;
+      _gcoreid = gcoreid;
+      _gtid = gtid;
+    }
 
     /// destructor
     ~Packet() { };
@@ -36,8 +52,8 @@ class Packet {
     icmsg_type_t msgType() { return _msgType; }
     uint32_t     addr()    { return _addr;    }
     uint32_t     data()    { return _data;    }
-    uint32_t     gcoreid() { return _gcoreid; }
-    uint32_t     gtid()    { return _gtid;    }
+    int     gcoreid() { return _gcoreid; }
+    int     gtid()    { return _gtid;    }
     uint32_t     gAtomicOperand() { return _gatomic_operand; }
 
     // FIXME: assumes even distribution...

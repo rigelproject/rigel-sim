@@ -70,6 +70,8 @@ class CoreFunctional : public CoreBase {
 
     // private methods
     regval32_t doGlobalAtomic(Packet* p);
+    regval32_t doLocalAtomic(Packet* p);
+    regval32_t doMemoryAccess(Packet* p);
    
     int width;      /// issue width
     int numthreads; /// numthreads
