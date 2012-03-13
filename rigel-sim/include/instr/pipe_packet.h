@@ -364,9 +364,17 @@ class PipePacket { // : public InstrBase { // maybe later...
       return regvals[r];
     }
 
-    /// TODO FIXME make array
-    regval32_t& src0() { return src0_; }
-    regval32_t& src1() { return src1_; }
+    regval32_t& dreg() {
+      return regvals[DREG];
+    }
+
+    regval32_t& sreg_s() {
+      return regvals[SREG_T];
+    }
+
+    regval32_t& sreg_t() {
+      return regvals[SREG_T];
+    }
 
     // TODO FIXME: relete me, move functionality into sdInfo
     bool has_imm5()  { return sdInfo_.has_imm5;   }
@@ -420,10 +428,6 @@ class PipePacket { // : public InstrBase { // maybe later...
 
     /// input values
     regval32_t regvals[NUM_ISA_OPERAND_REGS]; /// for storing temporary register values
-
-    regval32_t src0_;
-    regval32_t src1_;
-    
 
     /// static structure for holding STATIC instruction decode data
     static std::map<uint32_t,StaticDecodeInfo> decodedInstructions;
