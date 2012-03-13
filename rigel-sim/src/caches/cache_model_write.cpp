@@ -182,7 +182,7 @@ CacheModel::write_access(InstrLegacy &instr, int core, uint32_t addr, const
   instr.set_first_memaccess_cycle();
 
   // Used for L2Cache pend() calls.
-  icmsg_type_t icmsg_type = ICMsg::instr_to_icmsg(instr.get_type());
+  icmsg_type_t icmsg_type = rigel::instr_to_icmsg(instr.get_type());
 
   // Sanity check since we have no SMC.
   helper_check_code_highwater_mark(addr);

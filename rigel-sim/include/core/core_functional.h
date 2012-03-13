@@ -12,6 +12,7 @@
 class PipePacket;
 class RegisterFile;
 class Packet;
+class regval32_t;
 template<class T> class InPortBase;
 template<class T> class OutPortBase;
 namespace rigel {
@@ -66,6 +67,11 @@ class CoreFunctional : public CoreBase {
     InPortBase<Packet*>*  getInPort()  { return &from_ccache; }
 
   private:
+
+    // private methods
+    regval32_t doGlobalAtomic(Packet* p);
+    regval32_t doLocalAtomic(Packet* p);
+    regval32_t doMemoryAccess(Packet* p);
    
     int width;      /// issue width
     int numthreads; /// numthreads

@@ -51,7 +51,7 @@ CacheModel::global_memory_access(
   // requesting core.  If it does not have one pending, a new request is created
   // and then the core pipeline model begins polling until the bit is set in the
   // completed bit vector by the CCache controller
-  icmsg_type_t icmsg_type = ICMsg::instr_to_icmsg( ca_in.get_instr()->get_type());
+  icmsg_type_t icmsg_type = rigel::instr_to_icmsg( ca_in.get_instr()->get_type());
 
   // For profiling, we track the stall reason and return it to the core model.
   MemoryAccessStallReason masr = MemoryAccessStallReasonBug;

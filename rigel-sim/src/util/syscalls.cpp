@@ -645,8 +645,8 @@ Syscall::syscall_read(struct syscall_struct &syscall_data) {
   int bytes_requested = syscall_data.arg3.i;
 	int bytes_read;
   if(fdesc != STDIN_FILENO) {
-  fprintf(stderr, "syscall_read(fd=%d target/%d host, base_addr=0x%08"PRIx32", num_bytes=%d)...",
-          fdesc, hostfd, base_addr, bytes_requested);
+  //fprintf(stderr, "syscall_read(fd=%d target/%d host, base_addr=0x%08"PRIx32", num_bytes=%d)...",
+  //        fdesc, hostfd, base_addr, bytes_requested);
   }
 	char *buf = new char[bytes_requested+1]; //+1 for a NULL terminator in the stdin case
   memset(buf, 0x0, bytes_requested+1);
@@ -664,7 +664,7 @@ Syscall::syscall_read(struct syscall_struct &syscall_data) {
   assert(bytes_read >= 0 && "FIXME: handle errors from read()");
 
   if(fdesc != STDIN_FILENO) {
-	  fprintf(stderr, " read %d of %d bytes\n", bytes_read, bytes_requested);
+	  //fprintf(stderr, " read %d of %d bytes\n", bytes_read, bytes_requested);
   }
 
   // Do unaligned start

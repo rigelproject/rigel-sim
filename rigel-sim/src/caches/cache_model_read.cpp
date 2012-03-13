@@ -250,7 +250,7 @@ CacheModel::read_access(InstrLegacy &instr, int core, uint32_t addr,
   // Default values
   stall = true;
   data = 0xDEADBEEF;
-  icmsg_type_t icmsg_type = ICMsg::instr_to_icmsg(instr.get_type());
+  icmsg_type_t icmsg_type = rigel::instr_to_icmsg(instr.get_type());
 
   // Should not inspect code pages.  If a core attempts to access an area of
   // memory loaded as instructions (.text section of the ELF), exit.

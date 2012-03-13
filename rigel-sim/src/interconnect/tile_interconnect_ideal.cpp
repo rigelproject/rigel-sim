@@ -174,7 +174,7 @@ TileInterconnectIdeal::PerCycle()
     {
       // Only let the message move on if it is ready.
       if (bufIterator->is_ready_cycle()) {
-        bufIterator->set_type(ICMsg::convert(bufIterator->get_type()));
+        bufIterator->set_type(rigel::icmsg_convert(bufIterator->get_type()));
         DEBUG_network("TILE G$->C$ ROUTE", *bufIterator);
         repliesIterator->push_back(*bufIterator);
         bufIterator = ReplyBuffersIterator->erase(bufIterator);
@@ -189,7 +189,7 @@ TileInterconnectIdeal::PerCycle()
     {
       // Only let the message move on if it is ready.
       if (bufIterator->is_ready_cycle()) {
-        bufIterator->set_type(ICMsg::convert(bufIterator->get_type()));
+        bufIterator->set_type(rigel::icmsg_convert(bufIterator->get_type()));
         DEBUG_network("TILE C$->G$ ROUTE", *bufIterator);
         RequestBuffersIterator->push_back(*bufIterator);
         bufIterator = requestsIterator->erase(bufIterator);

@@ -40,9 +40,6 @@ CoreFunctional::CoreFunctional(
   CoreBase(cp.change_name("CoreFunctional")),
   width(CF_WIDTH),
   numthreads(rigel::THREADS_PER_CORE),
-  //rf(rigel::NUM_REGS),
-  //sprf(rigel::NUM_SREGS), // FIXME, replace 0 with the local corenum
-  //pc_(0),
   current_tid(0),
   ccache(ccache),
   syscall_handler(cp.syscall),
@@ -382,8 +379,12 @@ CoreFunctional::execute( PipePacket* instr ) {
     // however, NOT all are (some are overridden)
     uint32_t target_addr = sreg_t.u32() + simm16;
 
+    // new packet based on instr type
+    Packet* p = new Packet( rigel::instr_to_icmsg_full(instr->type()) );
+
     if (instr->isAtomic()) {
       DPRINT(DB_CF,"%s: isMem isAtomic\n", __func__);
+
       // split me into Local and Global atomic sections?
       switch (instr->type()) {
 
@@ -391,127 +392,92 @@ CoreFunctional::execute( PipePacket* instr ) {
         // these require intra-cluster synchronization 
         // (or for alternate implementations at least _some_ cross-core synch)
         case I_LDL: {
-          target_addr = sreg_t.u32();
+          uint32_t alt_target_addr = sreg_t.u32();
           // perform a regular LDW, but also set a link bit
-          Packet p(IC_MSG_LDL_REQ,target_addr,0,id(),GTID(instr->tid()));
-          port_status_t status;
-          status = to_ccache.sendMsg(&p);
-          Packet* reply;
-          if (status == ACK) {
-            reply = from_ccache.read();
-            DPRINT(DB_CF_LDL,"got LDL reply! %d\n", reply->msgType());
-            temp_result = reply->data();
-          } else {
-            throw ExitSim("unhandled path LDL");
-          }
-          //temp_result = ccache->doLocalAtomic(&p, LOCALID + instr->tid()); // FIXME localID
-          DPRINT(DB_CF_LDL,"load-linked: %08x from %08x\n",temp_result.u32(), target_addr);
+          p->initCorePacket(alt_target_addr, 0, id(), GTID(instr->tid()));
+          p->Dump();
+          temp_result = doLocalAtomic(p);
+          DPRINT(DB_CF_LDL,"load-linked: %08x from %08x\n",temp_result.u32(), alt_target_addr);
           break;
         }
         case I_STC: {
-          target_addr = sreg_t.u32();
+          uint32_t alt_target_addr = sreg_t.u32();
           // perform a store only if the link bit is set
-          Packet p(IC_MSG_STC_REQ,target_addr,sreg_s.u32(),id(),GTID(instr->tid()));
-          port_status_t status;
-          status = to_ccache.sendMsg(&p);
-          Packet* reply;
-          if (status == ACK) {
-            reply = from_ccache.read();
-            DPRINT(DB_CF_STC,"got STC reply! %d\n", reply->msgType());
-            temp_result = reply->data();
-          } else {
-            throw ExitSim("unhandled path STC");
-          }
-          if (reply->msgType()==IC_MSG_STC_REPLY_NACK) {
-            DPRINT(DB_CF_STC,"[fail]");
-          } else if (reply->msgType()==IC_MSG_STC_REPLY_ACK) {
-            DPRINT(DB_CF_STC,"[success]");
-          }else {
-            throw ExitSim("Invalid response to STC request!\n");
-          }
-          // old fast path
-          //temp_result = ccache->doLocalAtomic(&p, LOCALID + instr->tid()); // FIXME localID
-          //if (temp_result.u32() == 0) {
-          //  DPRINT(DB_CF_STC,"[fail]");
-          //} else {
-          //  DPRINT(DB_CF_STC,"[success]");
-          //}
-          DPRINT(DB_CF_STC,"store-conditional: %08x to %08x\n", temp_result.u32(), target_addr);
+          p->initCorePacket(alt_target_addr, sreg_s.u32(), id(), GTID(instr->tid()));
+          p->Dump();
+          printf("doing STC...\n");
+          temp_result = doLocalAtomic(p);
+          DPRINT(DB_CF_STC,"store-conditional: %08x to %08x\n", temp_result.u32(), alt_target_addr);
           break;
         }
 
         // atomics that return a copy of the OLD value before atomic update
         case I_ATOMCAS: {
-          target_addr = sreg_t.u32(); // target_addr is in a register for this one
-          uint32_t oldval = mem_backing_store->read_word(target_addr);
-          if (oldval == sreg_s.u32()) { 
-            mem_backing_store->write_word(target_addr, instr->regval(DREG).u32()); 
-          };
-          temp_result = oldval;
-          DPRINT(DB_CF,"cas target_addr: %08x \n",target_addr);
+          uint32_t alt_target_addr = sreg_t.u32(); // target_addr is in a register for this one
+          p->initCorePacket(alt_target_addr, instr->regval(DREG).u32(), id(), GTID(instr->tid()));
+          p->gAtomicOperand(sreg_s.u32());
+          temp_result = doGlobalAtomic(p);
+          DPRINT(DB_CF,"cas target_addr: %08x \n",alt_target_addr);
           break;
         }
         case I_ATOMXCHG: {
-          uint32_t oldval = mem_backing_store->read_word(target_addr); 
-          mem_backing_store->write_word(target_addr, instr->regval(DREG).u32());
-          temp_result = oldval;
+          p->initCorePacket(target_addr, instr->regval(DREG).u32(), id(), GTID(instr->tid()));
+          temp_result = doGlobalAtomic(p);
           break;
         }
         // arithmetic
         case I_ATOMINC: {
-          uint32_t oldval = mem_backing_store->read_word(target_addr); 
-          mem_backing_store->write_word(target_addr, oldval + 1);
-          temp_result = (oldval + 1);
+          p->initCorePacket(target_addr, 0, id(), GTID(instr->tid()));
+          temp_result = doGlobalAtomic(p);
           break;
         }
         case I_ATOMDEC: {
-          uint32_t oldval = mem_backing_store->read_word(target_addr); 
-          mem_backing_store->write_word(target_addr, oldval - 1);
-          temp_result = (oldval - 1);
+          p->initCorePacket(target_addr, 0, id(), GTID(instr->tid()));
+          temp_result = doGlobalAtomic(p);
           break;
         }
         case I_ATOMADDU: {
-          uint32_t oldval = mem_backing_store->read_word(target_addr); 
-          mem_backing_store->write_word(target_addr, oldval + sreg_s.u32());
-          temp_result = oldval;
+          p->initCorePacket(target_addr, 0, id(), GTID(instr->tid()));
+          p->gAtomicOperand(sreg_s.u32());
+          temp_result = doGlobalAtomic(p);
           break;
         }
         // atomics that return the NEW value after atomic update
         // min,max
         case I_ATOMMIN: {
-          uint32_t oldval = mem_backing_store->read_word(sreg_t.u32());
-          uint32_t newval = std::min(oldval,sreg_s.u32());
-          mem_backing_store->write_word(sreg_t.u32(), newval);
-          temp_result = newval;
+          uint32_t alt_target_addr = sreg_t.u32();
+          p->initCorePacket(alt_target_addr, 0, id(), GTID(instr->tid()));
+          p->gAtomicOperand(sreg_s.u32());
+          temp_result = doGlobalAtomic(p);
           break;
         }
         case I_ATOMMAX: {
-          uint32_t oldval = mem_backing_store->read_word(sreg_t.u32());
-          uint32_t newval = std::max(oldval,sreg_s.u32());
-          mem_backing_store->write_word(sreg_t.u32(), newval);
-          temp_result = newval;
+          uint32_t alt_target_addr = sreg_t.u32();
+          p->initCorePacket(alt_target_addr, 0, id(), GTID(instr->tid()));
+          p->gAtomicOperand(sreg_s.u32());
+          temp_result = doGlobalAtomic(p);
           break;
         }
         // logical
         case I_ATOMAND: {
-          uint32_t oldval = mem_backing_store->read_word(sreg_t.u32());
-          uint32_t newval = oldval & sreg_s.u32();
-          mem_backing_store->write_word(sreg_t.u32(), newval);
-          temp_result = newval;
+          uint32_t alt_target_addr = sreg_t.u32();
+          p->initCorePacket(alt_target_addr, 0, id(), GTID(instr->tid()));
+          p->gAtomicOperand(sreg_s.u32());
+          temp_result = doGlobalAtomic(p);
           break;
         }
         case I_ATOMOR: {
-          uint32_t oldval = mem_backing_store->read_word(sreg_t.u32());
-          uint32_t newval = oldval | sreg_s.u32();
-          mem_backing_store->write_word(sreg_t.u32(), newval);
-          temp_result = newval;
+          uint32_t alt_target_addr = sreg_t.u32();
+          p->initCorePacket(alt_target_addr, 0, id(), GTID(instr->tid()));
+          p->gAtomicOperand(sreg_s.u32());
+          temp_result = doGlobalAtomic(p);
           break;
         }
         case I_ATOMXOR: {
-          uint32_t oldval = mem_backing_store->read_word(sreg_t.u32());
-          uint32_t newval = oldval ^ sreg_s.u32();
-          mem_backing_store->write_word(sreg_t.u32(), newval);
-          temp_result = newval;
+          uint32_t alt_target_addr = sreg_t.u32();
+          p->initCorePacket(alt_target_addr, 0, id(), GTID(instr->tid()));
+          p->gAtomicOperand(sreg_s.u32());
+          temp_result = doGlobalAtomic(p);
           break;
         }
         default:
@@ -524,33 +490,13 @@ CoreFunctional::execute( PipePacket* instr ) {
     else if (instr->isStore()) {
       DPRINT(DB_CF,"%s: isMem isStore\n", __func__);
 
-
       switch (instr->type()) {
         case I_STW:
         case I_GSTW:
         case I_BCAST_UPDATE: {
           uint32_t data        = instr->regval(DREG).u32();
-
-          Packet p(IC_MSG_NULL,target_addr,data,id(),GTID(instr->tid()));
-
-          /// make this selection cleaner, maybe in the construction? or a
-          //helper method? p->setMsgType(instr_t)
-          if (instr->type()==I_STW) { p.msgType(IC_MSG_WRITE_REQ); }
-          else if (instr->type()==I_GSTW) { p.msgType(IC_MSG_GLOBAL_WRITE_REQ); }
-          else if (instr->type()==I_BCAST_UPDATE)  { p.msgType(IC_MSG_BCAST_UPDATE_REQ); }
-
-          port_status_t status;
-          status = to_ccache.sendMsg(&p);
-          Packet* reply;
-          if (status == ACK) {
-            reply = from_ccache.read();
-            temp_result = reply->data();
-          } else {
-            throw ExitSim("unhandled path Stores");
-          }
-
-          // old fast path
-          //mem_backing_store->write_word(target_addr, data);
+          p->initCorePacket(target_addr,data,id(),GTID(instr->tid()));
+          temp_result = doMemoryAccess(p);
           DPRINT(DB_CF_ST,"store: %08x to %08x\n",data, target_addr);
           break;
         }
@@ -565,25 +511,9 @@ CoreFunctional::execute( PipePacket* instr ) {
       switch (instr->type()) {
         case I_LDW:
         case I_GLDW: {
-
-          Packet p(IC_MSG_NULL,target_addr,0,id(),GTID(instr->tid()));
-          /// make this selection cleaner, maybe in the construction? or a
+          p->initCorePacket(target_addr,0,id(),GTID(instr->tid()));
           //helper method? p->setMsgType(instr_t)
-          if (instr->type()==I_LDW) { p.msgType(IC_MSG_READ_REQ); }
-          else if (instr->type()==I_GLDW) { p.msgType(IC_MSG_GLOBAL_READ_REQ); }
-
-          port_status_t status;
-          status = to_ccache.sendMsg(&p);
-          Packet* reply;
-          if (status == ACK) {
-            reply = from_ccache.read();
-            temp_result = reply->data();
-          } else {
-            throw ExitSim("unhandled path Stores");
-          }
-
-          // old fast path
-          //temp_result = mem_backing_store->read_word(target_addr);
+          temp_result = doMemoryAccess(p);
           DPRINT(DB_CF_LD,"load: %08x from %08x\n",temp_result.u32(), target_addr);
           break;
         }
@@ -778,6 +708,83 @@ CoreFunctional::Dump() {
     ts->rf.Dump();
     ts->sprf.Dump();
   }
+}
+
+regval32_t
+CoreFunctional::doGlobalAtomic(Packet* p) {
+
+  port_status_t status;
+  Packet* reply;
+  regval32_t temp_result;
+
+  status = to_ccache.sendMsg(p);
+
+  if (status == ACK) {
+    reply = from_ccache.read();
+    temp_result = reply->data();
+  } else {
+    throw ExitSim("unhandled GlobalAtomic");
+  }
+
+  delete p;
+  return temp_result;
+}
+
+regval32_t
+CoreFunctional::doLocalAtomic(Packet* p) {
+
+  port_status_t status;
+  Packet* reply;
+  regval32_t temp_result;
+
+  status = to_ccache.sendMsg(p);
+
+  icmsg_type_t was = p->msgType();
+
+  if (status == ACK) {
+    reply = from_ccache.read();
+    DPRINT(DB_CF_LDL,"got reply! %d\n", reply->msgType());
+    temp_result = reply->data();
+  } else {
+    throw ExitSim("unhandled path doLocalAtomic()");
+  }
+
+if(was==IC_MSG_STC_REQ) {
+  if (reply->msgType()==IC_MSG_STC_REPLY_NACK) {
+    DPRINT(DB_CF_STC,"[fail]");
+  } else if (reply->msgType()==IC_MSG_STC_REPLY_ACK) {
+    DPRINT(DB_CF_STC,"[success]");
+  }
+  // TODO: FIXME: re-enable checking for _all_ proper message request/reply pairs
+  else {
+    throw ExitSim("Invalid response to STC request!\n");
+  }
+} else {
+  printf("was?? %d\n",was);
+}
+
+  delete p;
+  return temp_result;
+}
+
+regval32_t 
+CoreFunctional::doMemoryAccess(Packet* p) {
+
+  port_status_t status;
+  Packet* reply;
+  regval32_t temp_result;
+
+  status = to_ccache.sendMsg(p);
+
+  if (status == ACK) {
+    reply = from_ccache.read();
+    temp_result = reply->data();
+  } else {
+    throw ExitSim("unhandled path doMemoryAccess");
+  }
+  
+  delete p;
+  return temp_result;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

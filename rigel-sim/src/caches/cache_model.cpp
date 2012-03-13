@@ -230,7 +230,7 @@ CacheModel::broadcast( const CacheAccess_t ca, uint32_t &data)
   if ( ca.get_instr()->IsCompletedBCAST_UPDATE()) { return false; }
 
   // For now we can just handle this like any other global memory operation.
-  icmsg_type_t icmsg_type = ICMsg::instr_to_icmsg( ca.get_instr()->get_type() );
+  icmsg_type_t icmsg_type = rigel::instr_to_icmsg( ca.get_instr()->get_type() );
 
   CacheAccess_t ca_out = ca;     // same parameters as input
   ca_out.set_icmsg_type( icmsg_type ); // now, with icmsg_type defined
@@ -492,7 +492,7 @@ CacheModel::writeback_line( const CacheAccess_t ca_in, bool &stall )
     case (I_CC_WB):
     case (I_CC_FLUSH):
       explicit_wb = true;
-      icmsg_type = ICMsg::instr_to_icmsg( ca_in.get_instr()->get_type() );
+      icmsg_type = rigel::instr_to_icmsg( ca_in.get_instr()->get_type() );
       break;
     default:
       assert(0 && "Unknown instruction type in writeback!");
