@@ -39,7 +39,7 @@ namespace rigel {
     const int CMD_WINDOW_SIZE = 2*CMD_WINDOW_MAX_DELAY;
 
     const int MAX_ACTIVATES_IN_WINDOW = 4;
-    // Configuration for timing purposes.  Based on 6.0gbps GDDR5 from Samsung
+    // Configuration for timing purposes.  Based on 6.0gbps GDDR5.
     namespace LATENCY {
       const uint32_t RAS = 45;    // ACT->PRE (minimum row active time)
       const uint32_t RC = 63;     // ACT->ACT in same bank
