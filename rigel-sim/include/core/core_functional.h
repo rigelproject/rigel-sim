@@ -80,7 +80,9 @@ class CoreFunctional : public CoreBase {
 
     void doSimSpecial(PipePacket* instr);
 
-    void doBranch(PipePacket* instr, uint32_t& branch_target, bool& temp_predicate);
+    void doBranch(PipePacket* instr);
+    void doBranchTarget(PipePacket* instr);
+    void doBranchPredicate(PipePacket* instr);
 
    
     int width;      /// issue width

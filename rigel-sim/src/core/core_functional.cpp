@@ -209,13 +209,15 @@ CoreFunctional::writeback( PipePacket* instr ) {
     if (instr->isSPRFDest()) {
       DPRINT(DB_CF /*DB_CF_WB*/,"[%d] SPRF write: pc rf val %08x %d %08x\n",
         id(), instr->pc(), instr->regnum(DREG), instr->regval(DREG).u32());
+      assert(instr->regnum(DREG) < rigel::NUM_SREGS && "DREG sprf id out of range!");
       ts->sprf.write(instr->regnum(DREG), instr->regval(DREG), instr->pc());
     } 
     // normal register file
     else {
-      DPRINT(DB_CF_WB,"[%d] RF write: pc rf val %08x %d %08x\n",
       //DPRINT(DB_CF,"%08x %d %08x\n",
+      DPRINT(DB_CF_WB,"[%d] RF write: pc rf val %08x %d %08x\n",
         id(), instr->pc(), instr->regnum(DREG), instr->regval(DREG).u32());
+      assert(instr->regnum(DREG) < rigel::NUM_REGS && "DREG rf id out of range!");
       ts->rf.write(instr->regnum(DREG), instr->regval(DREG), instr->pc());
     }
   }
@@ -246,19 +248,9 @@ CoreFunctional::execute( PipePacket* instr ) {
     assert( instr->dreg().valid() );
   }
 
-  // macros would be more efficient here...
-  uint32_t zimm16  = instr->imm16();  // zext(imm16)
-  uint32_t simm16  = instr->simm16(); // sext(imm16)
-  uint32_t imm5    = instr->imm5();   // imm5
-
   DPRINT(false,"exec: sreg_t:0x%08x sreg_s:0x%08x\n zimm16:%08x simm16:%08x imm5%d",
-    instr->sreg_t().u32(), instr->sreg_s().u32(), zimm16, simm16, imm5);
-
-  //
-  regval32_t temp_result;
-
-  uint32_t branch_target = 0;
-  bool temp_predicate = false;
+    instr->sreg_t().u32(), instr->sreg_s().u32(), 
+    instr->imm16(), instr->simm16(), instr->imm5());
 
   // FIXME: switch statement based on pre-decoded type in sdInfo?
   // TODO:  switches could be on per-type enums (ALU, FPU, mem, etc) 
@@ -291,7 +283,7 @@ CoreFunctional::execute( PipePacket* instr ) {
   // instructions that modify the PC in some way
   else if (instr->isBranch()) {
     DPRINT(DB_CF,"%s: isBranch\n", __func__);
-    doBranch(instr, branch_target, temp_predicate);
+    doBranch(instr);
   }
   // Sim special ops
   else if (instr->isSimSpecial()) {
@@ -310,14 +302,11 @@ CoreFunctional::execute( PipePacket* instr ) {
   }
  
   // select the next PC 
-  if( temp_predicate ) { // instr->branchPredicate()) 
-    instr->nextPC(branch_target);
+  if( instr->branch_predicate() ) {
+    instr->nextPC(instr->target_addr());
   } else {
     instr->nextPC(next_pc);
   }
-
-  // set the result output
-  //instr->setRegVal(DREG,temp_result); // done in handlers
 
   //instr->Dump();
 }
@@ -690,10 +679,9 @@ CoreFunctional::doCompare(PipePacket* instr) {
 }
 
 void 
-CoreFunctional::doBranch(PipePacket* instr, uint32_t& branch_target, bool& temp_predicate) {
+CoreFunctional::doBranch(PipePacket* instr) {
 
   regval32_t result; // empty and invalid by default
-  rword32_t  sreg_t = instr->regval(SREG_T);
   uint32_t incremented_pc = instr->pc() + 4;
 
   // some branches store a link register (otherwise, no register writes)
@@ -701,6 +689,21 @@ CoreFunctional::doBranch(PipePacket* instr, uint32_t& branch_target, bool& temp_
     assert( instr->regnum(DREG) == rigel::regs::LINK_REG );
     result = incremented_pc;
   }
+
+  doBranchPredicate(instr);
+
+  doBranchTarget(instr);
+
+  // this should be ignored (invalid) unless we have a link register
+  instr->setRegVal(DREG,result);
+
+}
+
+void 
+CoreFunctional::doBranchPredicate(PipePacket* instr) {
+
+  bool predicate = false;
+  rword32_t  sreg_t = instr->regval(SREG_T);
 
   // compute branch predicate
   switch (instr->type()) {
@@ -711,22 +714,31 @@ CoreFunctional::doBranch(PipePacket* instr, uint32_t& branch_target, bool& temp_
     case I_JMP: 
     case I_JMPR: 
     case I_LJ:   
-    case I_LJL:  temp_predicate = true;  break;
+    case I_LJL:  predicate = true;  break;
 
     // conditional branches
     // simple compare to zero branches
-    case I_BE:   temp_predicate = (sreg_t.i32 == 0);  break;
-    case I_BN:   temp_predicate = (sreg_t.i32 != 0);  break;
-    case I_BLT:  temp_predicate = (sreg_t.i32 <  0);  break;
-    case I_BGT:  temp_predicate = (sreg_t.i32 >  0);  break;
-    case I_BLE:  temp_predicate = (sreg_t.i32 <= 0);  break;
-    case I_BGE:  temp_predicate = (sreg_t.i32 >= 0);  break;
+    case I_BE:   predicate = (sreg_t.i32 == 0);  break;
+    case I_BN:   predicate = (sreg_t.i32 != 0);  break;
+    case I_BLT:  predicate = (sreg_t.i32 <  0);  break;
+    case I_BGT:  predicate = (sreg_t.i32 >  0);  break;
+    case I_BLE:  predicate = (sreg_t.i32 <= 0);  break;
+    case I_BGE:  predicate = (sreg_t.i32 >= 0);  break;
     // complex branches (cmp-branch with 2 register compare sources)
-    case I_BEQ:  temp_predicate = (sreg_t.i32 == instr->regval(DREG).i32()); break;
-    case I_BNE:  temp_predicate = (sreg_t.i32 != instr->regval(DREG).i32()); break;
+    case I_BEQ:  predicate = (sreg_t.i32 == instr->regval(DREG).i32()); break;
+    case I_BNE:  predicate = (sreg_t.i32 != instr->regval(DREG).i32()); break;
     default:
       assert(0&&"unknown BRANCH"); break;
   }
+
+  instr->branch_predicate(predicate);
+
+}
+
+void 
+CoreFunctional::doBranchTarget(PipePacket* instr) {
+
+  uint32_t branch_target = 0;
 
   if (instr->isBranchDirect()) {
     switch (instr->type()) {
@@ -744,9 +756,11 @@ CoreFunctional::doBranch(PipePacket* instr, uint32_t& branch_target, bool& temp_
       case I_BLE: 
       case I_BGE:
       case I_JAL: 
-      case I_JMP:
+      case I_JMP: {
+        uint32_t incremented_pc = instr->pc() + 4;
         branch_target = incremented_pc + (instr->simm16()<<2);
         break;
+      }
       // long jumps, 16-bit offsets
       // pc[31:28] | (imm26<<2)
       case I_LJ:
@@ -761,13 +775,13 @@ CoreFunctional::doBranch(PipePacket* instr, uint32_t& branch_target, bool& temp_
     switch (instr->type()) {
       case I_JALR:
       case I_JMPR:
-        branch_target = sreg_t.u32; // the link register
+        branch_target = instr->regval(SREG_T).u32(); // the link register
         break;
       default:
         assert(0&&"unknown indirect branch");
     }
   }
-  instr->setRegVal(DREG,result);
+  instr->target_addr(branch_target);
 }
 
 void

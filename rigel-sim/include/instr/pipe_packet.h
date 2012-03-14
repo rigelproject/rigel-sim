@@ -217,7 +217,8 @@ class PipePacket { // : public InstrBase { // maybe later...
       raw_instr_bits(raw),
       tid_(tid),
       _sdInfo(decode()),
-      target_addr(0),
+      _target_addr(0),
+      _branch_predicate(0),
       nextPC_(0)
     { 
       //_sdInfo = decode(); 
@@ -228,14 +229,19 @@ class PipePacket { // : public InstrBase { // maybe later...
     ///
   
     uint32_t nextPC()           { return nextPC_; }
+    uint32_t pc()               { return pc_; }
+    uint32_t tid()              { return tid_; }
+    uint32_t target_addr()      { return _target_addr; }
+    bool     branch_predicate() { return _branch_predicate; }
+
     void     nextPC(uint32_t p) { 
       assert(p%4 == 0 && "pc must be aligned!");
       nextPC_ = p; 
     }
-    uint32_t pc()     { return pc_; }
-    uint32_t tid()    { return tid_; }
+    void target_addr(uint32_t ta) { _target_addr = ta; }
+    void branch_predicate(bool p) { _branch_predicate = p; }
+
     //uint32_t raw_instr_bits() { return raw_instr_bits; }
-    //const StaticDecodeInfo& sdInfo() { return _sdInfo; }
 
     instr_t type() { return _sdInfo.type(); }  
 
@@ -320,7 +326,7 @@ class PipePacket { // : public InstrBase { // maybe later...
     
       /* Used in disassembler callbacks.  EA() may not be valid */
       dis_priv.raw_instr = raw_instr_bits;
-      dis_priv.target_addr = target_addr; 
+      dis_priv.target_addr = _target_addr; 
       dis_info.private_data = &dis_priv;
    
       if (_sdInfo.isBranch()) {
@@ -423,7 +429,8 @@ class PipePacket { // : public InstrBase { // maybe later...
 
     /// computed values
 
-    uint32_t target_addr;
+    uint32_t _target_addr;
+    bool _branch_predicate;
     uint32_t nextPC_;
 
     /// input values
