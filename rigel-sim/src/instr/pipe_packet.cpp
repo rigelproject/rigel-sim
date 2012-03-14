@@ -9,16 +9,11 @@ const char isa_reg_names[NUM_ISA_OPERAND_REGS][8] = {
 };
 
 
-/// TODO:
-/// FIXME: AUTO-GENERATE ALL of THESE HELPERS
+/// FIXME: AUTO-GENERATE ALL of THESE HELPERS (or, at least statically store flag result)
 ///
 ////////////////////////////////////////////////////////////////////////////////
-// instr_is_()
-////////////////////////////////////////////////////////////////////////////////
-// Helper functions for the InstrLegacy class.  Separated out to reduce size of
-// InstrLegacy.  Every instruction should be covered by one of:
-// instr_is_memaccess, instr_is_branch, instr_is_aluop, instr_is_fpuop
-////////////////////////////////////////////////////////////////////////////////
+// helper function
+// every instruction should be covered by one of these
 
 bool
 StaticDecodeInfo::isCacheControl() const {
@@ -59,6 +54,9 @@ StaticDecodeInfo::isMem() const {
     case I_VLDW:
     case I_PREF_NGA:
     case I_PREF_L:
+    case I_LINE_WB:
+    case I_LINE_INV:
+    case I_LINE_FLUSH:
       { return true; }
     default:
       { return false; }
@@ -365,14 +363,12 @@ StaticDecodeInfo::isFPU() const {
 bool
 StaticDecodeInfo::isOther() const {
   switch (type_) {
-    case I_NULL: 
     case I_PRE_DECODE: 
-    case I_HLT: 
+    case I_NULL: 
     case I_REP_HLT: 
     case I_DONE: 
     case I_BRANCH_FALL_THROUGH: 
     case I_CMNE_NOP:
-    case I_NOP: 
     case I_CMEQ_NOP: 
     case I_UNDEF: 
     case I_MB:
@@ -431,7 +427,10 @@ StaticDecodeInfo::isSimSpecial() const {
   switch (type_) {
     case I_PRINTREG: // RigelPrint
     case I_SYSCALL:  // System Call Emulation
+    case I_EVENT:
+    case I_NOP: 
     case I_ABORT:
+    case I_HLT: 
     { return true; }
     default: {return false; }
   }

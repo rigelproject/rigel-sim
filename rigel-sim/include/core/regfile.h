@@ -4,9 +4,10 @@
 #include <cassert>
 #include <google/protobuf/repeated_field.h>
 #include "typedefs.h"
+#include "define.h"
+#include "util/dynamic_bitset.h"
 
 typedef ::google::protobuf::RepeatedField< RIGEL_PROTOBUF_WORD_T > RepeatedWord;
-#include "util/dynamic_bitset.h"
 
 #define DB_RF 1
 
@@ -70,6 +71,19 @@ class regval32_t {
       return *this;
     }
 
+    /// assign a rword32_t
+    regval32_t& operator=(const rword32_t &r) {
+      data = r;
+      // who cares about the Float status?
+      valid_   = true;
+      return *this;
+    }
+
+    /// allow converstion to a rword32_t union
+    operator rword32_t() {
+      return data;
+    }
+
     void setFloat()   { isFloat_ = true;  }
     void setInt()     { isFloat_ = false; }
     void invalidate() { valid_   = false; }
@@ -84,13 +98,9 @@ class regval32_t {
 
   //public data members
   private:
-    union {         // Register data
-      float f32;
-      int32_t i32;
-			uint32_t u32;
-    } data;
+    rword32_t data; /// Register data union
     bool valid_;
-    bool isFloat_; /// track if this value is a float
+    bool isFloat_;  /// track if this value is a float
 
 };
 

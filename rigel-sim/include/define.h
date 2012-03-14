@@ -38,15 +38,15 @@
   std::cerr <<  "} (core # " << std::dec << CoreNum << ") " << "\n";
 
 #define HEX_COUT std::hex << std::setfill('0') << std::setw(8)
-//
+///////////////////////////////////////////////////////////////
 // Constant values used throughout the simulator
-//
 ///////////////////////////////////////////////////////////////
 const uint64_t U64_MAX_VAL = (uint64_t)(-1);
-//
-// Standard types to use throughout the simulator
-//
+
 ///////////////////////////////////////////////////////////////
+// Standard types to use throughout the simulator
+///////////////////////////////////////////////////////////////
+
 // Value used when reading the timestamp counter.
 typedef union {
   struct {
@@ -61,6 +61,15 @@ typedef uint32_t RIGEL_ADDR_T ;
 typedef uint32_t RIGEL_REGVAL_T;
 typedef uint32_t RIGEL_MEMVAL_T;
 typedef uint32_t RIGEL_FLOAT_T;
+
+// for convenient multi-typed access
+typedef union {
+  uint32_t u32;
+  int32_t  i32;
+  float    f32;
+} rword32_t;
+
+
 // Arbitration policies for arbiters.  (used in arbiter.[h|cpp])
 enum ARB_POLICY {
   ARB_ROUND_ROBIN = 1,
