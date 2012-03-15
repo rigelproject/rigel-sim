@@ -83,6 +83,7 @@ common_SOURCES = \
  src/instr/instrbase.cpp \
  src/instr/instr_legacy.cpp \
  src/instr/pipe_packet.cpp \
+ src/instr/static_decode_info.cpp \
  src/util/convert.cpp \
  src/util/rigel_strings.cpp \
  src/util/ui_legacy.cpp \
