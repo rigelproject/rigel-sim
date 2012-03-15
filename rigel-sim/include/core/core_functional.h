@@ -69,18 +69,20 @@ class CoreFunctional : public CoreBase {
   private:
 
     // private methods
-    regval32_t doMemoryAccess(Packet* p);
+    rword32_t doMemoryAccess(Packet* p);
 
-    regval32_t doALU(PipePacket* instr);
-    regval32_t doFPU(PipePacket* instr);
-    regval32_t doShift(PipePacket* instr);
-    regval32_t doCompare(PipePacket* instr);
+    void doALU(PipePacket* instr);
+    void doFPU(PipePacket* instr);
+    void doShift(PipePacket* instr);
+    void doCompare(PipePacket* instr);
 
-    regval32_t doMem(PipePacket* instr);
+    void doMem(PipePacket* instr);
 
-    void       doSimSpecial(PipePacket* instr);
+    void doSimSpecial(PipePacket* instr);
 
-    regval32_t doBranch(PipePacket* instr, uint32_t& branch_target, bool& temp_predicate);
+    void doBranch(PipePacket* instr);
+    void doBranchTarget(PipePacket* instr);
+    void doBranchPredicate(PipePacket* instr);
 
    
     int width;      /// issue width

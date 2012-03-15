@@ -216,11 +216,12 @@ class PipePacket { // : public InstrBase { // maybe later...
       pc_(pc),
       raw_instr_bits(raw),
       tid_(tid),
-      sdInfo_(decode()),
-      target_addr(0),
+      _sdInfo(decode()),
+      _target_addr(0),
+      _branch_predicate(0),
       nextPC_(0)
     { 
-      //sdInfo_ = decode(); 
+      //_sdInfo = decode(); 
     }
 
     ///
@@ -228,49 +229,54 @@ class PipePacket { // : public InstrBase { // maybe later...
     ///
   
     uint32_t nextPC()           { return nextPC_; }
+    uint32_t pc()               { return pc_; }
+    uint32_t tid()              { return tid_; }
+    uint32_t target_addr()      { return _target_addr; }
+    bool     branch_predicate() { return _branch_predicate; }
+
     void     nextPC(uint32_t p) { 
       assert(p%4 == 0 && "pc must be aligned!");
       nextPC_ = p; 
     }
-    uint32_t pc()     { return pc_; }
-    uint32_t tid()    { return tid_; }
-    //uint32_t raw_instr_bits() { return raw_instr_bits; }
-    //const StaticDecodeInfo& sdInfo() { return sdInfo_; }
+    void target_addr(uint32_t ta) { _target_addr = ta; }
+    void branch_predicate(bool p) { _branch_predicate = p; }
 
-    instr_t type() { return sdInfo_.type(); }  
+    //uint32_t raw_instr_bits() { return raw_instr_bits; }
+
+    instr_t type() { return _sdInfo.type(); }  
 
     // passthrough to static decode packet
-    bool    isBranch() const         { return sdInfo_.isBranch();         };
-    bool    isBranchIndirect() const { return sdInfo_.isBranchIndirect(); };
-    bool    isBranchDirect() const   { return sdInfo_.isBranchDirect();   };
-    bool    isStoreLinkRegister() const   { return sdInfo_.isStoreLinkRegister();   };
-    bool    isALU() const            { return sdInfo_.isALU();            };
-    bool    isFPU() const            { return sdInfo_.isFPU();            };
+    bool    isBranch() const         { return _sdInfo.isBranch();         };
+    bool    isBranchIndirect() const { return _sdInfo.isBranchIndirect(); };
+    bool    isBranchDirect() const   { return _sdInfo.isBranchDirect();   };
+    bool    isStoreLinkRegister() const   { return _sdInfo.isStoreLinkRegister();   };
+    bool    isALU() const            { return _sdInfo.isALU();            };
+    bool    isFPU() const            { return _sdInfo.isFPU();            };
     /// memory
-    bool    isMem() const            { return sdInfo_.isMem();            };
-    bool    isGlobal() const         { return sdInfo_.isGlobal();         };
-    bool    isLocalMem() const       { return sdInfo_.isLocalMem();       };
-    bool    isCacheControl() const   { return sdInfo_.isCacheControl();   };
-    //bool    isLocalLoad() const      { return sdInfo_.isLocalLoad();      }; // (local? global?)
-    //bool    isLocalStore() const     { return sdInfo_.isLocalStore();     }; // (local? global?)
+    bool    isMem() const            { return _sdInfo.isMem();            };
+    bool    isGlobal() const         { return _sdInfo.isGlobal();         };
+    bool    isLocalMem() const       { return _sdInfo.isLocalMem();       };
+    bool    isCacheControl() const   { return _sdInfo.isCacheControl();   };
+    //bool    isLocalLoad() const      { return _sdInfo.isLocalLoad();      }; // (local? global?)
+    //bool    isLocalStore() const     { return _sdInfo.isLocalStore();     }; // (local? global?)
     /// atomics
-    bool    isAtomic() const         { return sdInfo_.isAtomic();         };
-    bool    isStore() const          { return sdInfo_.isStore();          };
-    bool    isLoad() const           { return sdInfo_.isLoad();           };
-    //bool    isLocalAtomic() const    { return sdInfo_.isLocalAtomic();    };
-    //bool    isGlobalAtomic() const   { return sdInfo_.isGlobalAtomic();   };
+    bool    isAtomic() const         { return _sdInfo.isAtomic();         };
+    bool    isStore() const          { return _sdInfo.isStore();          };
+    bool    isLoad() const           { return _sdInfo.isLoad();           };
+    //bool    isLocalAtomic() const    { return _sdInfo.isLocalAtomic();    };
+    //bool    isGlobalAtomic() const   { return _sdInfo.isGlobalAtomic();   };
     /// other
-    bool    isPrefetch() const       { return sdInfo_.isPrefetch();       };
-    //bool    isSimOp() const          { return sdInfo_.isSimOp();          }; 
-    bool    isOther() const          { return sdInfo_.isOther();          }; 
-    bool    isNOP() const            { return sdInfo_.isNOP();            }; 
-    bool    isSPRFSrc() const        { return sdInfo_.isSPRFSrc();        }; 
-    bool    isDREGSrc() const        { return sdInfo_.isDREGSrc();        }; 
-    bool    isSPRFDest() const       { return sdInfo_.isSPRFDest();       }; 
-    bool    isShift() const          { return sdInfo_.isShift();          }; 
-    bool    isCompare() const        { return sdInfo_.isCompare();        }; 
+    bool    isPrefetch() const       { return _sdInfo.isPrefetch();       };
+    //bool    isSimOp() const          { return _sdInfo.isSimOp();          }; 
+    bool    isOther() const          { return _sdInfo.isOther();          }; 
+    bool    isNOP() const            { return _sdInfo.isNOP();            }; 
+    bool    isSPRFSrc() const        { return _sdInfo.isSPRFSrc();        }; 
+    bool    isDREGSrc() const        { return _sdInfo.isDREGSrc();        }; 
+    bool    isSPRFDest() const       { return _sdInfo.isSPRFDest();       }; 
+    bool    isShift() const          { return _sdInfo.isShift();          }; 
+    bool    isCompare() const        { return _sdInfo.isCompare();        }; 
     //
-    bool    isSimSpecial() const     { return sdInfo_.isSimSpecial();     }; 
+    bool    isSimSpecial() const     { return _sdInfo.isSimSpecial();     }; 
 
   ///
   /// public methods
@@ -285,7 +291,7 @@ class PipePacket { // : public InstrBase { // maybe later...
     /// dump useful internal state
     void Dump() {
       pretty_print();
-      sdInfo_.Dump();
+      _sdInfo.Dump();
       // print regvals
       printf("regs: ");
       for(int i=0;i<NUM_ISA_OPERAND_REGS;i++) {
@@ -320,10 +326,10 @@ class PipePacket { // : public InstrBase { // maybe later...
     
       /* Used in disassembler callbacks.  EA() may not be valid */
       dis_priv.raw_instr = raw_instr_bits;
-      dis_priv.target_addr = target_addr; 
+      dis_priv.target_addr = _target_addr; 
       dis_info.private_data = &dis_priv;
    
-      if (sdInfo_.isBranch()) {
+      if (_sdInfo.isBranch()) {
           dis_info.insn_type = dis_branch;
           dis_info.target = pc_;
       } else {
@@ -351,12 +357,12 @@ class PipePacket { // : public InstrBase { // maybe later...
 
     uint32_t regnum(isa_reg_t r) {
       assert(r >= 0 && r < NUM_ISA_OPERAND_REGS);
-      return sdInfo_.regnums[r];
+      return _sdInfo.regnums[r];
     }
 
     uint32_t input_deps(isa_reg_t r) {
       assert(r >= 0 && r < NUM_ISA_OPERAND_REGS);
-      return sdInfo_.input_deps[r];
+      return _sdInfo.input_deps[r];
     }
 
     regval32_t& regval(isa_reg_t r) {
@@ -377,17 +383,17 @@ class PipePacket { // : public InstrBase { // maybe later...
     }
 
     // TODO FIXME: relete me, move functionality into sdInfo
-    bool has_imm5()  { return sdInfo_.has_imm5;   }
-    bool has_imm16() { return sdInfo_.has_imm16;  }
-    bool has_imm26() { return sdInfo_.has_imm26;  }
-    bool has_sreg_t() { return sdInfo_.has_sreg_t;  }
-    bool has_sreg_s() { return sdInfo_.has_sreg_s;  }
+    bool has_imm5()  { return _sdInfo.has_imm5;   }
+    bool has_imm16() { return _sdInfo.has_imm16;  }
+    bool has_imm26() { return _sdInfo.has_imm26;  }
+    bool has_sreg_t() { return _sdInfo.has_sreg_t;  }
+    bool has_sreg_s() { return _sdInfo.has_sreg_s;  }
 
-    uint32_t imm26() { return sdInfo_.imm26();  }
-    uint32_t imm16() { return sdInfo_.imm16();  }
-    uint32_t imm5()  { return sdInfo_.imm5();   }
+    uint32_t imm26() { return _sdInfo.imm26();  }
+    uint32_t imm16() { return _sdInfo.imm16();  }
+    uint32_t imm5()  { return _sdInfo.imm5();   }
 
-    uint32_t simm16(){ return sdInfo_.simm16();  }
+    uint32_t simm16(){ return _sdInfo.simm16();  }
 
     
   /// private methods
@@ -415,7 +421,7 @@ class PipePacket { // : public InstrBase { // maybe later...
     int tid_;  /// thread id: whose data is in this pipe packet?
 
     /// pointer to static decode information
-    StaticDecodeInfo& sdInfo_;
+    StaticDecodeInfo& _sdInfo;
 
     ///////////////////////////////////////////////////////////////////////////
     /// DYNAMIC: these change at runtime
@@ -423,7 +429,8 @@ class PipePacket { // : public InstrBase { // maybe later...
 
     /// computed values
 
-    uint32_t target_addr;
+    uint32_t _target_addr;
+    bool _branch_predicate;
     uint32_t nextPC_;
 
     /// input values

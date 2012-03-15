@@ -209,13 +209,15 @@ CoreFunctional::writeback( PipePacket* instr ) {
     if (instr->isSPRFDest()) {
       DPRINT(DB_CF /*DB_CF_WB*/,"[%d] SPRF write: pc rf val %08x %d %08x\n",
         id(), instr->pc(), instr->regnum(DREG), instr->regval(DREG).u32());
+      assert(instr->regnum(DREG) < rigel::NUM_SREGS && "DREG sprf id out of range!");
       ts->sprf.write(instr->regnum(DREG), instr->regval(DREG), instr->pc());
     } 
     // normal register file
     else {
-      DPRINT(DB_CF_WB,"[%d] RF write: pc rf val %08x %d %08x\n",
       //DPRINT(DB_CF,"%08x %d %08x\n",
+      DPRINT(DB_CF_WB,"[%d] RF write: pc rf val %08x %d %08x\n",
         id(), instr->pc(), instr->regnum(DREG), instr->regval(DREG).u32());
+      assert(instr->regnum(DREG) < rigel::NUM_REGS && "DREG rf id out of range!");
       ts->rf.write(instr->regnum(DREG), instr->regval(DREG), instr->pc());
     }
   }
@@ -236,32 +238,19 @@ CoreFunctional::execute( PipePacket* instr ) {
   uint32_t incremented_pc = instr->pc() + 4;
   uint32_t next_pc        = incremented_pc;
 
-  regval32_t sreg_t = instr->regval(SREG_T);
-  regval32_t sreg_s = instr->regval(SREG_S);
-
   if( instr->input_deps(SREG_T) != simconst::NULL_REG ) { 
-    assert( sreg_t.valid() );
+    assert( instr->sreg_t().valid() );
   }
   if( instr->input_deps(SREG_S) != simconst::NULL_REG ) {
-    assert( sreg_s.valid() );
+    assert( instr->sreg_s().valid() );
   }
   if( instr->input_deps(DREG)   != simconst::NULL_REG ) {
-    assert( instr->regval(DREG).valid() );
+    assert( instr->dreg().valid() );
   }
 
-  // macros would be more efficient here...
-  uint32_t zimm16  = instr->imm16();  // zext(imm16)
-  uint32_t simm16  = instr->simm16(); // sext(imm16)
-  uint32_t imm5    = instr->imm5();   // imm5
-
   DPRINT(false,"exec: sreg_t:0x%08x sreg_s:0x%08x\n zimm16:%08x simm16:%08x imm5%d",
-    sreg_t.u32(), sreg_s.u32(), zimm16, simm16, imm5);
-
-  //
-  regval32_t temp_result;
-
-  uint32_t branch_target = 0;
-  bool temp_predicate = false;
+    instr->sreg_t().u32(), instr->sreg_s().u32(), 
+    instr->imm16(), instr->simm16(), instr->imm5());
 
   // FIXME: switch statement based on pre-decoded type in sdInfo?
   // TODO:  switches could be on per-type enums (ALU, FPU, mem, etc) 
@@ -270,42 +259,31 @@ CoreFunctional::execute( PipePacket* instr ) {
   // ALU
   if (instr->isALU()) {
     DPRINT(DB_CF,"%s: isALU\n", __func__);
-    temp_result = doALU(instr);
+    doALU(instr);
   }
   // shift
   else if (instr->isShift()) {
     DPRINT(DB_CF,"%s: isALU\n", __func__);
-    temp_result = doShift(instr);
+    doShift(instr);
   }
   // FPU
   else if (instr->isFPU()) {
     DPRINT(DB_CF,"%s: isFPU\n", __func__);
-    temp_result = doFPU(instr);
+    doFPU(instr);
   }
   // Memory
   else if (instr->isMem()) {
-    temp_result = doMem(instr);
-  }
-  else if (instr->isCacheControl()) {
-    switch (instr->type()) {
-      case I_LINE_WB:
-      case I_LINE_INV:
-      case I_LINE_FLUSH:
-        // do nothing for these in functional mode, for now, with no caches
-        break;
-      default:
-        throw ExitSim("unhandled CacheControl operation?");
-    }
+    doMem(instr);
   }
   // Comparisons
   else if (instr->isCompare()) {
     DPRINT(DB_CF,"%s: isCompare\n", __func__);
-    temp_result = doCompare(instr);
+    doCompare(instr);
   }
   // instructions that modify the PC in some way
   else if (instr->isBranch()) {
     DPRINT(DB_CF,"%s: isBranch\n", __func__);
-    temp_result = doBranch(instr, branch_target, temp_predicate);
+    doBranch(instr);
   }
   // Sim special ops
   else if (instr->isSimSpecial()) {
@@ -314,37 +292,21 @@ CoreFunctional::execute( PipePacket* instr ) {
   // other instruction types
   else if (instr->isOther()) {
     DPRINT(DB_CF,"%s: isOther\n", __func__);
-
-    switch (instr->type()) {
-      case I_NOP:
-        break;
-      case I_HLT:
-        printf("Halting Core %d @ pc %08x @ cycle %" PRIu64 "\n", id(), instr->pc(), rigel::CURR_CYCLE);
-        halt(instr->tid()); // halt this thread
-        break;
-      default:
-        instr->Dump();
-        throw ExitSim("unhandled instruction type");
-    }
+    instr->Dump();
+    throw ExitSim("unhandled 'isOther' instruction type");
   }
   else {
-    if (instr->type()==I_EVENT) {
-      DRIGEL( printf("ignore I_EVENT event instruction for now...NOP\n"); )
-    } else {
     DPRINT(true,"%s: UNKNOWN!\n", __func__);
     instr->Dump();
-    throw ExitSim("unhandled instruction type"); }
+    throw ExitSim("unhandled instruction type"); 
   }
  
   // select the next PC 
-  if( temp_predicate ) { // instr->branchPredicate()) 
-    instr->nextPC(branch_target);
+  if( instr->branch_predicate() ) {
+    instr->nextPC(instr->target_addr());
   } else {
     instr->nextPC(next_pc);
   }
-
-  // set the result output
-  instr->setRegVal(DREG,temp_result);
 
   //instr->Dump();
 }
@@ -367,16 +329,16 @@ CoreFunctional::Dump() {
 }
 
 
-regval32_t 
+void 
 CoreFunctional::doMem(PipePacket* instr) {
 
-  regval32_t sreg_t = instr->regval(SREG_T);
-  regval32_t sreg_s = instr->regval(SREG_S);
-  regval32_t temp_result;
+  regval32_t result;
+  rword32_t sreg_t = instr->regval(SREG_T);
+  rword32_t sreg_s = instr->regval(SREG_S);
 
   // most target addresses are of the following form
   // however, NOT all are (some are overridden)
-  uint32_t target_addr = sreg_t.u32() + instr->simm16();
+  uint32_t target_addr = sreg_t.u32 + instr->simm16();
 
   // new packet based on instr type
   Packet* p = new Packet( rigel::instr_to_icmsg_full(instr->type()) );
@@ -391,89 +353,89 @@ CoreFunctional::doMem(PipePacket* instr) {
       // these require intra-cluster synchronization 
       // (or for alternate implementations at least _some_ cross-core synch)
       case I_LDL: {
-      uint32_t alt_target_addr = sreg_t.u32();
+      uint32_t alt_target_addr = sreg_t.u32;
         // perform a regular LDW, but also set a link bit
         p->initCorePacket(alt_target_addr, 0, id(), GTID(instr->tid()));
-        temp_result = doMemoryAccess(p);
-        DPRINT(DB_CF_LDL,"load-linked: %08x from %08x\n",temp_result.u32(), alt_target_addr);
+        result = doMemoryAccess(p);
+        DPRINT(DB_CF_LDL,"load-linked: %08x from %08x\n", result.u32(), alt_target_addr);
         break;
       }
       case I_STC: {
-        uint32_t alt_target_addr = sreg_t.u32();
+        uint32_t alt_target_addr = sreg_t.u32;
         // perform a store only if the link bit is set
-        p->initCorePacket(alt_target_addr, sreg_s.u32(), id(), GTID(instr->tid()));
-        temp_result = doMemoryAccess(p);
-        DPRINT(DB_CF_STC,"store-conditional: %08x to %08x\n", temp_result.u32(), alt_target_addr);
+        p->initCorePacket(alt_target_addr, sreg_s.u32, id(), GTID(instr->tid()));
+        result = doMemoryAccess(p);
+        DPRINT(DB_CF_STC,"store-conditional: %08x to %08x\n", result.u32(), alt_target_addr);
         break;
       }
 
       // atomics that return a copy of the OLD value before atomic update
       case I_ATOMCAS: {
-        uint32_t alt_target_addr = sreg_t.u32(); // target_addr is in a register for this one
+        uint32_t alt_target_addr = sreg_t.u32; // target_addr is in a register for this one
         p->initCorePacket(alt_target_addr, instr->regval(DREG).u32(), id(), GTID(instr->tid()));
-        p->gAtomicOperand(sreg_s.u32());
-        temp_result = doMemoryAccess(p);
+        p->gAtomicOperand(sreg_s.u32);
+        result = doMemoryAccess(p);
         DPRINT(DB_CF,"cas target_addr: %08x \n",alt_target_addr);
         break;
       }
       case I_ATOMXCHG: {
         p->initCorePacket(target_addr, instr->regval(DREG).u32(), id(), GTID(instr->tid()));
-        temp_result = doMemoryAccess(p);
+        result = doMemoryAccess(p);
         break;
       }
       // arithmetic
       case I_ATOMINC: {
         p->initCorePacket(target_addr, 0, id(), GTID(instr->tid()));
-        temp_result = doMemoryAccess(p);
+        result = doMemoryAccess(p);
         break;
       }
       case I_ATOMDEC: {
         p->initCorePacket(target_addr, 0, id(), GTID(instr->tid()));
-        temp_result = doMemoryAccess(p);
+        result = doMemoryAccess(p);
         break;
       }
       case I_ATOMADDU: {
         p->initCorePacket(target_addr, 0, id(), GTID(instr->tid()));
-        p->gAtomicOperand(sreg_s.u32());
-        temp_result = doMemoryAccess(p);
+        p->gAtomicOperand(sreg_s.u32);
+        result = doMemoryAccess(p);
         break;
       }
       // atomics that return the NEW value after atomic update
       // min,max
       case I_ATOMMIN: {
-        uint32_t alt_target_addr = sreg_t.u32();
+        uint32_t alt_target_addr = sreg_t.u32;
         p->initCorePacket(alt_target_addr, 0, id(), GTID(instr->tid()));
-        p->gAtomicOperand(sreg_s.u32());
-        temp_result = doMemoryAccess(p);
+        p->gAtomicOperand(sreg_s.u32);
+        result = doMemoryAccess(p);
         break;
       }
       case I_ATOMMAX: {
-          uint32_t alt_target_addr = sreg_t.u32();
+          uint32_t alt_target_addr = sreg_t.u32;
           p->initCorePacket(alt_target_addr, 0, id(), GTID(instr->tid()));
-          p->gAtomicOperand(sreg_s.u32());
-          temp_result = doMemoryAccess(p);
+          p->gAtomicOperand(sreg_s.u32);
+          result = doMemoryAccess(p);
         break;
       }
       // logical
       case I_ATOMAND: {
-        uint32_t alt_target_addr = sreg_t.u32();
+        uint32_t alt_target_addr = sreg_t.u32;
         p->initCorePacket(alt_target_addr, 0, id(), GTID(instr->tid()));
-        p->gAtomicOperand(sreg_s.u32());
-        temp_result = doMemoryAccess(p);
+        p->gAtomicOperand(sreg_s.u32);
+        result = doMemoryAccess(p);
         break;
       }
       case I_ATOMOR: {
-        uint32_t alt_target_addr = sreg_t.u32();
+        uint32_t alt_target_addr = sreg_t.u32;
         p->initCorePacket(alt_target_addr, 0, id(), GTID(instr->tid()));
-        p->gAtomicOperand(sreg_s.u32());
-        temp_result = doMemoryAccess(p);
+        p->gAtomicOperand(sreg_s.u32);
+        result = doMemoryAccess(p);
         break;
       }
       case I_ATOMXOR: {
-        uint32_t alt_target_addr = sreg_t.u32();
+        uint32_t alt_target_addr = sreg_t.u32;
         p->initCorePacket(alt_target_addr, 0, id(), GTID(instr->tid()));
-        p->gAtomicOperand(sreg_s.u32());
-        temp_result = doMemoryAccess(p);
+        p->gAtomicOperand(sreg_s.u32);
+        result = doMemoryAccess(p);
         break;
       }
       default:
@@ -492,7 +454,7 @@ CoreFunctional::doMem(PipePacket* instr) {
       case I_BCAST_UPDATE: {
         uint32_t data        = instr->regval(DREG).u32();
         p->initCorePacket(target_addr,data,id(),GTID(instr->tid()));
-        temp_result = doMemoryAccess(p);
+        result = doMemoryAccess(p);
         DPRINT(DB_CF_ST,"store: %08x to %08x\n",data, target_addr);
         break;
       }
@@ -509,8 +471,8 @@ CoreFunctional::doMem(PipePacket* instr) {
       case I_GLDW: {
         p->initCorePacket(target_addr,0,id(),GTID(instr->tid()));
         //helper method? p->setMsgType(instr_t)
-        temp_result = doMemoryAccess(p);
-        DPRINT(DB_CF_LD,"load: %08x from %08x\n",temp_result.u32(), target_addr);
+        result = doMemoryAccess(p);
+        DPRINT(DB_CF_LD,"load: %08x from %08x\n", result.u32(), target_addr);
         break;
       }
       default:
@@ -518,30 +480,41 @@ CoreFunctional::doMem(PipePacket* instr) {
         assert(0 && "unknown LOAD");
         break;
     }
+  } 
+  else if (instr->isCacheControl()) {
+    switch (instr->type()) {
+      case I_LINE_WB:
+      case I_LINE_INV:
+      case I_LINE_FLUSH:
+        // do nothing for these in functional mode, for now, with no caches
+        DRIGEL( printf("ignoring CACHECONTROL instruction for now...NOP\n"); )
+        break;
+      default:
+        throw ExitSim("unhandled CacheControl operation?");
+    }
   } else if (instr->isPrefetch()) {
     DRIGEL( printf("ignoring PREFETCH instruction for now...NOP\n"); )
   } else {
     instr->Dump();
-    assert(0 && "unknown memory operation!");
+    throw ExitSim("unknown memory operation!");
   }
-
-  return temp_result;
+  instr->setRegVal(DREG,result);
 }
 
 
-regval32_t
+rword32_t
 CoreFunctional::doMemoryAccess(Packet* p) {
 
   port_status_t status;
   Packet* reply;
-  regval32_t temp_result;
+  rword32_t result;
 
   status = to_ccache.sendMsg(p);
 
   if (status == ACK) {
     reply = from_ccache.read();
     DPRINT(DB_CF_LDL,"got reply! %d\n", reply->msgType());
-    temp_result = reply->data();
+    result.u32 = reply->data();
   } else {
     throw ExitSim("unhandled path doMemoryAccess()");
   }
@@ -557,97 +530,97 @@ CoreFunctional::doMemoryAccess(Packet* p) {
   //}
 
   delete p;
-  return temp_result;
+  return result;
 }
 
 
-regval32_t 
+void 
 CoreFunctional::doALU(PipePacket* instr) {
 
-  regval32_t temp_result;
-  regval32_t sreg_t = instr->regval(SREG_T);
-  regval32_t sreg_s = instr->regval(SREG_S);
+  regval32_t result;
+  rword32_t sreg_t = instr->regval(SREG_T);
+  rword32_t sreg_s = instr->regval(SREG_S);
   uint32_t zimm16  = instr->imm16();  // zext(imm16)
   uint32_t simm16  = instr->simm16(); // sext(imm16)
-  uint32_t imm5    = instr->imm5(); 
 
   switch (instr->type()) {
 
     // arithmetic - register
-    case I_ADD:  temp_result =   sreg_t.u32() + sreg_s.u32();  break;
-    case I_SUB:  temp_result =   sreg_t.u32() - sreg_s.u32();  break;
-    case I_MUL:  temp_result =   sreg_t.u32() * sreg_s.u32();  break;
+    case I_ADD:  result  =   sreg_t.u32 + sreg_s.u32;  break;
+    case I_SUB:  result  =   sreg_t.u32 - sreg_s.u32;  break;
+    case I_MUL:  result  =   sreg_t.u32 * sreg_s.u32;  break;
     // arithmetic - immediate
-    case I_SUBI: temp_result =   sreg_t.u32() - simm16;        break;
-    case I_ADDI: temp_result =   sreg_t.u32() + simm16;        break;
+    case I_SUBI: result  =   sreg_t.u32 - simm16;        break;
+    case I_ADDI: result  =   sreg_t.u32 + simm16;        break;
     // arithmetic - immediate (unsigned, can't generate overflow exception -- if we cared about those)
-    case I_SUBIU: temp_result =  sreg_t.u32() - simm16;        break;
-    case I_ADDIU: temp_result =  sreg_t.u32() + simm16;        break;
+    case I_SUBIU: result  =  sreg_t.u32 - simm16;        break;
+    case I_ADDIU: result  =  sreg_t.u32 + simm16;        break;
 
     // logical - register
-    case I_AND:  temp_result =   sreg_t.u32() & sreg_s.u32();  break;
-    case I_OR:   temp_result =   sreg_t.u32() | sreg_s.u32();  break;
-    case I_XOR:  temp_result =   sreg_t.u32() ^ sreg_s.u32();  break;
-    case I_NOR:  temp_result = ~(sreg_t.u32() | sreg_s.u32()); break;
+    case I_AND:  result  =   sreg_t.u32 & sreg_s.u32;  break;
+    case I_OR:   result  =   sreg_t.u32 | sreg_s.u32;  break;
+    case I_XOR:  result  =   sreg_t.u32 ^ sreg_s.u32;  break;
+    case I_NOR:  result  = ~(sreg_t.u32 | sreg_s.u32); break;
     // logical - immediates
-    case I_ANDI: temp_result =   sreg_t.u32() & zimm16;        break;
-    case I_ORI:  temp_result =   sreg_t.u32() | zimm16;        break;
-    case I_XORI: temp_result =   sreg_t.u32() ^ zimm16;        break;
+    case I_ANDI: result  =   sreg_t.u32 & zimm16;        break;
+    case I_ORI:  result  =   sreg_t.u32 | zimm16;        break;
+    case I_XORI: result  =   sreg_t.u32 ^ zimm16;        break;
 
     // zero extensions
-    case I_ZEXTB: temp_result =  sreg_t.u32() & 0x000000FF;    break;
-    case I_ZEXTS: temp_result =  sreg_t.u32() & 0x0000FFFF;    break;
+    case I_ZEXTB: result  =  sreg_t.u32 & 0x000000FF;    break;
+    case I_ZEXTS: result  =  sreg_t.u32 & 0x0000FFFF;    break;
     // sign extensions
-    case I_SEXTB: temp_result = int32_t(int8_t(sreg_t.u32()));  break;
-    case I_SEXTS: temp_result = int32_t(int16_t(sreg_t.u32())); break;
+    case I_SEXTB: result  = int32_t(int8_t(sreg_t.u32));  break;
+    case I_SEXTS: result  = int32_t(int16_t(sreg_t.u32)); break;
 
     // other
-    case I_MVUI: temp_result =   zimm16 << 16;                 break;
+    case I_MVUI: result  =   zimm16 << 16;                 break;
 
     // clz
     case I_CLZ: {
-      uint32_t val = sreg_t.u32();
+      uint32_t val = sreg_t.u32;
       int lz;
       for (lz = 0; lz <= 32; ) {
         if ( val & 0x80000000) { break; }
         val = val << 1;
         lz++;
       }    
-      temp_result = lz; 
+      result  = lz; 
       break;
     }
     // sprf
-    case I_MFSR: temp_result = sreg_t; break; // just a move
-    case I_MTSR: temp_result = sreg_t; break; // just a move
+    case I_MFSR: result  = sreg_t; break; // just a move
+    case I_MTSR: result  = sreg_t; break; // just a move
 
     default:
-      assert(0 && "unhandled ALU operation type!"); break;
+      assert(0 && "unhandled ALU operation type!"); 
+      break;
   }
-  return temp_result;
+  instr->setRegVal(DREG,result);
 }
 
-regval32_t 
+void 
 CoreFunctional::doFPU(PipePacket* instr) {
-  regval32_t temp_result;
-  regval32_t sreg_t = instr->regval(SREG_T);
-  regval32_t sreg_s = instr->regval(SREG_S);
+  regval32_t result;
+  rword32_t sreg_t = instr->regval(SREG_T);
+  rword32_t sreg_s = instr->regval(SREG_S);
   switch (instr->type()) {
-    case I_FADD: temp_result = sreg_t.f32() + sreg_s.f32();      break;
-    case I_FSUB: temp_result = sreg_t.f32() - sreg_s.f32();      break;
-    case I_FMUL: temp_result = sreg_t.f32() * sreg_s.f32();      break;
-    case I_FABS: temp_result = float(fabs(sreg_t.f32()));        break;
-    case I_FRCP: temp_result = float(1.0 / sreg_t.f32());        break;
-    case I_FRSQ: temp_result = float(1.0 / sqrtf(sreg_t.f32())); break;
+    case I_FADD: result = sreg_t.f32 + sreg_s.f32;      break;
+    case I_FSUB: result = sreg_t.f32 - sreg_s.f32;      break;
+    case I_FMUL: result = sreg_t.f32 * sreg_s.f32;      break;
+    case I_FABS: result = float(fabs(sreg_t.f32));        break;
+    case I_FRCP: result = float(1.0 / sreg_t.f32);        break;
+    case I_FRSQ: result = float(1.0 / sqrtf(sreg_t.f32)); break;
     case I_FMADD:
-      temp_result = instr->regval(DREG).f32() + (sreg_t.f32() * sreg_s.f32());
+      result = instr->regval(DREG).f32() + (sreg_t.f32 * sreg_s.f32);
       break;
     // conversion (this could be a separate class)
-    case I_I2F:  temp_result = float(sreg_t.i32()); break;
-    case I_F2I:  temp_result = int(sreg_t.f32());   break;
+    case I_I2F:  result = float(sreg_t.i32); break;
+    case I_F2I:  result = int(sreg_t.f32);   break;
     // comparison
-    case I_CEQF:  temp_result = (sreg_t.f32() == sreg_s.f32()) ? 1 : 0;  break;
-    case I_CLTF:  temp_result = (sreg_t.f32() <  sreg_s.f32()) ? 1 : 0;  break;
-    case I_CLTEF: temp_result = (sreg_t.f32() <= sreg_s.f32()) ? 1 : 0;  break;
+    case I_CEQF:  result = (sreg_t.f32 == sreg_s.f32) ? 1 : 0;  break;
+    case I_CLTF:  result = (sreg_t.f32 <  sreg_s.f32) ? 1 : 0;  break;
+    case I_CLTEF: result = (sreg_t.f32 <= sreg_s.f32) ? 1 : 0;  break;
     // unimplemented
     case I_FMRS:  // UNIMPLEMENTED! (status?)
     case I_FMOV:  // UNIMPLEMENTED! (status?)
@@ -655,68 +628,82 @@ CoreFunctional::doFPU(PipePacket* instr) {
     default:
       instr->Dump();
       assert(0 && "unknown FPUOP");
+      result = 0;
       break;
   }
-  return temp_result;
+  instr->setRegVal(DREG,result);
 }
 
-regval32_t 
+void
 CoreFunctional::doShift(PipePacket* instr) {
-  regval32_t temp_result;
-  regval32_t sreg_t = instr->regval(SREG_T);
-  regval32_t sreg_s = instr->regval(SREG_S);
+  regval32_t result;
+  rword32_t sreg_t = instr->regval(SREG_T);
+  rword32_t sreg_s = instr->regval(SREG_S);
   uint32_t   imm5   = instr->imm5();
   switch (instr->type()) {
     // register based shifts
-    case I_SLL:  temp_result = sreg_t.u32() << (sreg_s.u32() & 0x01FU); break;
-    case I_SRL:  temp_result = sreg_t.u32() >> (sreg_s.u32() & 0x01FU); break;
-    case I_SRA:  temp_result = sreg_t.i32() >> (sreg_s.u32() & 0x01FU); break;
+    case I_SLL:  result = sreg_t.u32 << (sreg_s.u32 & 0x01FU); break;
+    case I_SRL:  result = sreg_t.u32 >> (sreg_s.u32 & 0x01FU); break;
+    case I_SRA:  result = sreg_t.i32 >> (sreg_s.u32 & 0x01FU); break;
     // immediate shifts
-    case I_SLLI: temp_result = sreg_t.u32() << imm5;  break;
-    case I_SRLI: temp_result = sreg_t.u32() >> imm5;  break;
-    case I_SRAI: temp_result = sreg_t.i32() >> imm5;  break;
+    case I_SLLI: result = sreg_t.u32 << imm5;  break;
+    case I_SRLI: result = sreg_t.u32 >> imm5;  break;
+    case I_SRAI: result = sreg_t.i32 >> imm5;  break;
     default:
       assert(0 && "unknown SHIFT");
       break;
   }
-  return temp_result;
+  instr->setRegVal(DREG,result);
 }
 
 
-regval32_t
+void 
 CoreFunctional::doCompare(PipePacket* instr) {
-  regval32_t sreg_t = instr->regval(SREG_T);
-  regval32_t sreg_s = instr->regval(SREG_S);
-  regval32_t temp_result;
+  regval32_t result;
+  rword32_t sreg_t = instr->regval(SREG_T);
+  rword32_t sreg_s = instr->regval(SREG_S);
   switch (instr->type()) {
     // signed compare
-    case I_CEQ:  temp_result = (sreg_t.i32() == sreg_s.i32()) ? 1 : 0;  break;
-    case I_CLT:  temp_result = (sreg_t.i32() <  sreg_s.i32()) ? 1 : 0;  break;
-    case I_CLE:  temp_result = (sreg_t.i32() <= sreg_s.i32()) ? 1 : 0;  break;
+    case I_CEQ:  result = (sreg_t.i32 == sreg_s.i32) ? 1 : 0;  break;
+    case I_CLT:  result = (sreg_t.i32 <  sreg_s.i32) ? 1 : 0;  break;
+    case I_CLE:  result = (sreg_t.i32 <= sreg_s.i32) ? 1 : 0;  break;
     // unsigned compare
-    case I_CLTU: temp_result = (sreg_t.u32() <  sreg_s.u32()) ? 1 : 0;  break;
-    case I_CLEU: temp_result = (sreg_t.u32() <= sreg_s.u32()) ? 1 : 0;  break;
+    case I_CLTU: result = (sreg_t.u32 <  sreg_s.u32) ? 1 : 0;  break;
+    case I_CLEU: result = (sreg_t.u32 <= sreg_s.u32) ? 1 : 0;  break;
     default:
       instr->Dump();
       throw ExitSim("unhandled COMPARE");
       break;
   }
-  return temp_result;
+  instr->setRegVal(DREG,result);
 }
 
-regval32_t
-CoreFunctional::doBranch(PipePacket* instr, uint32_t& branch_target, bool& temp_predicate) {
+void 
+CoreFunctional::doBranch(PipePacket* instr) {
 
-  regval32_t temp_result;
-  regval32_t sreg_t = instr->regval(SREG_T);
-  regval32_t sreg_s = instr->regval(SREG_S);
+  regval32_t result; // empty and invalid by default
   uint32_t incremented_pc = instr->pc() + 4;
 
-  // some branches store a link register
+  // some branches store a link register (otherwise, no register writes)
   if (instr->isStoreLinkRegister()) {
     assert( instr->regnum(DREG) == rigel::regs::LINK_REG );
-    temp_result = incremented_pc;
+    result = incremented_pc;
   }
+
+  doBranchPredicate(instr);
+
+  doBranchTarget(instr);
+
+  // this should be ignored (invalid) unless we have a link register
+  instr->setRegVal(DREG,result);
+
+}
+
+void 
+CoreFunctional::doBranchPredicate(PipePacket* instr) {
+
+  bool predicate = false;
+  rword32_t  sreg_t = instr->regval(SREG_T);
 
   // compute branch predicate
   switch (instr->type()) {
@@ -727,22 +714,31 @@ CoreFunctional::doBranch(PipePacket* instr, uint32_t& branch_target, bool& temp_
     case I_JMP: 
     case I_JMPR: 
     case I_LJ:   
-    case I_LJL:  temp_predicate = true;  break;
+    case I_LJL:  predicate = true;  break;
 
     // conditional branches
     // simple compare to zero branches
-    case I_BE:   temp_predicate = (sreg_t.i32() == 0);  break;
-    case I_BN:   temp_predicate = (sreg_t.i32() != 0);  break;
-    case I_BLT:  temp_predicate = (sreg_t.i32() <  0);  break;
-    case I_BGT:  temp_predicate = (sreg_t.i32() >  0);  break;
-    case I_BLE:  temp_predicate = (sreg_t.i32() <= 0);  break;
-    case I_BGE:  temp_predicate = (sreg_t.i32() >= 0);  break;
+    case I_BE:   predicate = (sreg_t.i32 == 0);  break;
+    case I_BN:   predicate = (sreg_t.i32 != 0);  break;
+    case I_BLT:  predicate = (sreg_t.i32 <  0);  break;
+    case I_BGT:  predicate = (sreg_t.i32 >  0);  break;
+    case I_BLE:  predicate = (sreg_t.i32 <= 0);  break;
+    case I_BGE:  predicate = (sreg_t.i32 >= 0);  break;
     // complex branches (cmp-branch with 2 register compare sources)
-    case I_BEQ:  temp_predicate = (sreg_t.i32() == instr->regval(DREG).i32()); break;
-    case I_BNE:  temp_predicate = (sreg_t.i32() != instr->regval(DREG).i32()); break;
+    case I_BEQ:  predicate = (sreg_t.i32 == instr->regval(DREG).i32()); break;
+    case I_BNE:  predicate = (sreg_t.i32 != instr->regval(DREG).i32()); break;
     default:
       assert(0&&"unknown BRANCH"); break;
   }
+
+  instr->branch_predicate(predicate);
+
+}
+
+void 
+CoreFunctional::doBranchTarget(PipePacket* instr) {
+
+  uint32_t branch_target = 0;
 
   if (instr->isBranchDirect()) {
     switch (instr->type()) {
@@ -760,9 +756,11 @@ CoreFunctional::doBranch(PipePacket* instr, uint32_t& branch_target, bool& temp_
       case I_BLE: 
       case I_BGE:
       case I_JAL: 
-      case I_JMP:
+      case I_JMP: {
+        uint32_t incremented_pc = instr->pc() + 4;
         branch_target = incremented_pc + (instr->simm16()<<2);
         break;
+      }
       // long jumps, 16-bit offsets
       // pc[31:28] | (imm26<<2)
       case I_LJ:
@@ -777,13 +775,13 @@ CoreFunctional::doBranch(PipePacket* instr, uint32_t& branch_target, bool& temp_
     switch (instr->type()) {
       case I_JALR:
       case I_JMPR:
-        branch_target = sreg_t.u32(); // the link register
+        branch_target = instr->regval(SREG_T).u32(); // the link register
         break;
       default:
         assert(0&&"unknown indirect branch");
     }
   }
-  return temp_result;
+  instr->target_addr(branch_target);
 }
 
 void
@@ -797,6 +795,15 @@ CoreFunctional::doSimSpecial(PipePacket* instr) {
       uint32_t addr = instr->regval(DREG).u32(); // Pointer to syscall_struct
       rigel::RigelSYSCALL(addr,syscall_handler,mem_backing_store); break; 
     }
+    case I_EVENT:
+      DRIGEL( printf("ignore I_EVENT event instruction for now...NOP\n"); )
+      break;
+    case I_NOP:
+      break;
+    case I_HLT:
+      printf("Halting Core %d @ pc %08x @ cycle %" PRIu64 "\n", id(), instr->pc(), rigel::CURR_CYCLE);
+      halt(instr->tid()); // halt this thread
+      break;
     case I_ABORT:
       instr->Dump();
       char str[128];
