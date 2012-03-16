@@ -98,6 +98,7 @@ class StaticDecodeInfo {
     bool    isNOP() const; 
     bool    isSPRFSrc() const; 
     bool    isDREGSrc() const; 
+    bool    isDREGNotDest() const;
     bool    isSPRFDest() const; 
     bool    isShift() const; 
     bool    isCompare() const; 
@@ -136,22 +137,26 @@ class StaticDecodeInfo {
       // FIXME: make sure these really read and/or write DREG
       if(has_dreg) {
         regnums[DREG]     = reg_d();
+        // do we read the DREG field?
         if (isDREGSrc()) {
           input_deps[DREG]  = reg_d(); 
         } else {
           input_deps[DREG]  = simconst::NULL_REG;
         }
-        output_deps[DREG] = reg_d(); // FIXME: might NOT be a dest...
-      } else {
-        if (isStoreLinkRegister()) {
+        // do we actually write the DREG field?
+        if (isDREGNotDest()) { // no, we don't
+          output_deps[DREG] = simconst::NULL_REG; 
+        } else { // otherwise we do
+          output_deps[DREG] = reg_d();
+        }
+      } else { // this may be caught above already...
+        if (isStoreLinkRegister()) { // writes link reg
           regnums[DREG]     = rigel::regs::LINK_REG;
-          input_deps[DREG]  = simconst::NULL_REG;
-          output_deps[DREG] = simconst::NULL_REG;
         } else {
           regnums[DREG]     = simconst::NULL_REG;
-          input_deps[DREG]  = simconst::NULL_REG;
-          output_deps[DREG] = simconst::NULL_REG;
         }
+        input_deps[DREG]  = simconst::NULL_REG;
+        output_deps[DREG] = simconst::NULL_REG;
       }
     }
 

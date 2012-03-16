@@ -90,6 +90,7 @@ class PipePacket { // : public InstrBase { // maybe later...
     bool    isNOP() const            { return _sdInfo.isNOP();            }; 
     bool    isSPRFSrc() const        { return _sdInfo.isSPRFSrc();        }; 
     bool    isDREGSrc() const        { return _sdInfo.isDREGSrc();        }; 
+    bool    isDREGDest() const       { return (! _sdInfo.isDREGNotDest());}; 
     bool    isSPRFDest() const       { return _sdInfo.isSPRFDest();       }; 
     bool    isShift() const          { return _sdInfo.isShift();          }; 
     bool    isCompare() const        { return _sdInfo.isCompare();        }; 
@@ -181,6 +182,12 @@ class PipePacket { // : public InstrBase { // maybe later...
     uint32_t input_deps(isa_reg_t r) {
       assert(r >= 0 && r < NUM_ISA_OPERAND_REGS);
       return _sdInfo.input_deps[r];
+    }
+
+    /// for now, we assume the only output dependency of an instruction is the DREG field
+    /// however, we can extend this in the future if desired
+    uint32_t output_deps() {
+      return _sdInfo.output_deps[DREG];
     }
 
     regval32_t& regval(isa_reg_t r) {

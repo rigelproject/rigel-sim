@@ -51,6 +51,8 @@ class CoreFunctional : public CoreBase {
     virtual void save_state() const;
     virtual void restore_state();
 
+  private:
+    int  thread_select();
     PipePacket* fetch( uint32_t pc, int tid );
     void     decode(  PipePacket* instr );
     void     execute( PipePacket* instr );
@@ -69,7 +71,7 @@ class CoreFunctional : public CoreBase {
   private:
 
     // private methods
-    rword32_t doMemoryAccess(Packet* p);
+    regval32_t doMemoryAccess(Packet* p);
 
     void doALU(PipePacket* instr);
     void doFPU(PipePacket* instr);
@@ -95,13 +97,15 @@ class CoreFunctional : public CoreBase {
       ) :
         rf(numregs),
         sprf(numsprfregs),
-        pc_(0)
+        pc_(0), 
+        stalled(0)
       { };
 
       RegisterFile rf;
       SPRegisterFile sprf;
 
       uint32_t pc_; /// pc
+      bool stalled;
     };
 
 

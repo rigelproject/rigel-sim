@@ -405,6 +405,39 @@ StaticDecodeInfo::isDREGSrc() const {
     default: {return false; }
   }
 }
+
+// for instructions with DREG fields that are NOT destinations...
+bool
+StaticDecodeInfo::isDREGNotDest() const {
+  if (has_dreg) {
+    switch (type_) {
+      case I_STW:
+      case I_GSTW:
+      case I_BEQ:
+      case I_BNE:
+      // ??? FIXME prefetches...
+      case I_PREF_L:
+      case I_PREF_B_GC:
+      case I_PREF_B_CC:
+      case I_PREF_NGA:
+      // ??? FIXME bcast.inv...
+      // FIXME: tons of others we don't really see...
+      case I_BCAST_UPDATE:
+      case I_SYSCALL:
+      case I_PRINTREG:
+      case I_EVENT:
+        { return true; }
+      default: 
+        {return false; }
+    }
+  } else {
+    if (isStoreLinkRegister()) {
+      return false; // we write LinkReg on these, but they are not has_dreg now...
+    }
+    return true; // if we don't have one...it's not a destination
+  }
+}
+
 bool
 StaticDecodeInfo::isSPRFDest() const {
   switch (type_) {

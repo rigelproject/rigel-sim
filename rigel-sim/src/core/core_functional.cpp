@@ -108,41 +108,61 @@ CoreFunctional::PerCycle() {
   //  return 0;
   //}
 
-  // select a thread
-  do {
-    current_tid = (current_tid+1) % numthreads;
-  } while(halted(current_tid));
+  CoreFunctionalThreadState *ts;
 
-  CoreFunctionalThreadState *ts = thread_state[current_tid];
+  // select a thread for this cycle
+  current_tid = thread_select();
 
-  for(int i=0; i<width; i++) {
+  if (current_tid >= 0) {
 
-    // fetch
-    PipePacket* instr;
-    instr = fetch(ts->pc_, current_tid);
+    ts = thread_state[current_tid];
 
-    // decode
-    decode( instr );
+    for(int i=0; i<width; i++) {
 
-    // read operands from regfile (no bypassing in functional core)
-    regfile_read( instr );
-    
-    // execute
-    execute( instr );
-    
-    // writeback
-    writeback( instr );
-    
-    ts->pc_ = instr->nextPC();
+      // fetch
+      PipePacket* instr;
+      instr = fetch(ts->pc_, current_tid);
 
-    delete instr; // don't forget to clear out that pesky dynamic object...
+      // decode
+      decode( instr );
 
+      // read operands from regfile (no bypassing in functional core)
+      regfile_read( instr );
+      
+      // execute
+      execute( instr );
+      
+      // writeback
+      writeback( instr );
+      
+      ts->pc_ = instr->nextPC();
+
+      delete instr; // don't forget to clear out that pesky dynamic object...
+
+    }
+
+  } else {
+    // no thread available this cycle, stalled
   }
 
   if (DB_CF) { ts->rf.Dump(); }
 
   return halted();
 
+}
+
+int
+CoreFunctional::thread_select() {
+  int next_tid = current_tid + 1;
+  for (int i = 0; i < numthreads; i++) {
+    next_tid = (next_tid + i) % numthreads;
+    // find a thread that is ready to execute (not halted,stalled)
+    if ( !halted(next_tid) && !thread_state[next_tid]->stalled ) {
+      return next_tid; // select this thread 
+    }
+  }
+  printf("no unstalled threads available this cycle!\n");
+  return -1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -204,7 +224,13 @@ CoreFunctional::writeback( PipePacket* instr ) {
   // use thread state
   CoreFunctionalThreadState *ts = thread_state[instr->tid()];
 
-  if (instr->regval(DREG).valid()) {
+  if ( instr->isDREGDest() ) {
+    
+    assert( instr->regval(DREG).valid() );
+    if (!instr->regval(DREG).valid()) { 
+      instr->Dump();
+      throw ExitSim("invalid value on writeback"); }
+
     // SPRF writes (rare)
     if (instr->isSPRFDest()) {
       DPRINT(DB_CF /*DB_CF_WB*/,"[%d] SPRF write: pc rf val %08x %d %08x\n",
@@ -238,14 +264,20 @@ CoreFunctional::execute( PipePacket* instr ) {
   uint32_t incremented_pc = instr->pc() + 4;
   uint32_t next_pc        = incremented_pc;
 
-  if( instr->input_deps(SREG_T) != simconst::NULL_REG ) { 
+  if (instr->input_deps(SREG_T) != simconst::NULL_REG) { 
     assert( instr->sreg_t().valid() );
   }
-  if( instr->input_deps(SREG_S) != simconst::NULL_REG ) {
+  if (instr->input_deps(SREG_S) != simconst::NULL_REG) {
     assert( instr->sreg_s().valid() );
   }
-  if( instr->input_deps(DREG)   != simconst::NULL_REG ) {
+  if (instr->input_deps(DREG)   != simconst::NULL_REG) {
     assert( instr->dreg().valid() );
+  }
+
+  if (id()==0 && instr->output_deps() != simconst::NULL_REG) {
+    //printf("\n>>>\n instruction has an output dep: %d\n", instr->output_deps());
+    //instr->Dump();
+    //printf("<<<\n\n");
   }
 
   DPRINT(false,"exec: sreg_t:0x%08x sreg_s:0x%08x\n zimm16:%08x simm16:%08x imm5%d",
@@ -365,7 +397,7 @@ CoreFunctional::doMem(PipePacket* instr) {
         // perform a store only if the link bit is set
         p->initCorePacket(alt_target_addr, sreg_s.u32, id(), GTID(instr->tid()));
         result = doMemoryAccess(p);
-        DPRINT(DB_CF_STC,"store-conditional: %08x to %08x\n", result.u32(), alt_target_addr);
+        DPRINT(DB_CF_STC,"store-conditional: %08x to %08x\n", sreg_s.u32, alt_target_addr);
         break;
       }
 
@@ -454,7 +486,7 @@ CoreFunctional::doMem(PipePacket* instr) {
       case I_BCAST_UPDATE: {
         uint32_t data        = instr->regval(DREG).u32();
         p->initCorePacket(target_addr,data,id(),GTID(instr->tid()));
-        result = doMemoryAccess(p);
+        doMemoryAccess(p); // no result for stores
         DPRINT(DB_CF_ST,"store: %08x to %08x\n",data, target_addr);
         break;
       }
@@ -470,7 +502,6 @@ CoreFunctional::doMem(PipePacket* instr) {
       case I_LDW:
       case I_GLDW: {
         p->initCorePacket(target_addr,0,id(),GTID(instr->tid()));
-        //helper method? p->setMsgType(instr_t)
         result = doMemoryAccess(p);
         DPRINT(DB_CF_LD,"load: %08x from %08x\n", result.u32(), target_addr);
         break;
@@ -501,21 +532,23 @@ CoreFunctional::doMem(PipePacket* instr) {
   instr->setRegVal(DREG,result);
 }
 
-
-rword32_t
+regval32_t
 CoreFunctional::doMemoryAccess(Packet* p) {
 
   port_status_t status;
   Packet* reply;
-  rword32_t result;
+  regval32_t result;
 
   status = to_ccache.sendMsg(p);
 
   if (status == ACK) {
     reply = from_ccache.read();
+    assert(reply == p); // for now, this is true
+    if (reply!=p) { throw ExitSim("unhandled in doMemoryAccess"); }
     DPRINT(DB_CF_LDL,"got reply! %d\n", reply->msgType());
-    result.u32 = reply->data();
+    result = reply->data();
   } else {
+    reply = NULL;
     throw ExitSim("unhandled path doMemoryAccess()");
   }
 
@@ -530,7 +563,9 @@ CoreFunctional::doMemoryAccess(Packet* p) {
   //}
 
   delete p;
+  assert(reply == p); // for now, this is true
   return result;
+  //return reply;
 }
 
 
