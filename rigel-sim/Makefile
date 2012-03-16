@@ -14,7 +14,7 @@ clean_debug:
 	$(MAKE) -C ${DEBUGDIR} clean
 clean_release:
 	$(MAKE) -C ${RELEASEDIR} clean
-install: install_release
+install: install_release install_debug
 install_debug:
 	$(MAKE) -C ${DEBUGDIR} install
 install_release:
