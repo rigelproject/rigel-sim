@@ -31,9 +31,11 @@ class PipePacket { // : public InstrBase { // maybe later...
       uint32_t raw,  /// raw instruction bits
       int      tid
     ) :
-      pc_(pc),
+      _valid(true),
+      _completed(false),
+      _pc(pc),
       raw_instr_bits(raw),
-      tid_(tid),
+      _tid(tid),
       _sdInfo(decode()),
       _target_addr(0),
       _branch_predicate(0),
@@ -47,8 +49,8 @@ class PipePacket { // : public InstrBase { // maybe later...
     ///
   
     uint32_t nextPC()           { return nextPC_; }
-    uint32_t pc()               { return pc_; }
-    uint32_t tid()              { return tid_; }
+    uint32_t pc()               { return _pc; }
+    uint32_t tid()              { return _tid; }
     uint32_t target_addr()      { return _target_addr; }
     bool     branch_predicate() { return _branch_predicate; }
 
@@ -150,7 +152,7 @@ class PipePacket { // : public InstrBase { // maybe later...
    
       if (_sdInfo.isBranch()) {
           dis_info.insn_type = dis_branch;
-          dis_info.target = pc_;
+          dis_info.target = _pc;
       } else {
           dis_info.insn_type = dis_nonbranch;
       }
@@ -220,6 +222,11 @@ class PipePacket { // : public InstrBase { // maybe later...
 
     uint32_t simm16(){ return _sdInfo.simm16();  }
 
+    bool valid() { return _valid; }
+    void invalidate() { _valid = false; }
+
+    bool isCompleted() { return _completed; }
+    bool setCompleted() { _completed = true; }
     
   /// private methods
   private:
@@ -229,24 +236,27 @@ class PipePacket { // : public InstrBase { // maybe later...
     StaticDecodeInfo& decode() {
       // use pre-existing decoded info when it exists
       // otherwise, decode the instruction
-      if (!decodedInstructions[pc_].valid()) {
-        DPRINT(DB_INSTR,"SDInfo:Decoding unseen pc %08x\n", pc_);
-        decodedInstructions[pc_].decode(pc_,raw_instr_bits);
+      if (!decodedInstructions[_pc].valid()) {
+        DPRINT(DB_INSTR,"SDInfo:Decoding unseen pc %08x\n", _pc);
+        decodedInstructions[_pc].decode(_pc,raw_instr_bits);
       }
-      return decodedInstructions[pc_];
+      return decodedInstructions[_pc];
     }
 
   /// private member data
   private:
 
     /// basic attributes
-    uint32_t pc_;        /// program counter associated with this instruction
+    bool _valid;
+    bool _completed;
+    uint32_t _pc;        /// program counter associated with this instruction
     uint32_t raw_instr_bits;  /// for internal class use only
 
-    int tid_;  /// thread id: whose data is in this pipe packet?
+    int _tid;  /// thread id: whose data is in this pipe packet?
 
     /// pointer to static decode information
     StaticDecodeInfo& _sdInfo;
+
 
     ///////////////////////////////////////////////////////////////////////////
     /// DYNAMIC: these change at runtime

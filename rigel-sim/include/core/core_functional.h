@@ -55,8 +55,9 @@ class CoreFunctional : public CoreBase {
     int  thread_select();
     PipePacket* fetch( uint32_t pc, int tid );
     void     decode(  PipePacket* instr );
-    void     execute( PipePacket* instr );
     void     regfile_read( PipePacket* instr );
+    void     execute( PipePacket* instr );
+    void     memory( PipePacket* instr );
     void     writeback( PipePacket* instr );
 
   public:
@@ -71,6 +72,8 @@ class CoreFunctional : public CoreBase {
   private:
 
     // private methods
+    void doMem(PipePacket* instr);
+    void doMemAddress(PipePacket* p);
     regval32_t doMemoryAccess(Packet* p);
 
     void doALU(PipePacket* instr);
@@ -78,7 +81,6 @@ class CoreFunctional : public CoreBase {
     void doShift(PipePacket* instr);
     void doCompare(PipePacket* instr);
 
-    void doMem(PipePacket* instr);
 
     void doSimSpecial(PipePacket* instr);
 
@@ -98,6 +100,7 @@ class CoreFunctional : public CoreBase {
         rf(numregs),
         sprf(numsprfregs),
         pc_(0), 
+        instr(0),
         stalled(0)
       { };
 
@@ -105,6 +108,9 @@ class CoreFunctional : public CoreBase {
       SPRegisterFile sprf;
 
       uint32_t pc_; /// pc
+
+      PipePacket* instr; /// for a simple model, hold the current instr
+
       bool stalled;
     };
 
@@ -118,6 +124,7 @@ class CoreFunctional : public CoreBase {
 
     OutPortBase<Packet*> to_ccache;
     InPortBase<Packet*>  from_ccache;
+    InPortBase<Packet*>  icache;
 
     std::vector<CoreFunctionalThreadState*> thread_state;
 

@@ -45,6 +45,7 @@ CoreFunctional::CoreFunctional(
   syscall_handler(cp.syscall),
   to_ccache(),
   from_ccache(),
+  icache(),
   thread_state(numthreads)
 {
   cp.parent = this;
@@ -119,25 +120,35 @@ CoreFunctional::PerCycle() {
 
     for(int i=0; i<width; i++) {
 
-      // fetch
-      PipePacket* instr;
-      instr = fetch(ts->pc_, current_tid);
+      if (!ts->instr) { // if there is not an existing instruction
+        // fetch
+        ts->instr = fetch(ts->pc_, current_tid);
+        // decode
+        decode( ts->instr );
+        // read operands from regfile (no bypassing in functional core)
+        regfile_read( ts->instr );
+        // execute
+        execute( ts->instr );
+      } else { // check on the existing instruction
+        // TODO
+      }
 
-      // decode
-      decode( instr );
-
-      // read operands from regfile (no bypassing in functional core)
-      regfile_read( instr );
-      
-      // execute
-      execute( instr );
+      if (ts->instr->isMem()) { // do memory access
+        memory(ts->instr);  
+      }
       
       // writeback
-      writeback( instr );
-      
-      ts->pc_ = instr->nextPC();
+      if (ts->instr->isCompleted()) {
 
-      delete instr; // don't forget to clear out that pesky dynamic object...
+        writeback( ts->instr );
+      
+        ts->pc_ = ts->instr->nextPC();
+
+        delete ts->instr; // don't forget to clear out that pesky dynamic object...
+        ts->instr = 0; // no valid instruction
+      } else {
+        throw ExitSim("not allowed to have incomplete instructions now");
+      }
 
     }
 
@@ -303,9 +314,9 @@ CoreFunctional::execute( PipePacket* instr ) {
     DPRINT(DB_CF,"%s: isFPU\n", __func__);
     doFPU(instr);
   }
-  // Memory
+  // Memory (address computation here)
   else if (instr->isMem()) {
-    doMem(instr);
+    doMemAddress(instr);
   }
   // Comparisons
   else if (instr->isCompare()) {
@@ -343,6 +354,14 @@ CoreFunctional::execute( PipePacket* instr ) {
   //instr->Dump();
 }
 
+
+// memory 
+// memory access 'stage'
+void
+CoreFunctional::memory(PipePacket* instr) {
+  doMem(instr);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 /// Dump
 ///////////////////////////////////////////////////////////////////////////////
@@ -362,7 +381,7 @@ CoreFunctional::Dump() {
 
 
 void 
-CoreFunctional::doMem(PipePacket* instr) {
+CoreFunctional::doMemAddress(PipePacket* instr) {
 
   regval32_t result;
   rword32_t sreg_t = instr->regval(SREG_T);
@@ -371,6 +390,104 @@ CoreFunctional::doMem(PipePacket* instr) {
   // most target addresses are of the following form
   // however, NOT all are (some are overridden)
   uint32_t target_addr = sreg_t.u32 + instr->simm16();
+
+  if (instr->isAtomic()) {
+    DPRINT(DB_CF,"%s: isMem isAtomic\n", __func__);
+
+    // split me into Local and Global atomic sections?
+    switch (instr->type()) {
+
+      case I_LDL: 
+      case I_STC: 
+      case I_ATOMCAS: {
+        uint32_t alt_target_addr = sreg_t.u32; // target_addr is in a register for this one
+        instr->target_addr(alt_target_addr);
+        break;
+      }
+      case I_ATOMXCHG:
+      case I_ATOMINC:
+      case I_ATOMDEC: 
+      case I_ATOMADDU: 
+        instr->target_addr(target_addr); 
+        break;
+
+      case I_ATOMMIN: 
+      case I_ATOMMAX: 
+      case I_ATOMAND: 
+      case I_ATOMOR: 
+      case I_ATOMXOR: {
+        uint32_t alt_target_addr = sreg_t.u32;
+        instr->target_addr(alt_target_addr);
+        break;
+      } 
+      default:
+        instr->Dump();
+        assert(0 && "unknown or unimplemented ATOMICOP");
+        break;
+    }
+  // store value
+  }
+  else if (instr->isStore()) {
+    DPRINT(DB_CF,"%s: isMem isStore\n", __func__);
+
+    switch (instr->type()) {
+      case I_STW:
+      case I_GSTW:
+      case I_BCAST_UPDATE: {
+        instr->target_addr(target_addr);
+        break;
+      }
+      default:
+        instr->Dump();
+        assert(0 && "unknown STORE");
+        break;
+    }
+  }
+  else if (instr->isLoad()) {
+    DPRINT(DB_CF,"%s: isMem isLoad\n", __func__);
+    switch (instr->type()) {
+      case I_LDW:
+      case I_GLDW: {
+        instr->target_addr(target_addr);
+        break;
+      }
+      default:
+        instr->Dump();
+        assert(0 && "unknown LOAD");
+        break;
+    }
+  } 
+  else if (instr->isCacheControl()) {
+    switch (instr->type()) {
+      case I_LINE_WB:
+      case I_LINE_INV:
+      case I_LINE_FLUSH:
+        // do nothing for these in functional mode, for now, with no caches
+        DRIGEL( printf("ignoring CACHECONTROL instruction for now...NOP\n"); )
+        break;
+      default:
+        throw ExitSim("unhandled CacheControl operation?");
+    }
+  } else if (instr->isPrefetch()) {
+    DRIGEL( printf("ignoring PREFETCH instruction for now...NOP\n"); )
+  } else {
+    instr->Dump();
+    throw ExitSim("unknown memory operation!");
+  }
+  // above, we have set the instr->target_addr
+}
+
+
+void 
+CoreFunctional::doMem(PipePacket* instr) {
+
+  regval32_t result;
+  rword32_t sreg_t = instr->regval(SREG_T);
+  rword32_t sreg_s = instr->regval(SREG_S);
+
+  //doMemAddress(instr); already done
+
+  uint32_t addr = instr->target_addr();
 
   // new packet based on instr type
   Packet* p = new Packet( rigel::instr_to_icmsg_full(instr->type()) );
@@ -385,87 +502,49 @@ CoreFunctional::doMem(PipePacket* instr) {
       // these require intra-cluster synchronization 
       // (or for alternate implementations at least _some_ cross-core synch)
       case I_LDL: {
-      uint32_t alt_target_addr = sreg_t.u32;
         // perform a regular LDW, but also set a link bit
-        p->initCorePacket(alt_target_addr, 0, id(), GTID(instr->tid()));
+        p->initCorePacket(addr, 0, id(), GTID(instr->tid()));
         result = doMemoryAccess(p);
-        DPRINT(DB_CF_LDL,"load-linked: %08x from %08x\n", result.u32(), alt_target_addr);
+        DPRINT(DB_CF_LDL,"load-linked: %08x from %08x\n", result.u32(), addr);
         break;
       }
       case I_STC: {
-        uint32_t alt_target_addr = sreg_t.u32;
         // perform a store only if the link bit is set
-        p->initCorePacket(alt_target_addr, sreg_s.u32, id(), GTID(instr->tid()));
+        p->initCorePacket(addr, sreg_s.u32, id(), GTID(instr->tid()));
         result = doMemoryAccess(p);
-        DPRINT(DB_CF_STC,"store-conditional: %08x to %08x\n", sreg_s.u32, alt_target_addr);
+        DPRINT(DB_CF_STC,"store-conditional: %08x to %08x\n", sreg_s.u32, addr);
         break;
       }
-
       // atomics that return a copy of the OLD value before atomic update
       case I_ATOMCAS: {
-        uint32_t alt_target_addr = sreg_t.u32; // target_addr is in a register for this one
-        p->initCorePacket(alt_target_addr, instr->regval(DREG).u32(), id(), GTID(instr->tid()));
+        p->initCorePacket(addr, instr->regval(DREG).u32(), id(), GTID(instr->tid()));
         p->gAtomicOperand(sreg_s.u32);
         result = doMemoryAccess(p);
-        DPRINT(DB_CF,"cas target_addr: %08x \n",alt_target_addr);
+        DPRINT(DB_CF,"cas target_addr: %08x \n",addr);
         break;
       }
       case I_ATOMXCHG: {
-        p->initCorePacket(target_addr, instr->regval(DREG).u32(), id(), GTID(instr->tid()));
+        p->initCorePacket(addr, instr->regval(DREG).u32(), id(), GTID(instr->tid()));
         result = doMemoryAccess(p);
         break;
       }
       // arithmetic
-      case I_ATOMINC: {
-        p->initCorePacket(target_addr, 0, id(), GTID(instr->tid()));
-        result = doMemoryAccess(p);
-        break;
-      }
+      case I_ATOMINC: 
       case I_ATOMDEC: {
-        p->initCorePacket(target_addr, 0, id(), GTID(instr->tid()));
+        p->initCorePacket(addr, 0, id(), GTID(instr->tid()));
         result = doMemoryAccess(p);
         break;
       }
-      case I_ATOMADDU: {
-        p->initCorePacket(target_addr, 0, id(), GTID(instr->tid()));
-        p->gAtomicOperand(sreg_s.u32);
-        result = doMemoryAccess(p);
-        break;
-      }
+      case I_ATOMADDU:
       // atomics that return the NEW value after atomic update
       // min,max
-      case I_ATOMMIN: {
-        uint32_t alt_target_addr = sreg_t.u32;
-        p->initCorePacket(alt_target_addr, 0, id(), GTID(instr->tid()));
-        p->gAtomicOperand(sreg_s.u32);
-        result = doMemoryAccess(p);
-        break;
-      }
-      case I_ATOMMAX: {
-          uint32_t alt_target_addr = sreg_t.u32;
-          p->initCorePacket(alt_target_addr, 0, id(), GTID(instr->tid()));
-          p->gAtomicOperand(sreg_s.u32);
-          result = doMemoryAccess(p);
-        break;
-      }
+      case I_ATOMMIN: 
+      case I_ATOMMAX: 
       // logical
-      case I_ATOMAND: {
-        uint32_t alt_target_addr = sreg_t.u32;
-        p->initCorePacket(alt_target_addr, 0, id(), GTID(instr->tid()));
-        p->gAtomicOperand(sreg_s.u32);
-        result = doMemoryAccess(p);
-        break;
-      }
-      case I_ATOMOR: {
-        uint32_t alt_target_addr = sreg_t.u32;
-        p->initCorePacket(alt_target_addr, 0, id(), GTID(instr->tid()));
-        p->gAtomicOperand(sreg_s.u32);
-        result = doMemoryAccess(p);
-        break;
-      }
+      case I_ATOMAND:
+      case I_ATOMOR:
       case I_ATOMXOR: {
-        uint32_t alt_target_addr = sreg_t.u32;
-        p->initCorePacket(alt_target_addr, 0, id(), GTID(instr->tid()));
+        p->initCorePacket(addr, 0, id(), GTID(instr->tid()));
         p->gAtomicOperand(sreg_s.u32);
         result = doMemoryAccess(p);
         break;
@@ -485,9 +564,9 @@ CoreFunctional::doMem(PipePacket* instr) {
       case I_GSTW:
       case I_BCAST_UPDATE: {
         uint32_t data        = instr->regval(DREG).u32();
-        p->initCorePacket(target_addr,data,id(),GTID(instr->tid()));
+        p->initCorePacket(addr ,data, id(), GTID(instr->tid()));
         doMemoryAccess(p); // no result for stores
-        DPRINT(DB_CF_ST,"store: %08x to %08x\n",data, target_addr);
+        DPRINT(DB_CF_ST,"store: %08x to %08x\n", data, addr);
         break;
       }
       default:
@@ -501,9 +580,9 @@ CoreFunctional::doMem(PipePacket* instr) {
     switch (instr->type()) {
       case I_LDW:
       case I_GLDW: {
-        p->initCorePacket(target_addr,0,id(),GTID(instr->tid()));
+        p->initCorePacket(addr, 0, id(), GTID(instr->tid()));
         result = doMemoryAccess(p);
-        DPRINT(DB_CF_LD,"load: %08x from %08x\n", result.u32(), target_addr);
+        DPRINT(DB_CF_LD,"load: %08x from %08x\n", result.u32(), addr);
         break;
       }
       default:
@@ -530,8 +609,11 @@ CoreFunctional::doMem(PipePacket* instr) {
     throw ExitSim("unknown memory operation!");
   }
   instr->setRegVal(DREG,result);
+  instr->setCompleted(); // just for now...
 }
 
+// doMemoryAccess
+// actually poke the ports
 regval32_t
 CoreFunctional::doMemoryAccess(Packet* p) {
 
@@ -632,6 +714,7 @@ CoreFunctional::doALU(PipePacket* instr) {
       break;
   }
   instr->setRegVal(DREG,result);
+  instr->setCompleted();
 }
 
 void 
@@ -667,6 +750,7 @@ CoreFunctional::doFPU(PipePacket* instr) {
       break;
   }
   instr->setRegVal(DREG,result);
+  instr->setCompleted();
 }
 
 void
@@ -689,6 +773,7 @@ CoreFunctional::doShift(PipePacket* instr) {
       break;
   }
   instr->setRegVal(DREG,result);
+  instr->setCompleted();
 }
 
 
@@ -711,6 +796,7 @@ CoreFunctional::doCompare(PipePacket* instr) {
       break;
   }
   instr->setRegVal(DREG,result);
+  instr->setCompleted();
 }
 
 void 
@@ -731,7 +817,7 @@ CoreFunctional::doBranch(PipePacket* instr) {
 
   // this should be ignored (invalid) unless we have a link register
   instr->setRegVal(DREG,result);
-
+  instr->setCompleted();
 }
 
 void 
@@ -767,7 +853,6 @@ CoreFunctional::doBranchPredicate(PipePacket* instr) {
   }
 
   instr->branch_predicate(predicate);
-
 }
 
 void 
@@ -848,6 +933,7 @@ CoreFunctional::doSimSpecial(PipePacket* instr) {
       instr->Dump();
       throw ExitSim("unhandled SimSpecial instruction type");
   }
+  instr->setCompleted();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
