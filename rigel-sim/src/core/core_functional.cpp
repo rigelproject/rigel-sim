@@ -22,6 +22,7 @@
 #define DB_CF_LD 0
 #define DB_CF_LDL 0
 #define DB_CF_STC 0
+#define DB_CF_MEM 0
 
 #define DB_CF_SYSCALL 0
 
@@ -129,12 +130,18 @@ CoreFunctional::PerCycle() {
         regfile_read( ts->instr );
         // execute
         execute( ts->instr );
-      } else { // check on the existing instruction
-        // TODO
-      }
-
-      if (ts->instr->isMem()) { // do memory access
+        // memory access (if applicable)
         memory(ts->instr);  
+      } else { // check on the existing instruction
+        // handle memory stall
+        Packet* reply;
+        reply = from_ccache.read();
+        if (reply) { // handle reply
+          DPRINT(true,"got reply! %d\n", reply->msgType());
+          ts->instr->setRegVal(DREG, reply->data()); // FIXME: NOT ALL have results! 
+          ts->instr->setCompleted(); // just for now...
+          delete reply; // because we are done (for now)
+        } 
       }
       
       // writeback
@@ -147,6 +154,7 @@ CoreFunctional::PerCycle() {
         delete ts->instr; // don't forget to clear out that pesky dynamic object...
         ts->instr = 0; // no valid instruction
       } else {
+        DPRINT(true, "memory operation returned incomplete!\n");
         throw ExitSim("not allowed to have incomplete instructions now");
       }
 
@@ -359,7 +367,9 @@ CoreFunctional::execute( PipePacket* instr ) {
 // memory access 'stage'
 void
 CoreFunctional::memory(PipePacket* instr) {
-  doMem(instr);
+  if (instr->isMem()) {
+    doMem(instr);
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -504,35 +514,32 @@ CoreFunctional::doMem(PipePacket* instr) {
       case I_LDL: {
         // perform a regular LDW, but also set a link bit
         p->initCorePacket(addr, 0, id(), GTID(instr->tid()));
-        result = doMemoryAccess(p);
-        DPRINT(DB_CF_LDL,"load-linked: %08x from %08x\n", result.u32(), addr);
+        doMemoryAccess(instr, p);
         break;
       }
       case I_STC: {
         // perform a store only if the link bit is set
         p->initCorePacket(addr, sreg_s.u32, id(), GTID(instr->tid()));
-        result = doMemoryAccess(p);
-        DPRINT(DB_CF_STC,"store-conditional: %08x to %08x\n", sreg_s.u32, addr);
+        doMemoryAccess(instr, p);
         break;
       }
       // atomics that return a copy of the OLD value before atomic update
       case I_ATOMCAS: {
         p->initCorePacket(addr, instr->regval(DREG).u32(), id(), GTID(instr->tid()));
         p->gAtomicOperand(sreg_s.u32);
-        result = doMemoryAccess(p);
-        DPRINT(DB_CF,"cas target_addr: %08x \n",addr);
+        doMemoryAccess(instr, p);
         break;
       }
       case I_ATOMXCHG: {
         p->initCorePacket(addr, instr->regval(DREG).u32(), id(), GTID(instr->tid()));
-        result = doMemoryAccess(p);
+        doMemoryAccess(instr, p);
         break;
       }
       // arithmetic
       case I_ATOMINC: 
       case I_ATOMDEC: {
         p->initCorePacket(addr, 0, id(), GTID(instr->tid()));
-        result = doMemoryAccess(p);
+        doMemoryAccess(instr, p);
         break;
       }
       case I_ATOMADDU:
@@ -546,7 +553,7 @@ CoreFunctional::doMem(PipePacket* instr) {
       case I_ATOMXOR: {
         p->initCorePacket(addr, 0, id(), GTID(instr->tid()));
         p->gAtomicOperand(sreg_s.u32);
-        result = doMemoryAccess(p);
+        doMemoryAccess(instr, p);
         break;
       }
       default:
@@ -565,8 +572,7 @@ CoreFunctional::doMem(PipePacket* instr) {
       case I_BCAST_UPDATE: {
         uint32_t data        = instr->regval(DREG).u32();
         p->initCorePacket(addr ,data, id(), GTID(instr->tid()));
-        doMemoryAccess(p); // no result for stores
-        DPRINT(DB_CF_ST,"store: %08x to %08x\n", data, addr);
+        doMemoryAccess(instr, p); // no result for stores
         break;
       }
       default:
@@ -581,8 +587,7 @@ CoreFunctional::doMem(PipePacket* instr) {
       case I_LDW:
       case I_GLDW: {
         p->initCorePacket(addr, 0, id(), GTID(instr->tid()));
-        result = doMemoryAccess(p);
-        DPRINT(DB_CF_LD,"load: %08x from %08x\n", result.u32(), addr);
+        doMemoryAccess(instr, p);
         break;
       }
       default:
@@ -608,27 +613,36 @@ CoreFunctional::doMem(PipePacket* instr) {
     instr->Dump();
     throw ExitSim("unknown memory operation!");
   }
-  instr->setRegVal(DREG,result);
-  instr->setCompleted(); // just for now...
+
+  if (p->isCompleted()) {
+    result = p->data();
+    delete p; // because we are done (for now)
+    instr->setRegVal(DREG,result); // FIXME: NOT ALL have results! 
+    instr->setCompleted(); // just for now...
+  } else {
+    throw ExitSim("unimplemented for incompleted operation\n");
+  }
 }
 
 // doMemoryAccess
 // actually poke the ports
-regval32_t
-CoreFunctional::doMemoryAccess(Packet* p) {
+void
+CoreFunctional::doMemoryAccess(PipePacket* instr, Packet* p) {
 
   port_status_t status;
   Packet* reply;
-  regval32_t result;
 
   status = to_ccache.sendMsg(p);
 
-  if (status == ACK) {
+  if (status == ACK) { // port accepted message
     reply = from_ccache.read();
-    assert(reply == p); // for now, this is true
-    if (reply!=p) { throw ExitSim("unhandled in doMemoryAccess"); }
-    DPRINT(DB_CF_LDL,"got reply! %d\n", reply->msgType());
-    result = reply->data();
+    if (reply) { // handle reply
+      DPRINT(DB_CF_MEM,"got reply! %d\n", reply->msgType());
+      // FIXME: some operations DO NOT HAVE a result!
+      assert( reply == p ); // for now
+    } else { 
+      // NULL message means we have nothing to process
+    }
   } else {
     reply = NULL;
     throw ExitSim("unhandled path doMemoryAccess()");
@@ -644,10 +658,6 @@ CoreFunctional::doMemoryAccess(Packet* p) {
   //  throw ExitSim("Invalid response to STC request!\n");
   //}
 
-  delete p;
-  assert(reply == p); // for now, this is true
-  return result;
-  //return reply;
 }
 
 

@@ -74,7 +74,7 @@ class CoreFunctional : public CoreBase {
     // private methods
     void doMem(PipePacket* instr);
     void doMemAddress(PipePacket* p);
-    regval32_t doMemoryAccess(Packet* p);
+    void doMemoryAccess(PipePacket* instr, Packet* p);
 
     void doALU(PipePacket* instr);
     void doFPU(PipePacket* instr);

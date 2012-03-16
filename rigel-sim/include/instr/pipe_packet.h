@@ -210,9 +210,9 @@ class PipePacket { // : public InstrBase { // maybe later...
     }
 
     // TODO FIXME: relete me, move functionality into sdInfo
-    bool has_imm5()  { return _sdInfo.has_imm5;   }
-    bool has_imm16() { return _sdInfo.has_imm16;  }
-    bool has_imm26() { return _sdInfo.has_imm26;  }
+    bool has_imm5()   { return _sdInfo.has_imm5;   }
+    bool has_imm16()  { return _sdInfo.has_imm16;  }
+    bool has_imm26()  { return _sdInfo.has_imm26;  }
     bool has_sreg_t() { return _sdInfo.has_sreg_t;  }
     bool has_sreg_s() { return _sdInfo.has_sreg_s;  }
 
@@ -222,11 +222,11 @@ class PipePacket { // : public InstrBase { // maybe later...
 
     uint32_t simm16(){ return _sdInfo.simm16();  }
 
-    bool valid() { return _valid; }
+    bool valid()      { return _valid; }
     void invalidate() { _valid = false; }
 
-    bool isCompleted() { return _completed; }
-    bool setCompleted() { _completed = true; }
+    bool isCompleted()  { return _completed; }
+    void setCompleted() { _completed = true; }
     
   /// private methods
   private:

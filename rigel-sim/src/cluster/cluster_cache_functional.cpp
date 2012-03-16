@@ -68,6 +68,7 @@ ClusterCacheFunctional::doMemoryAccess(PacketPtr p) {
     case IC_MSG_GLOBAL_READ_REQ: {
       uint32_t data = mem_backing_store->read_word(p->addr());
       p->data(data);
+      p->setCompleted();
       break;
     }
 
@@ -76,6 +77,7 @@ ClusterCacheFunctional::doMemoryAccess(PacketPtr p) {
     case IC_MSG_GLOBAL_WRITE_REQ:
     case IC_MSG_BCAST_UPDATE_REQ:
       mem_backing_store->write_word(p->addr(), p->data()); 
+      p->setCompleted();
       break;
 
     // atomics
@@ -200,6 +202,7 @@ ClusterCacheFunctional::doGlobalAtomic(PacketPtr p) {
   // convert the request to a reply
   p->msgType( rigel::icmsg_convert(p->msgType()) );
   p->data( temp_result );
+  p->setCompleted();
 }
 
 /// side effect: updates p
@@ -219,7 +222,6 @@ ClusterCacheFunctional::doLocalAtomic(PacketPtr p) {
       LinkTable[tid].size  = sizeof(uint32_t); // TODO FIXME: non-32-bit-word sizes
       uint32_t readval = mem_backing_store->read_word(p->addr());
       DPRINT(DB_CC,"LDL: tid %d read %08x at %08x\n",tid,readval,p->addr());
-      //return readval;
       p->data(readval);
       p->msgType(IC_MSG_LDL_REPLY);
       break;
@@ -251,8 +253,6 @@ ClusterCacheFunctional::doLocalAtomic(PacketPtr p) {
         }
         p->data(1);
         p->msgType(IC_MSG_STC_REPLY_ACK);
-        return;
-        //return 1; // success
       } 
       // STC fails otherwise
       else {
@@ -260,14 +260,13 @@ ClusterCacheFunctional::doLocalAtomic(PacketPtr p) {
         for (unsigned i = 0; i < LinkTable.size(); ++i) {
           //printf("LinkTable: %08x v[%d]\n",LinkTable[i].addr,LinkTable[i].valid);
         }
-        //return 0; // fail
         p->data(0);
         p->msgType(IC_MSG_STC_REPLY_NACK);
-        return;
       }
       break;
     default:
       throw ExitSim("invalid message type in packet!");
   }
+  p->setCompleted(); // access handled, return to core
   return;
 };

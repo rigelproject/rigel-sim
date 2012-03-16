@@ -18,7 +18,8 @@ class Packet {
        _addr(a),
        _data(d),
        _gcoreid(gcoreid),
-       _gtid(gtid)
+       _gtid(gtid),
+       _completed(false)
     { };
 
     /// constructor
@@ -52,8 +53,8 @@ class Packet {
     icmsg_type_t msgType() { return _msgType; }
     uint32_t     addr()    { return _addr;    }
     uint32_t     data()    { return _data;    }
-    int     gcoreid() { return _gcoreid; }
-    int     gtid()    { return _gtid;    }
+    int          gcoreid() { return _gcoreid; }
+    int          gtid()    { return _gtid;    }
     uint32_t     gAtomicOperand() { return _gatomic_operand; }
 
     // FIXME: assumes even distribution...
@@ -65,14 +66,19 @@ class Packet {
     void msgType(icmsg_type_t t) { _msgType = t; }
     void gAtomicOperand( uint32_t o ) { _gatomic_operand = o; }
 
+    bool isCompleted()  { return _completed; }
+    bool setCompleted() { _completed = true; }
+
   private:
     icmsg_type_t _msgType; // interconnect message type
     uint32_t     _addr;
-    uint32_t     _data;
-    int          _gcoreid;
-    int          _gtid;
+    uint32_t     _data;    
+    int          _gcoreid; /// global core ID (should REMOVE, use TID)
+    int          _gtid;    /// global thread ID
 
-    uint32_t     _gatomic_operand;
+    uint32_t     _gatomic_operand; /// global atomic operand
+
+    bool         _completed; /// has been fully serviced
 
 };
 
