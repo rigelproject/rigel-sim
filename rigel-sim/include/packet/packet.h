@@ -67,7 +67,7 @@ class Packet {
     void gAtomicOperand( uint32_t o ) { _gatomic_operand = o; }
 
     bool isCompleted()  { return _completed; }
-    bool setCompleted() { _completed = true; }
+    void setCompleted() { _completed = true; }
 
   private:
     icmsg_type_t _msgType; // interconnect message type

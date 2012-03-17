@@ -59,14 +59,16 @@ L2Cache::helper_handle_ccbcast_probe(MissHandlingEntry<cache::LINESIZE> &mshr)
   }
   #endif
 
-  // Hack to fix timeout in bug 148 for --sleepy-cores. 
+  // Hack to fix timeout in old bugzilla bug 148 for --sleepy-cores.
+	// We used to wake up all cores waiting on an MSHR for a code address,
+	// but we don't have a way to check if an address is code from the L2Cache
+	// anymore (that information currently lives in the backing store).
+	// So now we wake all cores whenever we get a CC bcast message under coherence.
+	// FIXME Somehow expose this information nearly everywhere in the simulator,
+	// without exposing the backing store itself.
   for (int i = 0; i < MAX_L2D_OUTSTANDING_MISSES; i++) {
     if (pendingMiss[i].check_valid()) {
-      uint32_t addr = pendingMiss[i].get_addr();
-      // Wake up any cores waiting on code to avoid deadlock.
-      if (addr < rigel::CODEPAGE_HIGHWATER_MARK) {
-        pendingMiss[i].wake_cores_all();
-      }
+			pendingMiss[i].wake_cores_all();
     }
   }
 
@@ -251,17 +253,13 @@ L2Cache::helper_handle_coherence_probe(MissHandlingEntry<cache::LINESIZE> &mshr)
 
   //HACK FIXME this could be prohibitively slow if we call this function often
   // Hack to fix timeout in bug 148 for --sleepy-cores. 
+	// We used to wake up all cores waiting on an MSHR for a code address, but we
+	// don't have a way to tell if an address is code from the L2Cache anymore,
+	// so we conservatively wake up all cores.
+	// FIXME expose the address metadata held in the backing store nearly
+	// everywhere in the simulator, without exposing the entire backing store interface.
   for(int i = validBits.findFirstSet(); i != -1; i = validBits.findNextSet(i)) {
-    for(std::set<uint32_t>::const_iterator it = pendingMiss[i].get_pending_addrs_begin(),
-                                     end = pendingMiss[i].get_pending_addrs_end();
-        it != end; ++it)
-    {
-      const uint32_t &addr = *it;
-      // Wake up any cores waiting on code to avoid deadlock.
-      if (addr < rigel::CODEPAGE_HIGHWATER_MARK) {
-        pendingMiss[i].wake_cores_all();
-      }
-    }
+		pendingMiss[i].wake_cores_all();
   }
 
   // If we run out of MSHRs, we cannot handle the probe this cycle.  Any probe

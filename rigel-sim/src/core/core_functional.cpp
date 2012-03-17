@@ -191,7 +191,7 @@ CoreFunctional::fetch( uint32_t pc, int tid ) {
 
   DPRINT(DB_CF,"%s\n",__func__);
 
-  uint32_t data = mem_backing_store->read_word(pc);
+  uint32_t data = mem_backing_store->read_instr_word(pc);
   PipePacket* instr = new PipePacket(pc,data,tid);
   //instr->Dump();
   return instr;

@@ -146,7 +146,6 @@ MemoryTimingDRAM::MemoryTimingDRAM(bool _collisionChecking)
     size_t bytes = words*4;
     totalArgSize += bytes;
   }
-  assert(rigel::CODEPAGE_HIGHWATER_MARK+totalArgSize < 0x400000 && "Code+Args too large");
   uint32_t argvBaseAddr = 0x400000-(sizeof(uint32_t)*rigel::TARGET_ARGS.size());
   uint32_t argumentsBaseAddr = 0x400000-totalArgSize;
   for(size_t j = 0; j < rigel::TARGET_ARGS.size(); j++)
@@ -181,12 +180,6 @@ MemoryTimingDRAM::MemoryTimingDRAM(bool _collisionChecking)
 ////////////////////////////////////////////////////////////////////////////////
 
 //#define DEBUG_PRINT_DRAM_TRACE
-// Will not be set until after LoadELF is called and has loaded code
-uint32_t rigel::CODEPAGE_HIGHWATER_MARK = 0x0;
-uint32_t rigel::CODEPAGE_LIBPAR_BEGIN = 0x0;
-uint32_t rigel::CODEPAGE_LIBPAR_END = 0x0;
-uint32_t rigel::LOCKS_REGION_BEGIN = 0x0;
-uint32_t rigel::LOCKS_REGION_END = 0x0;
 
 /////////////////////////////////////////////////////////////////////////////////
 /// alias_check()
@@ -212,7 +205,7 @@ bool MemoryTimingDRAM::alias_check()
    if (0 == (addr % 0x08000000)) {
      fprintf(stderr, "%4d MiB\n", addr >> 20);
    }
-   data = rigel::GLOBAL_BACKING_STORE_PTR->read_word(addr);
+   data = rigel::GLOBAL_BACKING_STORE_PTR->read_data_word(addr);
    if (data != rigel::memory::MEMORY_INIT_VALUE) {
      fprintf(stderr, "Found an alias at addr: 0x%08x\n", addr);
      fprintf(stderr, "data: 0x%08x\n", data);

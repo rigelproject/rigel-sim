@@ -248,10 +248,10 @@ CCacheAccessStage::ccaccess(InstrSlot instr, int pipe, bool stalledMemoryOp)
         addr3 = ea + 0xc;
         // addr0 already is a hit so the rest must be
         //FIXME So much indirection is ugly.
-        mv0 = core->get_cluster()->getCacheModel()->backing_store.read_word(addr0);
-        mv1 = core->get_cluster()->getCacheModel()->backing_store.read_word(addr1);
-        mv2 = core->get_cluster()->getCacheModel()->backing_store.read_word(addr2);
-        mv3 = core->get_cluster()->getCacheModel()->backing_store.read_word(addr3);
+        mv0 = core->get_cluster()->getCacheModel()->backing_store.read_data_word(addr0);
+        mv1 = core->get_cluster()->getCacheModel()->backing_store.read_data_word(addr1);
+        mv2 = core->get_cluster()->getCacheModel()->backing_store.read_data_word(addr2);
+        mv3 = core->get_cluster()->getCacheModel()->backing_store.read_data_word(addr3);
         // Set the results.  Be careful for the first parameter since it needs
         // to be the vector register number not the first scalar of the vector:
         //          v = s / 4

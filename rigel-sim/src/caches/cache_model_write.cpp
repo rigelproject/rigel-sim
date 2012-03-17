@@ -116,21 +116,6 @@ CacheModel::helper_return_write_success(bool &stall,
   return masr;
 }
 
-void
-CacheModel::helper_check_code_highwater_mark(uint32_t addr) {
-
-  using namespace rigel::cache;
-  using namespace rigel;
-
-  if (addr < CODEPAGE_HIGHWATER_MARK) {
-    DEBUG_HEADER();
-    fprintf(stderr, "Attempting to write to a code word! highwater mark:"
-                    "0x%08x addr: 0x%08x\n", CODEPAGE_HIGHWATER_MARK, addr);
-    assert(0);
-  }
-}
-
-
 ///////////////////////////////////////////////////////////////////////////////
 /// write_access
 ///////////////////////////////////////////////////////////////////////////////
@@ -183,9 +168,6 @@ CacheModel::write_access(InstrLegacy &instr, int core, uint32_t addr, const
 
   // Used for L2Cache pend() calls.
   icmsg_type_t icmsg_type = rigel::instr_to_icmsg(instr.get_type());
-
-  // Sanity check since we have no SMC.
-  helper_check_code_highwater_mark(addr);
 
   // If the line is currently interlocked by another core, we have to stall.
   // TODO: We probably want to move the interlock below L1D hits and the

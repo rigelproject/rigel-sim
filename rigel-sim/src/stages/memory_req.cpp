@@ -463,9 +463,9 @@ MemoryStage::memaccess(InstrSlot instr, int pipe) {
       // Short circuit for finished loads
       if (instr->doneMemAccess()) { goto done_memaccess; }
 
-      if (ea < CODEPAGE_HIGHWATER_MARK) {
+      if (!core->get_cluster()->getCacheModel()->backing_store.is_readable(ea)) {
         DEBUG_HEADER();
-        fprintf(stderr, "[MC] Attempting to read to a code word! "
+        fprintf(stderr, "[MC] Attempting to read from an unreadable word! "
                         "PC: 0x%08x addr: 0x%08x core: %d \n",
                 instr->get_currPC(), ea, core->get_core_num_global());
         // Dump stack trace
@@ -478,7 +478,7 @@ MemoryStage::memaccess(InstrSlot instr, int pipe) {
             for (int j = 0; j < 32; j += 4) {
               uint32_t addr = sp_addr + (32*i) + j;
               uint32_t data = UINT32_MAX;
-              data = core->get_cluster()->getCacheModel()->backing_store.read_word(addr);
+              data = core->get_cluster()->getCacheModel()->backing_store.read_host_word(addr);
               fprintf(stderr, "(%3d) %08x ", i*32+j, data);
             }
             fprintf(stderr, "\n");
@@ -493,7 +493,7 @@ MemoryStage::memaccess(InstrSlot instr, int pipe) {
         // TODO: Dump pipeline state.
         // this->dump();
         fprintf(stderr,"cycle %" PRIu64 "\n", rigel::CURR_CYCLE);
-        assert(0 && "ea<CODEPAGE_HIGHWATER_MARK");
+				throw ExitSim("Tried to read from an unreadable word");
       } 
       // end debug dump for codeword access
       else if (
@@ -506,7 +506,7 @@ MemoryStage::memaccess(InstrSlot instr, int pipe) {
         )))))
       {
         DEBUG_HEADER();
-        fprintf(stderr, "[MC] Attempting to read a different core's stack!! "
+        fprintf(stderr, "[MC] Attempting to read from another thread's stack!! "
                         "PC: 0x%08x addr: 0x%08x core: %d \n",
                 instr->get_currPC(), ea, core->get_core_num_global());
         // Dump stack trace
@@ -519,7 +519,7 @@ MemoryStage::memaccess(InstrSlot instr, int pipe) {
             for (int j = 0; j < 32; j += 4) {
               uint32_t addr = sp_addr + (32*i) + j;
               uint32_t data = UINT32_MAX;
-              data = core->get_cluster()->getCacheModel()->backing_store.read_word(addr);
+              data = core->get_cluster()->getCacheModel()->backing_store.read_host_word(addr);
               fprintf(stderr, "(%3d) %08x ", i*32+j, data);
             }
             fprintf(stderr, "\n");
@@ -533,7 +533,7 @@ MemoryStage::memaccess(InstrSlot instr, int pipe) {
         instr->dump();
         // TODO: Dump pipeline state.
         // this->dump();
-        assert(0);
+				throw ExitSim("Tried to read from another thread's stack");
       }
 
       // FIXME: Only allow a single load in flight at a time.
@@ -563,7 +563,7 @@ MemoryStage::memaccess(InstrSlot instr, int pipe) {
             for (int j = 0; j < 32; j += 4) {
               uint32_t addr = sp_addr + (32*i) + j;
               uint32_t data = UINT32_MAX;
-              data = core->get_cluster()->getCacheModel()->backing_store.read_word(addr);
+              data = core->get_cluster()->getCacheModel()->backing_store.read_host_word(addr);
               fprintf(stderr, "(%3d) %08x ", i*32+j, data);
             }
             fprintf(stderr, "\n");
@@ -748,10 +748,10 @@ MemoryStage::memaccess(InstrSlot instr, int pipe) {
         addr2 = ea + 0x8;
         addr3 = ea + 0xc;
         // addr0 already is a hit so the rest must be
-        mv0 = core->get_cluster()->getCacheModel()->backing_store.read_word(addr0);
-        mv1 = core->get_cluster()->getCacheModel()->backing_store.read_word(addr1);
-        mv2 = core->get_cluster()->getCacheModel()->backing_store.read_word(addr2);
-        mv3 = core->get_cluster()->getCacheModel()->backing_store.read_word(addr3);
+        mv0 = core->get_cluster()->getCacheModel()->backing_store.read_data_word(addr0);
+        mv1 = core->get_cluster()->getCacheModel()->backing_store.read_data_word(addr1);
+        mv2 = core->get_cluster()->getCacheModel()->backing_store.read_data_word(addr2);
+        mv3 = core->get_cluster()->getCacheModel()->backing_store.read_data_word(addr3);
         // Set the results.  Be careful for the first parameter since it needs
         // to be the vector register number not the first scalar of the vector:
         //          v = s / 4
@@ -807,10 +807,10 @@ fprintf(stderr, "r3(%d) ea 0x%08x d 0x%08x\n", instr->get_result_reg3().addr, ad
       // Read in the parameters and sanity check?
       //We get words 0, 2, 3, and 4 of the __suds_syscall_struct.
       //Word 1 is for the result.
-      syscall_data.syscall_num = core->getBackingStore()->read_word(addr+0*sizeof(uint32_t));
-      syscall_data.arg1.u = core->getBackingStore()->read_word(addr+2*sizeof(uint32_t));
-      syscall_data.arg2.u = core->getBackingStore()->read_word(addr+3*sizeof(uint32_t));
-      syscall_data.arg3.u = core->getBackingStore()->read_word(addr+4*sizeof(uint32_t));
+      syscall_data.syscall_num = core->getBackingStore()->read_data_word(addr+0*sizeof(uint32_t));
+      syscall_data.arg1.u = core->getBackingStore()->read_data_word(addr+2*sizeof(uint32_t));
+      syscall_data.arg2.u = core->getBackingStore()->read_data_word(addr+3*sizeof(uint32_t));
+      syscall_data.arg3.u = core->getBackingStore()->read_data_word(addr+4*sizeof(uint32_t));
 
 #if 0
       std::cerr << "SYSCALL 0x" << hex << setw(2) << setfill('0') << syscall_data.syscall_num;
@@ -996,7 +996,7 @@ fprintf(stderr, "r3(%d) ea 0x%08x d 0x%08x\n", instr->get_result_reg3().addr, ad
             for (int j = 0; j < 32; j += 4) {
               uint32_t addr = sp_addr + (32*i) + j;
               uint32_t data = UINT32_MAX;
-              data = core->get_cluster()->getCacheModel()->backing_store.read_word(addr);
+              data = core->get_cluster()->getCacheModel()->backing_store.read_host_word(addr);
               fprintf(stderr, "(%3d) %08x ", i*32+j, data);
             }
             fprintf(stderr, "\n");
@@ -1012,9 +1012,9 @@ fprintf(stderr, "r3(%d) ea 0x%08x d 0x%08x\n", instr->get_result_reg3().addr, ad
         // this->dump();
         assert(0);
       }
-      if (ea < rigel::CODEPAGE_HIGHWATER_MARK) {
+      if (!core->get_cluster()->getCacheModel()->backing_store.is_writable(ea)) {
         DEBUG_HEADER();
-        fprintf(stderr, "[MC] Attempting to write to a code word! "
+        fprintf(stderr, "[MC] Attempting to write to an unwritable word! "
                         "PC: 0x%08x addr: 0x%08x core: %d \n",
                 instr->get_currPC(), ea, core->get_core_num_global());
         // Dump stack trace
@@ -1027,7 +1027,7 @@ fprintf(stderr, "r3(%d) ea 0x%08x d 0x%08x\n", instr->get_result_reg3().addr, ad
             for (int j = 0; j < 32; j += 4) {
               uint32_t addr = sp_addr + (32*i) + j;
               uint32_t data = UINT32_MAX;
-              data = core->get_cluster()->getCacheModel()->backing_store.read_word(addr);
+              data = core->get_cluster()->getCacheModel()->backing_store.read_host_word(addr);
               fprintf(stderr, "(%3d) %08x ", i*32+j, data);
             }
             fprintf(stderr, "\n");
@@ -1199,7 +1199,7 @@ fprintf(stderr, "r3(%d) ea 0x%08x d 0x%08x\n", instr->get_result_reg3().addr, ad
             for (int j = 0; j < 32; j += 4) {
               uint32_t addr = sp_addr + (32*i) + j;
               uint32_t data = UINT32_MAX;
-              data = core->get_cluster()->getCacheModel()->backing_store.read_word(addr);
+              data = core->get_cluster()->getCacheModel()->backing_store.read_host_word(addr);
               fprintf(stderr, "(%3d) %08x ", i*32+j, data);
             }
             fprintf(stderr, "\n");
@@ -1292,7 +1292,7 @@ fprintf(stderr, "r3(%d) ea 0x%08x d 0x%08x\n", instr->get_result_reg3().addr, ad
             for (int j = 0; j < 32; j += 4) {
               uint32_t addr = sp_addr + (32*i) + j;
               uint32_t data = UINT32_MAX;
-              data = core->get_cluster()->getCacheModel()->backing_store.read_word(addr);
+              data = core->get_cluster()->getCacheModel()->backing_store.read_host_word(addr);
               fprintf(stderr, "(%3d) %08x ", i*32+j, data);
             }
             fprintf(stderr, "\n");

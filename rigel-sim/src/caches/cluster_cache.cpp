@@ -22,6 +22,7 @@
 #include "util/debug.h"          // for DebugSim, GLOBAL_debug_sim
 #include "define.h"         // for DEBUG_HEADER, etc
 #include "util/dynamic_bitset.h"  // for DynamicBitset
+#include "util/util.h"      // for ExitSim
 #include "icmsg.h"          // for ICMsg
 #include "interconnect.h"   // for TileInterconnectBase
 #include "locality_tracker.h"  // for LocalityTracker
@@ -31,6 +32,7 @@
 #include "seqnum.h"         // for seq_num_t
 #include "sim.h"
 #include "tlb.h"            // for TLBs
+#include "memory/backing_store.h" // FIXME used for is_executable()
 
 using namespace rigel;
 
@@ -1321,10 +1323,14 @@ L2Cache::Fill(uint32_t addr, bool was_prefetch, bool rnw, bool incoherent, bool 
     TagArray[set][way].set_accessed_bit_write();
   } else {
     // FIXME DIRTY HACK!!!  We need to make sure that speculative instructions
-    // get their accessed bits set.  We should fix this later so that the MSHR
+    // get their accessed bits set so they can be evicted.
+		// We should fix this later so that the MSHR
     // knows that a fetch triggered the access and it can do the right thing on
     // a fill, i.e., set the bit if needed.
-    if (addr < CODEPAGE_HIGHWATER_MARK) {
+		// FIXME Needing to poke through to the cache model and backing store suggests
+		// that maybe target memory metadata should live in a separate, globally
+		// accessible object.
+    if (Caches->backing_store.is_executable(addr)) { //if *addr is code
       TagArray[set][way].set_accessed_bit_read();
       TagArray[set][way].set_accessed_bit_write();
     } else {

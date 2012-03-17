@@ -2320,16 +2320,15 @@ Profile::handle_network_stats(uint32_t addr, icmsg_type_t type)
   uint32_t bottom_of_stack = 0UL - stack_size;
 
   switch (type) {
-    case IC_MSG_READ_REQ:                
-    case IC_MSG_INSTR_READ_REQ:          
-      if (addr < CODEPAGE_HIGHWATER_MARK) {
-        rigel::profiler::stats[STATNAME_L2OUT_INSTR_REQ].inc();
-      } else {
-        (addr < bottom_of_stack) ?
+    case IC_MSG_INSTR_READ_REQ:
+			rigel::profiler::stats[STATNAME_L2OUT_INSTR_REQ].inc();
+			rigel::profiler::stats[STATNAME_L2OUT_TOTAL].inc();
+			break;
+    case IC_MSG_READ_REQ:          
+      (addr < bottom_of_stack) ?
         rigel::profiler::stats[STATNAME_L2OUT_READ_NONSTACK_REQ].inc() :
         rigel::profiler::stats[STATNAME_L2OUT_READ_STACK_REQ].inc();
-      }
-      profiler::stats[STATNAME_L2OUT_TOTAL].inc();
+			rigel::profiler::stats[STATNAME_L2OUT_TOTAL].inc();
       break;
     case IC_MSG_WRITE_REQ:               
       (addr < bottom_of_stack) ?
@@ -2398,13 +2397,12 @@ Profile::handle_network_stats(uint32_t addr, icmsg_type_t type)
       profiler::stats[STATNAME_L2OUT_TOTAL].inc();
       break;
     // BEGIN REPLY MESSAGES
-    case IC_MSG_READ_REPLY:              
-    case IC_MSG_INSTR_READ_REPLY:        
-      if (addr < CODEPAGE_HIGHWATER_MARK) {
-        rigel::profiler::stats[STATNAME_L2IN_INSTR_REPLY].inc();
-      } else {
-        rigel::profiler::stats[STATNAME_L2IN_READ_REPLY].inc();
-      }
+    case IC_MSG_INSTR_READ_REPLY:
+			rigel::profiler::stats[STATNAME_L2IN_INSTR_REPLY].inc();
+			rigel::profiler::stats[STATNAME_L2IN_TOTAL].inc();
+			break;
+    case IC_MSG_READ_REPLY:
+      rigel::profiler::stats[STATNAME_L2IN_READ_REPLY].inc();
       profiler::stats[STATNAME_L2IN_TOTAL].inc();
       break;
     case IC_MSG_WRITE_REPLY:             

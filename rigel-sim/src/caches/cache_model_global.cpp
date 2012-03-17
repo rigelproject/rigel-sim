@@ -82,7 +82,7 @@ CacheModel::global_memory_access(
         // Global atomic increment.  Take value, add one. (atom.inc)
         case I_ATOMINC:
         {
-          data = backing_store.read_word(ca_in.get_addr());
+          data = backing_store.read_data_word(ca_in.get_addr());
           data++;
           backing_store.write_word(ca_in.get_addr(), data);
           break;
@@ -90,7 +90,7 @@ CacheModel::global_memory_access(
         // Global atomic decrement.  Take value, subtract one. (atom.dec)
         case I_ATOMDEC:
         {
-          data = backing_store.read_word(ca_in.get_addr());
+          data = backing_store.read_data_word(ca_in.get_addr());
           data--;
           backing_store.write_word(ca_in.get_addr(), data);
           break;
@@ -106,7 +106,7 @@ CacheModel::global_memory_access(
           uint32_t addu_addr = ca_in.get_instr()->get_sreg0().data.i32;
 
           // Grab old value out of memory.
-          data = backing_store.read_word(addu_addr);
+          data = backing_store.read_data_word(addu_addr);
           // Do the atomic addition here.
           mem_data = data + addu_data;
           backing_store.write_word(addu_addr, mem_data);
@@ -129,7 +129,7 @@ CacheModel::global_memory_access(
           uint32_t swap_data    = ca_in.get_instr()->get_sreg2().data.i32;
           uint32_t cas_addr     = ca_in.get_instr()->get_sreg0().data.i32;
 
-          mem_data = backing_store.read_word(cas_addr);
+          mem_data = backing_store.read_data_word(cas_addr);
           if (mem_data == compare_data) {
             backing_store.write_word(cas_addr, swap_data);
           }
@@ -142,7 +142,7 @@ CacheModel::global_memory_access(
         {
           // Grab value from memory and replace it with value in the source
           // register. 
-          uint32_t mem_data = backing_store.read_word( ca_in.get_addr());
+          uint32_t mem_data = backing_store.read_data_word( ca_in.get_addr());
           backing_store.write_word( ca_in.get_addr(), data);
           data = mem_data;
           break;
@@ -155,7 +155,7 @@ CacheModel::global_memory_access(
           // FIXME If we wanted to be a
           // bit more accurate, we would freeze the value when we hit the
           // GCache and then return that to the core.
-          data = backing_store.read_word(ca_in.get_addr());
+          data = backing_store.read_data_word(ca_in.get_addr());
           break;
         }
         // Global store word. (g.stw)
@@ -176,7 +176,7 @@ CacheModel::global_memory_access(
           uint32_t op_data = ca_in.get_instr()->get_sreg1().data.i32;
           uint32_t op_addr = ca_in.get_instr()->get_sreg0().data.i32;
           // 1. READ
-          mem_data = backing_store.read_word(op_addr);
+          mem_data = backing_store.read_data_word(op_addr);
           // 2. MODIFY
           mem_data = (op_data > mem_data) ? op_data : mem_data;
           // 3. WRITE
@@ -192,7 +192,7 @@ CacheModel::global_memory_access(
           uint32_t op_data = ca_in.get_instr()->get_sreg1().data.i32;
           uint32_t op_addr = ca_in.get_instr()->get_sreg0().data.i32;
           // 1. READ
-          mem_data = backing_store.read_word(op_addr);
+          mem_data = backing_store.read_data_word(op_addr);
           // 2. MODIFY
           mem_data = (op_data < mem_data) ? op_data : mem_data;
           // 3. WRITE
@@ -208,7 +208,7 @@ CacheModel::global_memory_access(
           uint32_t op_data = ca_in.get_instr()->get_sreg1().data.i32;
           uint32_t op_addr = ca_in.get_instr()->get_sreg0().data.i32;
           // 1. READ
-          mem_data = backing_store.read_word(op_addr);
+          mem_data = backing_store.read_data_word(op_addr);
           // 2. MODIFY
           mem_data = op_data | mem_data;
           // 3. WRITE
@@ -227,7 +227,7 @@ CacheModel::global_memory_access(
           uint32_t op_data = ca_in.get_instr()->get_sreg1().data.i32;
           uint32_t op_addr = ca_in.get_instr()->get_sreg0().data.i32;
           // 1. READ
-          mem_data = backing_store.read_word(op_addr);
+          mem_data = backing_store.read_data_word(op_addr);
           // 2. MODIFY
           mem_data = op_data & mem_data;
           // 3. WRITE
@@ -246,7 +246,7 @@ CacheModel::global_memory_access(
           uint32_t op_data = ca_in.get_instr()->get_sreg1().data.i32;
           uint32_t op_addr = ca_in.get_instr()->get_sreg0().data.i32;
           // 1. READ
-          mem_data = backing_store.read_word(op_addr);
+          mem_data = backing_store.read_data_word(op_addr);
           // 2. MODIFY
           mem_data = op_data ^ mem_data;
           // 3. WRITE

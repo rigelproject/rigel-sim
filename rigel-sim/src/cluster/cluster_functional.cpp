@@ -40,6 +40,17 @@ ClusterSimple::~ClusterSimple() {
   }
 }
 
+void
+ClusterSimple::Heartbeat() {
+
+  // p: core
+  for (int p = 0; p < rigel::CORES_PER_CLUSTER; p++) {
+		for (int t = 0; t < rigel::THREADS_PER_CORE; t++) {
+		  fprintf(stderr, "cycle %"PRIu64": core %d, thread %d: 0x%08x\n", rigel::CURR_CYCLE, p, t, cores[p]->pc(t));
+		} // end thread
+  } // end core
+}
+
 /// PerCycle
 int
 ClusterSimple::PerCycle() {
@@ -59,11 +70,6 @@ ClusterSimple::PerCycle() {
   }
 
   return halted();
-};
-
-void 
-ClusterSimple::Heartbeat() { 
-  assert( 0 && "unimplemented!");
 };
 
 void 
