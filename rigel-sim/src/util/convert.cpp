@@ -1,5 +1,6 @@
 #include "define.h"
 #include <cassert>
+#include <cstdio>
 
 namespace rigel {
 
@@ -35,6 +36,7 @@ namespace rigel {
       case (I_PREF_B_GC): return IC_MSG_PREFETCH_BLOCK_GC_REQ;
       case (I_PREF_B_CC): return IC_MSG_PREFETCH_BLOCK_CC_REQ;
       case (I_PREF_NGA): return IC_MSG_PREFETCH_NGA_REQ;
+			case (I_LINE_INV): return IC_MSG_LINE_INVALIDATE_REQ;
       case (I_LINE_WB): return IC_MSG_LINE_WRITEBACK_REQ;
       case (I_LINE_FLUSH): return IC_MSG_LINE_WRITEBACK_REQ;
       case (I_CC_WB): return IC_MSG_LINE_WRITEBACK_REQ;
@@ -80,6 +82,7 @@ instr_to_icmsg_full(instr_t type) {
     case (I_PREF_B_CC): return IC_MSG_PREFETCH_BLOCK_CC_REQ;
     case (I_PREF_NGA):  return IC_MSG_PREFETCH_NGA_REQ;
     // cache management
+		case (I_LINE_INV):   return IC_MSG_LINE_INVALIDATE_REQ;
     case (I_LINE_WB):    return IC_MSG_LINE_WRITEBACK_REQ;
     case (I_LINE_FLUSH): return IC_MSG_LINE_WRITEBACK_REQ;
     case (I_CC_WB):      return IC_MSG_LINE_WRITEBACK_REQ;
@@ -87,7 +90,7 @@ instr_to_icmsg_full(instr_t type) {
     // broadcast
     case (I_BCAST_UPDATE): return IC_MSG_BCAST_UPDATE_REQ;
     case (I_BCAST_INV):    return IC_MSG_BCAST_INV_REQ;
-    default: assert(0 && "Unknown instruction type!");
+    default: printf("%d\n", type); assert(0 && "Unknown instruction type!");
   }
   assert(0 && "Unknown instruction type!");
   return IC_MSG_NULL;
