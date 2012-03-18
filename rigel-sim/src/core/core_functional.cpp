@@ -484,20 +484,26 @@ CoreFunctional::doMem(PipePacket* instr) {
       case I_LINE_INV:
       case I_LINE_FLUSH:
         // do nothing for these in functional mode, for now, with no caches
+        instr->setCompleted();
         DRIGEL( printf("ignoring CACHECONTROL instruction for now...NOP\n"); )
         break;
       default:
         throw ExitSim("unhandled CacheControl operation?");
     }
   } else if (instr->isPrefetch()) {
+    instr->setCompleted();
     DRIGEL( printf("ignoring PREFETCH instruction for now...NOP\n"); )
   } else {
     instr->Dump();
     throw ExitSim("unknown memory operation!");
   }
 
-  instr->memRequest(p); // save pointer to incomplete request
-  checkMemoryRequest(instr);
+  instr->memRequest(p); // save pointer to request
+  if (instr->isCompleted()) {
+    return;
+  } else {
+    checkMemoryRequest(instr);
+  }
 
 }
 
@@ -553,7 +559,9 @@ CoreFunctional::checkMemoryRequest(PipePacket* instr) {
 
   } else { 
     // NULL message means we have nothing to process
-    throw ExitSim("unhandled path sendMemoryRequest()");
+    instr->Dump();
+    p->Dump();
+    throw ExitSim("unhandled path checkMemoryRequest()");
   }
 
 }
