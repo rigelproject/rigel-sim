@@ -5,6 +5,8 @@
 #include "port.h"
 #include "util/callback.h"
 
+#include "isa/rigel_isa.h"
+
 #define DB_CC 0
 
 /// constructor
@@ -106,6 +108,15 @@ ClusterCacheFunctional::doMemoryAccess(PacketPtr p) {
 
 }
 
+void
+ClusterCacheFunctional::doGlobalAtomic(PacketPtr p) {
+  uint32_t result = RigelISA::execGlobalAtomic(p, mem_backing_store);
+  // convert the request to a reply
+  p->msgType( rigel::icmsg_convert(p->msgType()) );
+  p->data( result );
+  p->setCompleted();
+}
+#if 0
 #include "core/regfile.h" // TODO FIXME REMOVE ME, bad, for regval32_t
 void 
 ClusterCacheFunctional::doGlobalAtomic(PacketPtr p) {
@@ -204,6 +215,7 @@ ClusterCacheFunctional::doGlobalAtomic(PacketPtr p) {
   p->data( temp_result );
   p->setCompleted();
 }
+#endif
 
 /// side effect: updates p
 void

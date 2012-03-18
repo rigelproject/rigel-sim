@@ -20,6 +20,7 @@ AM_CPPFLAGS=$(protobuf_CFLAGS)
 bin_PROGRAMS = rigelsim dramtest
 common_SOURCES = \
  src/autogen/simdecoder_new.cpp \
+ src/isa/rigel_isa.cpp \
  src/tile/tile_legacy.cpp \
  src/tile/tile_new.cpp \
  src/tile/tilebase.cpp \
