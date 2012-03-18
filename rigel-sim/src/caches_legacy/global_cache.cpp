@@ -15,16 +15,16 @@
 #include <string>                       // for string
 #include <vector>                       // for vector, vector<>::iterator
 #include "memory/address_mapping.h"  // for AddressMapping
-#include "cache_tags.h"     // for CacheTag
-#include "caches/cache_base.h"  // for CacheAccess_t, etc
-#include "caches/global_cache.h"  // for GlobalCache, etc
-#include "caches/global_cache_debug.h"  // for __DEBUG_ADDR, etc
+#include "caches_legacy/cache_tags.h"     // for CacheTag
+#include "caches_legacy/cache_base.h"  // for CacheAccess_t, etc
+#include "caches_legacy/global_cache.h"  // for GlobalCache, etc
+#include "caches_legacy/global_cache_debug.h"  // for __DEBUG_ADDR, etc
 #include "util/debug.h"          // for DebugSim, GLOBAL_debug_sim
 #include "define.h"         // for DEBUG_HEADER, etc
 #include "directory.h"      // for CacheDirectory
 #include "memory/dram.h"           // for BANKS, CONTROLLERS, RANKS, etc
 #include "util/dynamic_bitset.h"  // for DynamicBitset
-#include "gcache_request_state_machine.h"
+#include "caches_legacy/gcache_request_state_machine.h"
 #include "global_network.h"  // for GlobalNetworkBase
 #include "icmsg.h"          // for ICMsg
 #include "instr.h"          // for InstrLegacy

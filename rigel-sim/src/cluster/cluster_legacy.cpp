@@ -14,8 +14,8 @@
 #include <bitset>                       // for bitset, bitset<>::reference
 #include <fstream>
 #include <iostream>
-#include "cache_model.h"    // for CacheModel, etc
-#include "caches/l2d.h"     // for L2Cache, etc
+#include "caches_legacy/cache_model.h"    // for CacheModel, etc
+#include "caches_legacy/l2d.h"     // for L2Cache, etc
 #include "cluster.h"        // for ClusterLegacy, etc
 #include "core.h"           // for CoreInOrderLegacy, ::IF2DC, ::CC2WB, etc
 #include "instr.h"          // for InstrLegacy

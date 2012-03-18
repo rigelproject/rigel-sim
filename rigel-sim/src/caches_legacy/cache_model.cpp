@@ -14,12 +14,12 @@
 #include <stdint.h>                     // for uint32_t
 #include <list>                         // for list
 #include "broadcast_manager.h"  // for BroadcastManager
-#include "cache_model.h"    // for CacheModel, ldlstc_req_t
-#include "caches/cache_base.h"  // for CacheAccess_t, etc
-#include "caches/l1d.h"     // for L1DCache, NoL1DCache
-#include "caches/l1i.h"     // for L1ICache
-#include "caches/l2d.h"     // for L2Cache, Profile (ptr only), etc
-#include "caches/l2i.h"     // for L2ICache
+#include "caches_legacy/cache_model.h"    // for CacheModel, ldlstc_req_t
+#include "caches_legacy/cache_base.h"  // for CacheAccess_t, etc
+#include "caches_legacy/l1d.h"     // for L1DCache, NoL1DCache
+#include "caches_legacy/l1i.h"     // for L1ICache
+#include "caches_legacy/l2d.h"     // for L2Cache, Profile (ptr only), etc
+#include "caches_legacy/l2i.h"     // for L2ICache
 #include "util/debug.h"          // for DebugSim, GLOBAL_debug_sim
 #include "define.h"         // for RES_TYPE, icmsg_type_t, etc
 #include "icmsg.h"          // for ICMsg

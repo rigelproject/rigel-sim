@@ -38,24 +38,24 @@ common_SOURCES = \
  src/memory/dram_controller.cpp \
  src/memory/dram_channel_model.cpp \
  src/memory/tlb.cpp \
- src/caches/broadcast_manager.cpp \
- src/caches/prefetch.cpp \
- src/caches/gcache_request_state_machine.cpp \
- src/caches/cache_model_read.cpp \
- src/caches/cache_model_write.cpp \
- src/caches/cache_model_instr.cpp \
- src/caches/cache_model_global.cpp \
- src/caches/cache_model.cpp \
- src/caches/core_caches.cpp \
- src/caches/cluster_cache.cpp \
- src/caches/global_cache.cpp \
- src/caches/directory.cpp \
- src/caches/directory_helpers.cpp \
- src/caches/overflow_directory.cpp \
- src/caches/hybrid_directory.cpp \
- src/caches/global_cache_coherence.cpp \
- src/caches/cluster_cache_coherence.cpp \
- src/caches/cluster_cache_util.cpp \
+ src/caches_legacy/broadcast_manager.cpp \
+ src/caches_legacy/prefetch.cpp \
+ src/caches_legacy/gcache_request_state_machine.cpp \
+ src/caches_legacy/cache_model_read.cpp \
+ src/caches_legacy/cache_model_write.cpp \
+ src/caches_legacy/cache_model_instr.cpp \
+ src/caches_legacy/cache_model_global.cpp \
+ src/caches_legacy/cache_model.cpp \
+ src/caches_legacy/core_caches.cpp \
+ src/caches_legacy/cluster_cache.cpp \
+ src/caches_legacy/global_cache.cpp \
+ src/caches_legacy/directory.cpp \
+ src/caches_legacy/directory_helpers.cpp \
+ src/caches_legacy/overflow_directory.cpp \
+ src/caches_legacy/hybrid_directory.cpp \
+ src/caches_legacy/global_cache_coherence.cpp \
+ src/caches_legacy/cluster_cache_coherence.cpp \
+ src/caches_legacy/cluster_cache_util.cpp \
  src/stages/fp_complete.cpp \
  src/stages/ccache_access.cpp \
  src/stages/decode.cpp \

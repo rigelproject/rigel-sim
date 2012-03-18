@@ -19,7 +19,7 @@
 #include <iostream>                     // for hex, dec, cerr
 #include <string>                       // for char_traits
 #include <vector>                       // for vector
-#include "caches/hybrid_directory.h"  // for HybridDirectory, etc
+#include "caches_legacy/hybrid_directory.h"  // for HybridDirectory, etc
 #include "profile/profile.h"        // for ProfileStat
 #include "core/regfile_legacy.h"        // for RegisterBase, RegisterFileLegacy, etc
 #include "rigellib.h"       // for ::SPRF_HYBRIDCC_BASE_ADDR, etc

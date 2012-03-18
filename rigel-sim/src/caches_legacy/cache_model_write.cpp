@@ -11,11 +11,11 @@
 #include <stdint.h>                     // for uint32_t
 #include <stdio.h>                      // for fprintf, NULL, stderr
 #include "memory/address_mapping.h"  // for AddressMapping
-#include "cache_model.h"    // for CacheModel
-#include "caches/cache_base.h"  // for CacheAccess_t, etc
-#include "caches/global_cache.h"  // for GlobalCache
-#include "caches/l1d.h"     // for L1DCache
-#include "caches/l2d.h"     // for L2Cache
+#include "caches_legacy/cache_model.h"    // for CacheModel
+#include "caches_legacy/cache_base.h"  // for CacheAccess_t, etc
+#include "caches_legacy/global_cache.h"  // for GlobalCache
+#include "caches_legacy/l1d.h"     // for L1DCache
+#include "caches_legacy/l2d.h"     // for L2Cache
 #include "util/debug.h"          // for DebugSim, GLOBAL_debug_sim
 #include "define.h"         // for DEBUG_HEADER, etc
 #include "icmsg.h"          // for ICMsg

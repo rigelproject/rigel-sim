@@ -14,7 +14,7 @@
 #include "arbiter.h"
 
 // Includes CacheTags and MSHRs
-#include "cache_tags.h"
+#include "caches_legacy/cache_tags.h"
 #include "mshr.h"
 // Each of the caches is kept in a separate file, but they are all interrelated
 // so we pull them in here.
@@ -22,12 +22,12 @@
 // The includes below from includes/caches/ contain *NO* include files of their
 // own.
 using namespace rigel::cache;
-#include "caches/cache_base.h"
-#include "caches/l1d.h"
-#include "caches/l1i.h"
-#include "caches/l2i.h"
-#include "caches/l2d.h"
-#include "caches/global_cache.h"
+#include "caches_legacy/cache_base.h"
+#include "caches_legacy/l1d.h"
+#include "caches_legacy/l1i.h"
+#include "caches_legacy/l2i.h"
+#include "caches_legacy/l2d.h"
+#include "caches_legacy/global_cache.h"
 
 // Forward declarations
 class BroadcastManager;

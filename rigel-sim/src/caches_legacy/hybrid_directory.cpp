@@ -6,7 +6,7 @@
 #include <stddef.h>                     // for size_t
 #include <stdint.h>                     // for uint32_t
 #include "memory/address_mapping.h"  // for AddressMapping
-#include "caches/hybrid_directory.h"  // for HybridDirectory, etc
+#include "caches_legacy/hybrid_directory.h"  // for HybridDirectory, etc
 #include "define.h"         // for ::IC_MSG_DIRECTORY_READ_REQ
 #include "memory/dram.h"           // for CONTROLLERS
 #include "overflow_directory.h"  // for dir_of_timing_entry_t, etc

@@ -15,7 +15,7 @@
 #include <cstdio>
 #include <string>
 #include "util/debug.h"
-#include "caches/cache_base.h"
+#include "caches_legacy/cache_base.h"
 #include "sim.h"
 #include "tlb.h"
 

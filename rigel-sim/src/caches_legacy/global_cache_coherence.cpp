@@ -9,10 +9,10 @@
 #include <string>                       // for char_traits, string
 #include <vector>                       // for vector
 #include "memory/address_mapping.h"  // for AddressMapping
-#include "caches/cache_base.h"  // for CacheAccess_t
-#include "caches/global_cache.h"  // for GlobalCache, etc
-#include "caches/global_cache_debug.h"  // for DEBUG_CC, etc
-#include "caches/hybrid_directory.h"  // for HybridDirectory, etc
+#include "caches_legacy/cache_base.h"  // for CacheAccess_t
+#include "caches_legacy/global_cache.h"  // for GlobalCache, etc
+#include "caches_legacy/global_cache_debug.h"  // for DEBUG_CC, etc
+#include "caches_legacy/hybrid_directory.h"  // for HybridDirectory, etc
 #include "define.h"         // for ::IC_MSG_CC_RD_RELEASE_REQ, etc
 #include "directory.h"      // for CacheDirectory
 #include "global_network.h"  // for GlobalNetworkBase

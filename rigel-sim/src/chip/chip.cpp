@@ -7,11 +7,11 @@
 #include "tile.h"
 #include "broadcast_manager.h"  // for BroadcastManager
 #include "memory/dram.h"           // for CONTROLLERS, RANKS, ROWS, etc
-#include "caches/global_cache.h"  // for GlobalCache, etc
+#include "caches_legacy/global_cache.h"  // for GlobalCache, etc
 #include "global_network.h"
 #include "memory_timing.h"      //For MemoryTimingType implementation
 #include "util/value_tracker.h"
-#include "cache_model.h" //For poking into L2s for TLB aggregation :(
+#include "caches_legacy/cache_model.h" //For poking into L2s for TLB aggregation :(
 #include "util/construction_payload.h"
 
 /// chip constructor

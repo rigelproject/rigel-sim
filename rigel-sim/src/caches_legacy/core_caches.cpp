@@ -16,12 +16,12 @@
 #include <stdio.h>                      // for fprintf, printf, stderr
 #include <iomanip>                      // for operator<<, setfill, setw
 #include <ostream>                      // for operator<<, etc
-#include "cache_model.h"    // for CacheModel
-#include "cache_tags.h"     // for CacheTag
-#include "caches/l1d.h"     // for L1DCache
-#include "caches/l1i.h"     // for L1ICache
-#include "caches/l2d.h"     // for L2Cache
-#include "caches/l2i.h"     // for L2ICache
+#include "caches_legacy/cache_model.h"    // for CacheModel
+#include "caches_legacy/cache_tags.h"     // for CacheTag
+#include "caches_legacy/l1d.h"     // for L1DCache
+#include "caches_legacy/l1i.h"     // for L1ICache
+#include "caches_legacy/l2d.h"     // for L2Cache
+#include "caches_legacy/l2i.h"     // for L2ICache
 #include "cluster.h"        // for Cluster
 #include "core.h"           // for CoreInOrderLegacy, etc
 #include "define.h"         // for ::IC_INVALID_DO_NOT_USE, etc

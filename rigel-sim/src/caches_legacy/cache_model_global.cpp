@@ -9,10 +9,10 @@
 
 #include <assert.h>                     // for assert
 #include <stdint.h>                     // for uint32_t
-#include "cache_model.h"    // for CacheModel
-#include "caches/cache_base.h"  // for CacheAccess_t
-#include "caches/hybrid_directory.h"  // for HybridDirectory, etc
-#include "caches/l2d.h"     // for L2Cache
+#include "caches_legacy/cache_model.h"    // for CacheModel
+#include "caches_legacy/cache_base.h"  // for CacheAccess_t
+#include "caches_legacy/hybrid_directory.h"  // for HybridDirectory, etc
+#include "caches_legacy/l2d.h"     // for L2Cache
 #include "cluster.h"        // for Cluster
 #include "core.h"           // for CoreInOrderLegacy, etc
 #include "define.h"         // for MemoryAccessStallReason, etc

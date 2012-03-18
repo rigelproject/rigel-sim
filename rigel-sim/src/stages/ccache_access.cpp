@@ -13,7 +13,7 @@
 #include <stdint.h>                     // for uint32_t
 #include <stdio.h>                      // for fprintf, stderr
 #include <list>                         // for list, _List_iterator, etc
-#include "cache_model.h"    // for CacheModel
+#include "caches_legacy/cache_model.h"    // for CacheModel
 #include "cluster.h"        // for Cluster
 #include "core.h"           // for CoreInOrderLegacy, ::CC2WB, ::FP2CC
 #include "define.h"         // for InstrSlot, DEBUG_HEADER, etc

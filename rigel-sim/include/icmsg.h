@@ -10,7 +10,7 @@
 #include "seqnum.h"
 // Necessary evil for timers.  util.h is copesetic otherwise.
 #include "util/util.h"
-#include "gcache_request_state_machine.h" //Have to include since we have a set<> of them :(
+#include "caches_legacy/gcache_request_state_machine.h" //Have to include since we have a set<> of them :(
 #include <bitset>
 #include <set>
 #include <vector>

@@ -12,8 +12,8 @@
 #include <sys/types.h>                  // for int32_t
 #include <cmath>                        // for fabs, sqrtf
 #include "memory/address_mapping.h"  // for AddressMapping
-#include "cache_model.h"    // for CacheModel
-#include "caches/hybrid_directory.h"  // for HybridDirectory
+#include "caches_legacy/cache_model.h"    // for CacheModel
+#include "caches_legacy/hybrid_directory.h"  // for HybridDirectory
 #include "cluster.h"        // for Cluster
 #include "core.h"           // for CoreInOrderLegacy, etc
 #include "define.h"         // for RES_TYPE::L2_READ_CMD, etc

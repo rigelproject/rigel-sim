@@ -11,7 +11,7 @@
 #define __CACHES__CACHE_BASE__
 
 #include "util/dynamic_bitset.h"
-#include "cache_tags.h"
+#include "caches_legacy/cache_tags.h"
 #include "mshr.h"
 
 ////////////////////////////////////////////////////////////////////////////////

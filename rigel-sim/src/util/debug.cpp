@@ -8,9 +8,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include <cstdio>                      // for fprintf, stderr
-#include "cache_model.h"    // for CacheModel
-#include "caches/global_cache.h"  // for GlobalCache, etc
-#include "caches/l2d.h"     // for L2Cache, etc
+#include "caches_legacy/cache_model.h"    // for CacheModel
+#include "caches_legacy/global_cache.h"  // for GlobalCache, etc
+#include "caches_legacy/l2d.h"     // for L2Cache, etc
 #include "util/debug.h"          // for DebugSim
 #include "directory.h"      // for CacheDirectory
 #include "global_network.h"  // for GlobalNetworkBase

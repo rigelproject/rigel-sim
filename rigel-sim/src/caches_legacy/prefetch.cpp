@@ -12,8 +12,8 @@
 #include <assert.h>                     // for assert
 #include <stddef.h>                     // for NULL
 #include <stdint.h>                     // for uint32_t
-#include "caches/cache_base.h"  // for CacheAccess_t, etc
-#include "caches/l2d.h"     // for L2Cache
+#include "caches_legacy/cache_base.h"  // for CacheAccess_t, etc
+#include "caches_legacy/l2d.h"     // for L2Cache
 #include "define.h"
 #include "instr.h"          // for InstrLegacy
 #include "prefetch.h"       // for HWPrefetcher, RPTEntry

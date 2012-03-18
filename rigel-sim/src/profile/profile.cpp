@@ -36,7 +36,7 @@
 #include <string>                       // for string, char_traits, etc
 #include <utility>                      // for pair
 #include <vector>                       // for vector, etc
-#include "caches/global_cache.h"  // for GlobalCache
+#include "caches_legacy/global_cache.h"  // for GlobalCache
 #include "util/debug.h"          // for DebugSim, GLOBAL_debug_sim
 #include "define.h"
 #include "memory/dram.h"           // for BURST_SIZE, CONTROLLERS, etc

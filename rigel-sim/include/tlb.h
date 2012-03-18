@@ -6,7 +6,7 @@
 #include <string>              //For std::string
 #include <cstdio>              //For FILE *
 
-//#include "caches/cache_base.h" //For CacheAccess_t
+//#include "caches_legacy/cache_base.h" //For CacheAccess_t
 #include "util/dynamic_bitset.h"    //For DynamicBitset
 
 typedef uint32_t addr_t;

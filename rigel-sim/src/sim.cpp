@@ -31,8 +31,8 @@
 #include "../user.config"   // for ENABLE_VERIF
 #include "RandomLib/Random.hpp"  // for Random
 #include "broadcast_manager.h"  // for BroadcastManager
-#include "caches/global_cache.h"  // for GlobalCache, etc
-#include "caches/hybrid_directory.h"  // for HybridDirectory, etc
+#include "caches_legacy/global_cache.h"  // for GlobalCache, etc
+#include "caches_legacy/hybrid_directory.h"  // for HybridDirectory, etc
 //#include "core.h"           // for CoreInOrderLegacy
 #include "util/debug.h"          // for DebugSim, GLOBAL_debug_sim
 #include "define.h"         // for DEBUG_HEADER, etc

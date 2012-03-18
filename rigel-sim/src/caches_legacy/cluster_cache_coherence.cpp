@@ -11,10 +11,10 @@
 #include <stdio.h>                      // for fprintf, stderr, NULL
 #include <set>                          // for _Rb_tree_const_iterator, etc
 #include "memory/address_mapping.h"  // for AddressMapping
-#include "cache_model.h"    // for CacheModel
-#include "cache_tags.h"     // for CacheTag
-#include "caches/cache_base.h"  // for CacheAccess_t, etc
-#include "caches/l2d.h"     // for L2Cache
+#include "caches_legacy/cache_model.h"    // for CacheModel
+#include "caches_legacy/cache_tags.h"     // for CacheTag
+#include "caches_legacy/cache_base.h"  // for CacheAccess_t, etc
+#include "caches_legacy/l2d.h"     // for L2Cache
 #include "util/debug.h"          // for DebugSim, GLOBAL_debug_sim
 #include "define.h"         // for DEBUG_HEADER, icmsg_type_t, etc
 #include "util/dynamic_bitset.h"  // for DynamicBitset

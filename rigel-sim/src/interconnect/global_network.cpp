@@ -19,7 +19,7 @@
 #include "memory/address_mapping.h"
 #include "RandomLib/Random.hpp"
 //Only for G$ hit/miss profiling
-#include "cache_model.h"
+#include "caches_legacy/cache_model.h"
 //#define DEBUG_GNET
 #include "instr.h"
 #include "util/debug.h"

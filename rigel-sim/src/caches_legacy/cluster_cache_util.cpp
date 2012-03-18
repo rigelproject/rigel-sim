@@ -15,10 +15,10 @@
 #include <iostream>                     // for operator<<, cerr, endl, etc
 #include <set>                          // for set, etc
 #include <string>                       // for char_traits
-#include "cache_tags.h"     // for CacheTag
-#include "caches/cache_base.h"  // for CacheAccess_t, etc
-#include "caches/l2d.h"     // for L2Cache, etc
-#include "caches/l2i.h"     // for L2ICache
+#include "caches_legacy/cache_tags.h"     // for CacheTag
+#include "caches_legacy/cache_base.h"  // for CacheAccess_t, etc
+#include "caches_legacy/l2d.h"     // for L2Cache, etc
+#include "caches_legacy/l2i.h"     // for L2ICache
 #include "util/debug.h"          // for DebugSim, GLOBAL_debug_sim
 #include "define.h"         // for DEBUG_HEADER, etc
 #include "locality_tracker.h"  // for LocalityTracker

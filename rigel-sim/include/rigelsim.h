@@ -12,7 +12,7 @@
 #include "shell/shell.h"
 #include "broadcast_manager.h"  // for BroadcastManager
 #include "memory/dram.h"           // for CONTROLLERS, RANKS, ROWS, etc
-#include "caches/global_cache.h"  // for GlobalCache, etc
+#include "caches_legacy/global_cache.h"  // for GlobalCache, etc
 #include "memory/backing_store.h"
 
 #include "util/construction_payload.h"

@@ -28,12 +28,6 @@
 
 #include "util/dynamic_bitset.h"
 
-/// MissHandlingEntry
-///
-/// The MissHandlingEntry class is used to track outstanding misses at each level
-/// of the cache.  They are usually refered to as MSHRs in the code for brevity.
-/// Some of the fields are unnecessary at some levels of the cache and are simply
-/// ignored.
 template <int ways, int sets, int linesize, int MAX_OUTSTANDING_MISSES,
           int WB_POLICY, int CACHE_EVICTION_BUFFER_SIZE> class CacheBase;
 
@@ -79,6 +73,12 @@ class ReadyLinesEntry
     uint64_t ready_cycle;
 };
 
+/// MissHandlingEntry
+///
+/// The MissHandlingEntry class is used to track outstanding misses at each level
+/// of the cache.  They are usually refered to as MSHRs in the code for brevity.
+/// Some of the fields are unnecessary at some levels of the cache and are simply
+/// ignored.
 template <int linesize>
 class MissHandlingEntry {  
 

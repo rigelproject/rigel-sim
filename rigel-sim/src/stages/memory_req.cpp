@@ -11,8 +11,8 @@
 #include <inttypes.h>                   // for PRIu64
 #include <stdint.h>                     // for uint32_t, UINT32_MAX, etc
 #include <stdio.h>                      // for fprintf, stderr, printf
-#include "cache_model.h"    // for CacheModel
-#include "caches/cache_base.h"  // for CacheAccess_t
+#include "caches_legacy/cache_model.h"    // for CacheModel
+#include "caches_legacy/cache_base.h"  // for CacheAccess_t
 #include "cluster.h"        // for Cluster
 #include "core.h"           // for CoreInOrderLegacy, ::EX2MC, ::MC2FP
 #include "define.h"         // for DEBUG_HEADER, etc

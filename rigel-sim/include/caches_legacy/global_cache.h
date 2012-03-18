@@ -12,7 +12,7 @@
 #define __CACHES__GLOBAL_CACHE_H__
 
 #include "sim.h"
-#include "caches/cache_base.h"
+#include "caches_legacy/cache_base.h"
 #include <list>
 #include <set>
 

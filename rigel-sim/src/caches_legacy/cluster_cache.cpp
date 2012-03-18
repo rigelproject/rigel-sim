@@ -12,13 +12,13 @@
 #include <set>                          // for set, etc
 #include "memory/address_mapping.h"  // for AddressMapping
 #include "broadcast_manager.h"  // for BroadcastManager
-#include "cache_model.h"    // for CacheModel
-#include "cache_tags.h"     // for CacheTag
-#include "caches/cache_base.h"  // for CacheAccess_t, etc
-#include "caches/l1d.h"     // for L1DCache
-#include "caches/l1i.h"     // for L1ICache
-#include "caches/l2d.h"     // for L2Cache
-#include "caches/l2i.h"     // for L2ICache
+#include "caches_legacy/cache_model.h"    // for CacheModel
+#include "caches_legacy/cache_tags.h"     // for CacheTag
+#include "caches_legacy/cache_base.h"  // for CacheAccess_t, etc
+#include "caches_legacy/l1d.h"     // for L1DCache
+#include "caches_legacy/l1i.h"     // for L1ICache
+#include "caches_legacy/l2d.h"     // for L2Cache
+#include "caches_legacy/l2i.h"     // for L2ICache
 #include "util/debug.h"          // for DebugSim, GLOBAL_debug_sim
 #include "define.h"         // for DEBUG_HEADER, etc
 #include "util/dynamic_bitset.h"  // for DynamicBitset

@@ -16,7 +16,7 @@
 #include <vector>                       // for vector, etc
 #include "memory/address_mapping.h"  // for AddressMapping
 #include "define.h"         // for ::IC_MSG_LINE_WRITEBACK_REQ, etc
-#include "gcache_request_state_machine.h"
+#include "caches_legacy/gcache_request_state_machine.h"
 #include "icmsg.h"          // for ICMsg
 #include "sim.h"            // for CURR_CYCLE, GCACHE_SETS
 

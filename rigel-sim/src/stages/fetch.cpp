@@ -12,7 +12,7 @@
 #include <assert.h>                     // for assert
 #include <stdint.h>                     // for uint32_t
 #include "core/btb.h"            // for BranchTargetBufferBase
-#include "cache_model.h"    // for CacheModel
+#include "caches_legacy/cache_model.h"    // for CacheModel
 #include "cluster.h"        // for Cluster
 #include "core.h"           // for CoreInOrderLegacy, etc
 #include "define.h"         // for InstrSlot, etc
