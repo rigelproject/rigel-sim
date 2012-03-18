@@ -11,38 +11,35 @@ typedef ::google::protobuf::RepeatedField< RIGEL_PROTOBUF_WORD_T > RepeatedWord;
 
 #define DB_RF 1
 
+// TODO: rename this and move it out of this file...
 class regval32_t {
 
   public:
 
     /// default constructor, marks invalid 
     regval32_t() :
-      valid_(false),
-      isFloat_(false)
+      _valid(false)
     { 
       data.u32 = 0x00000000;
     }
 
     /// init i32 constructor, marks valid with contents 
     regval32_t(uint32_t val) : 
-      valid_(true),
-      isFloat_(false)
+      _valid(true)
     { 
       data.u32 = val;
     }
 
     // init i32 (int) constructor, marks valid with contents 
     regval32_t(int val) : 
-      valid_(true),
-      isFloat_(false)
+      _valid(true)
     { 
       data.i32 = int32_t(val);
     }
 
     /// init f32 constructor, marks valid 
     regval32_t(float val, bool ro = false) :
-      valid_(true),
-      isFloat_(true)
+      _valid(true)
     { 
       data.f32 = val;
     }
@@ -50,24 +47,21 @@ class regval32_t {
     /// assign an int
     regval32_t& operator=(const int &i) {
       data.i32 = (uint32_t)i;
-      isFloat_ = false;
-      valid_   = true;
+      _valid   = true;
       return *this;
     }
 
     /// assign a uint32_t
     regval32_t& operator=(const uint32_t &u) {
       data.u32 = u;
-      isFloat_ = false;
-      valid_   = true;
+      _valid   = true;
       return *this;
     }
 
     /// assign a float
     regval32_t& operator=(const float &f) {
       data.f32 = f;
-      isFloat_ = true;
-      valid_   = true;
+      _valid   = true;
       return *this;
     }
 
@@ -75,22 +69,19 @@ class regval32_t {
     regval32_t& operator=(const rword32_t &r) {
       data = r;
       // who cares about the Float status?
-      valid_   = true;
+      _valid   = true;
       return *this;
     }
 
     /// allow converstion to a rword32_t union
+    /// however, we lose our valid bit status upon conversion!
     operator rword32_t() {
       return data;
     }
 
-    void setFloat()   { isFloat_ = true;  }
-    void setInt()     { isFloat_ = false; }
-    void invalidate() { valid_   = false; }
+    void invalidate() { _valid   = false; }
 
-    bool isFloat() const { return isFloat_; }
-    bool isInt()   const { return !isFloat_; }
-    bool valid()   const { return valid_; }
+    bool valid()   const { return _valid; }
 
     int32_t  i32() const { return data.i32; }
 		uint32_t u32() const { return data.u32; }
@@ -99,8 +90,7 @@ class regval32_t {
   //public data members
   private:
     rword32_t data; /// Register data union
-    bool valid_;
-    bool isFloat_;  /// track if this value is a float
+    bool _valid;
 
 };
 
