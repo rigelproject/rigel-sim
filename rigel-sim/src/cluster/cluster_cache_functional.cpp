@@ -36,6 +36,14 @@ ClusterCacheFunctional::ClusterCacheFunctional(
 
 int
 ClusterCacheFunctional::PerCycle()  { 
+
+  Packet* p;
+  if (!outpackets.empty()) {
+    p = outpackets.front();
+    outs[p->local_coreid()]->sendMsg(p);
+    outpackets.pop(); 
+  }
+
   return 0; 
 };
 
@@ -58,7 +66,9 @@ void
 ClusterCacheFunctional::FunctionalMemoryRequest(Packet* p) {
   doMemoryAccess(p);
   assert(p!=0);
-  outs[p->local_coreid()]->sendMsg(p);
+  // send immediately
+  //outs[p->local_coreid()]->sendMsg(p);
+  outpackets.push(p);
 }
 
 void

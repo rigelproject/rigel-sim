@@ -77,7 +77,6 @@ CoreFunctional::CoreFunctional(
     ts->sprf.assign(SPRF_THREAD_NUM,          id() * numthreads + t); 
     ts->sprf.assign(SPRF_CLUSTER_ID,          parent()->id());
     ts->sprf.assign(SPRF_THREADS_PER_CORE,    numthreads);
-      //assert(rigel::THREADS_PER_CORE==1 && "not multithreaded");
     ts->sprf.assign(SPRF_NUM_CLUSTERS,        rigel::NUM_CLUSTERS);
     ts->sprf.assign(SPRF_CORES_PER_CLUSTER,   rigel::CORES_PER_CLUSTER);
     ts->sprf.assign(SPRF_THREADS_PER_CLUSTER, rigel::THREADS_PER_CLUSTER);
@@ -148,8 +147,9 @@ CoreFunctional::PerCycle() {
         delete ts->instr; // don't forget to clear out that pesky dynamic object...
         ts->instr = 0; // no valid instruction
       } else {
-        DPRINT(true, "memory operation returned incomplete!\n");
-        throw ExitSim("not allowed to have incomplete instructions now");
+        DPRINT(false, "instruction incomplete!\n");
+        //DRIGEL(instr->Dump());
+        //throw ExitSim("not allowed to have incomplete instructions now");
       }
 
     }
@@ -164,8 +164,16 @@ CoreFunctional::PerCycle() {
 
 }
 
+// thread_select()
+// select a thread to issue from
 int
 CoreFunctional::thread_select() {
+
+  // if there is an incomplete instruction stalled, wait for it to finish
+  if (thread_state[current_tid]->instr) {
+    return current_tid;
+  }
+
   int next_tid = current_tid + 1;
   for (int i = 0; i < numthreads; i++) {
     next_tid = (next_tid + i) % numthreads;
@@ -242,7 +250,8 @@ CoreFunctional::writeback( PipePacket* instr ) {
     assert( instr->regval(DREG).valid() );
     if (!instr->regval(DREG).valid()) { 
       instr->Dump();
-      throw ExitSim("invalid value on writeback"); }
+      throw ExitSim("invalid value on writeback"); 
+    }
 
     // SPRF writes (rare)
     if (instr->isSPRFDest()) {
@@ -532,6 +541,7 @@ CoreFunctional::checkMemoryRequest(PipePacket* instr) {
   Packet* p = instr->memRequest();
 
   reply = from_ccache.read();
+
   if (reply) { // handle reply
     DPRINT(DB_CF_MEM,"got reply! %d\n", reply->msgType());
     // FIXME: some operations DO NOT HAVE a result!
@@ -539,9 +549,9 @@ CoreFunctional::checkMemoryRequest(PipePacket* instr) {
 
     // check response types
     if (reply->msgType()==IC_MSG_STC_REPLY_NACK) {
-      DPRINT(DB_CF_STC,"[fail]");
+      DPRINT(DB_CF_STC,"[STC: fail]");
     } else if (reply->msgType()==IC_MSG_STC_REPLY_ACK) {
-      DPRINT(DB_CF_STC,"[success]");
+      DPRINT(DB_CF_STC,"[STC: success]");
     }
     // TODO: FIXME: re-enable checking for _all_ proper message request/reply pairs
     //else {
@@ -558,10 +568,11 @@ CoreFunctional::checkMemoryRequest(PipePacket* instr) {
     }
 
   } else { 
+    DPRINT(DB_CF_MEM,"no reply yet core:%d tid:%d\n", id(), instr->tid());
     // NULL message means we have nothing to process
-    instr->Dump();
-    p->Dump();
-    throw ExitSim("unhandled path checkMemoryRequest()");
+    //instr->Dump();
+    //p->Dump();
+    //throw ExitSim("unhandled path checkMemoryRequest()");
   }
 
 }

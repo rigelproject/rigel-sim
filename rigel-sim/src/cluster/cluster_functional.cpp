@@ -59,6 +59,8 @@ ClusterSimple::PerCycle() {
     return halted();
   }
 
+  ccache->PerCycle(); 
+
   int halted_cores = 0;
   for (int i=0; i < numcores; i++) {
     halted_cores += cores[i]->PerCycle();
