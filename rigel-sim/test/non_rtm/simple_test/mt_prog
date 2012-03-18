@@ -14,7 +14,7 @@ TEST_STRING="threads: ${THREADS} clusters: ${CLUSTERS}"
 $RIGELSIM $ARGS -threads $THREADS -clusters $CLUSTERS simple_test.tasks 1> cout.out 2> cerr.out
 #cat RUN_OUTPUT/rigelprint.out | sed 's/0x[0-9a-f]* (PC 0x[0-9a-f]*)//' > RUN_OUTPUT/compare.out
 cat RUN_OUTPUT/rigelprint.out | sed 's/0x[0-9a-f]* (PC 0x[0-9a-f]*)//' | sed 's/ thread: [0-9]*//' > RUN_OUTPUT/compare.out ;
-if(diff RUN_OUTPUT/compare.out rigelprint.out.GOLD) then
+if(diff RUN_OUTPUT/compare.out rigelprint.out.GOLD > mtdiff1.out) then
   echo "===== Passed =====($NAME_STRING,$TEST_STRING, $ARGS)"
 else
   echo "===== Failed =====($NAME_STRING,$TEST_STRING, $ARGS)"
@@ -27,7 +27,7 @@ TEST_STRING="threads: ${THREADS} clusters: ${CLUSTERS}"
 $RIGELSIM $ARGS -threads $THREADS -clusters $CLUSTERS simple_test.tasks 1> cout.out 2> cerr.out
 #cat RUN_OUTPUT/rigelprint.out | sed 's/0x[0-9a-f]* (PC 0x[0-9a-f]*)//' > RUN_OUTPUT/compare.out
 cat RUN_OUTPUT/rigelprint.out | sed 's/0x[0-9a-f]* (PC 0x[0-9a-f]*)//' | sed 's/ thread: [0-9]*//' > RUN_OUTPUT/compare.out ;
-if(diff RUN_OUTPUT/compare.out rigelprint.out.GOLD) then
+if(diff RUN_OUTPUT/compare.out rigelprint.out.GOLD > mtdiff2.out) then
   echo "===== Passed =====($NAME_STRING,$TEST_STRING, $ARGS)"
 else
   echo "===== Failed =====($NAME_STRING,$TEST_STRING, $ARGS)"
