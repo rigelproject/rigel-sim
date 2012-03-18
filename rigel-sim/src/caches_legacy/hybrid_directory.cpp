@@ -135,7 +135,11 @@ void
 HybridDirectory::init()
 {
   // Set up the code, stack, and incoherent malloc entries.
-  coarse_region_table[COARSE_REGION_IDX_CODE].set(0, CODEPAGE_HIGHWATER_MARK, false);
+	// FIXME CODEPAGE_HIGHWATER_MARK doesn't exist anymore, the backing store tracks code regions
+	// explicitly.  Once we expose that API to HybridDirectory we can do a better version of what
+	// used to be below.  Use a dummy version of the commented out line below for now.
+  //coarse_region_table[COARSE_REGION_IDX_CODE].set(0, CODEPAGE_HIGHWATER_MARK, false);
+	coarse_region_table[COARSE_REGION_IDX_CODE].set(0, 0x10000, false);
   coarse_region_table[COARSE_REGION_IDX_STACK].set(0x7FFFFFFF, 0xFFFFFFFF, false);
   coarse_region_table[COARSE_REGION_IDX_HEAP].set(INCOHERENT_MALLOC_START, INCOHERENT_MALLOC_END, true);
 }

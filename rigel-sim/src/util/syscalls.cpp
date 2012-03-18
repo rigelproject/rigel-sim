@@ -69,10 +69,10 @@ namespace rigel {
     // Read in the syscall parameters
     // read words 0, 2, 3, and 4 of the __suds_syscall_struct
     // word 1 is reserved for the result
-    syscall_data.syscall_num = mem->read_word(addr + (0 * sizeof(uint32_t)) );
-    syscall_data.arg1.u      = mem->read_word(addr + (2 * sizeof(uint32_t) ));
-    syscall_data.arg2.u      = mem->read_word(addr + (3 * sizeof(uint32_t) ));
-    syscall_data.arg3.u      = mem->read_word(addr + (4 * sizeof(uint32_t) ));
+    syscall_data.syscall_num = mem->read_data_word(addr + (0 * sizeof(uint32_t)) );
+    syscall_data.arg1.u      = mem->read_data_word(addr + (2 * sizeof(uint32_t) ));
+    syscall_data.arg2.u      = mem->read_data_word(addr + (3 * sizeof(uint32_t) ));
+    syscall_data.arg3.u      = mem->read_data_word(addr + (4 * sizeof(uint32_t) ));
     DPRINT(DB_SYSCALL,"syscall addr:0x%08x syscall[0x%x] {%08x,%08x,%08x}\n",
       addr, syscall_data.syscall_num, 
       syscall_data.arg1.u, syscall_data.arg2.u, syscall_data.arg3.u);
@@ -250,7 +250,7 @@ Syscall::syscall_filemap(struct syscall_struct &syscall_data) {
   while ( (base_addr % 4) && (num_bytes > 0) ) {
     WordByte mem_data;
 
-    mem_data.w = backing_store->read_word( base_addr & 0xFFFFFFFC);
+    mem_data.w = backing_store->read_data_word( base_addr & 0xFFFFFFFC);
     mem_data.b[base_addr%4] = buf[buf_offset++];
     //cerr << "base_addr: 0x" << hex << base_addr << " data: 0x" << mem_data.w << endl;
     backing_store->write_word( base_addr & 0xFFFFFFFC, mem_data.w);
@@ -278,7 +278,7 @@ Syscall::syscall_filemap(struct syscall_struct &syscall_data) {
   while (num_bytes > 0) {
     WordByte mem_data;
 
-    mem_data.w = backing_store->read_word( base_addr & 0xFFFFFFFC);
+    mem_data.w = backing_store->read_data_word( base_addr & 0xFFFFFFFC);
     //cerr << "(READ) base_addr: 0x" << hex << base_addr << " data: 0x" << mem_data.w << endl;
     mem_data.b[base_addr%4] = buf[buf_offset++];
     backing_store->write_word( base_addr & 0xFFFFFFFC, mem_data.w);
@@ -361,7 +361,7 @@ Syscall::syscall_fileslurp(struct syscall_struct &syscall_data) {
   while ( (base_addr % 4) && (num_bytes > 0) ) {
     WordByte mem_data;
 
-    mem_data.w = backing_store->read_word( base_addr & 0xFFFFFFFC);
+    mem_data.w = backing_store->read_data_word( base_addr & 0xFFFFFFFC);
     mem_data.b[base_addr%4] = buf[buf_offset++];
     //cerr << "base_addr: 0x" << hex << base_addr << " data: 0x" << mem_data.w << endl;
     backing_store->write_word( base_addr & 0xFFFFFFFC, mem_data.w);
@@ -389,7 +389,7 @@ Syscall::syscall_fileslurp(struct syscall_struct &syscall_data) {
   while (num_bytes > 0) {
     WordByte mem_data;
 
-    mem_data.w = backing_store->read_word( base_addr & 0xFFFFFFFC);
+    mem_data.w = backing_store->read_data_word( base_addr & 0xFFFFFFFC);
     //cerr << "(READ) base_addr: 0x" << hex << base_addr << " data: 0x" << mem_data.w << endl;
     mem_data.b[base_addr%4] = buf[buf_offset++];
     backing_store->write_word( base_addr & 0xFFFFFFFC, mem_data.w);
@@ -450,7 +450,7 @@ Syscall::syscall_filedump(struct syscall_struct &syscall_data) {
   while ( (base_addr % 4) && (num_bytes > 0) ) {
     WordByte mem_data;
 
-    mem_data.w = backing_store->read_word( base_addr & 0xFFFFFFFC);
+    mem_data.w = backing_store->read_data_word( base_addr & 0xFFFFFFFC);
     buf[buf_offset] = mem_data.b[base_addr%4];
     buf_offset++;
     //cerr << "base_addr: 0x" << hex << base_addr << " data: 0x" << mem_data.w << endl;
@@ -462,7 +462,7 @@ Syscall::syscall_filedump(struct syscall_struct &syscall_data) {
   while (num_bytes >= 4) {
     assert((base_addr % 4 == 0) && "base_addr must be aligned here");
     WordByte mem_data;
-    mem_data.w = backing_store->read_word(base_addr);
+    mem_data.w = backing_store->read_data_word(base_addr);
     buf[buf_offset++] = mem_data.b[0];
     buf[buf_offset++] = mem_data.b[1];
     buf[buf_offset++] = mem_data.b[2]; 
@@ -477,7 +477,7 @@ Syscall::syscall_filedump(struct syscall_struct &syscall_data) {
   while (num_bytes > 0) {
     WordByte mem_data;
 
-    mem_data.w = backing_store->read_word(base_addr & 0xFFFFFFFC);
+    mem_data.w = backing_store->read_data_word(base_addr & 0xFFFFFFFC);
     //cerr << "(READ) base_addr: 0x" << hex << base_addr << " data: 0x" << mem_data.w << endl;
     buf[buf_offset++] = mem_data.b[base_addr%4]; 
     num_bytes--;
@@ -573,7 +573,7 @@ Syscall::syscall_write(struct syscall_struct &syscall_data) {
   // Do unaligned start
   while ( (base_addr % 4) && (num_bytes > 0) ) {
     WordByte mem_data;
-    mem_data.w = backing_store->read_word( base_addr & 0xFFFFFFFC);
+    mem_data.w = backing_store->read_data_word( base_addr & 0xFFFFFFFC);
     buf[buf_offset] = mem_data.b[base_addr%4];
     buf_offset++;
     //cerr << "base_addr: 0x" << hex << base_addr << " data: 0x" << mem_data.w << endl;
@@ -585,7 +585,7 @@ Syscall::syscall_write(struct syscall_struct &syscall_data) {
   while (num_bytes >= 4) {
     assert((base_addr % 4 == 0) && "base_addr must be aligned here");
     WordByte mem_data;
-    mem_data.w = backing_store->read_word(base_addr);
+    mem_data.w = backing_store->read_data_word(base_addr);
     buf[buf_offset++] = mem_data.b[0];
     buf[buf_offset++] = mem_data.b[1];
     buf[buf_offset++] = mem_data.b[2];
@@ -600,7 +600,7 @@ Syscall::syscall_write(struct syscall_struct &syscall_data) {
   while (num_bytes > 0) {
     WordByte mem_data;
 
-    mem_data.w = backing_store->read_word( base_addr & 0xFFFFFFFC);
+    mem_data.w = backing_store->read_data_word( base_addr & 0xFFFFFFFC);
     //cerr << "(READ) base_addr: 0x" << hex << base_addr << " data: 0x" << mem_data.w << endl;
     buf[buf_offset++] = mem_data.b[base_addr%4];
     num_bytes--;
@@ -670,7 +670,7 @@ Syscall::syscall_read(struct syscall_struct &syscall_data) {
   // Do unaligned start
   while ( (base_addr % 4 != 0) && (bytes_read > 0) ) {
     WordByte mem_data;
-    mem_data.w = backing_store->read_word(base_addr & 0xFFFFFFFC);
+    mem_data.w = backing_store->read_data_word(base_addr & 0xFFFFFFFC);
     mem_data.b[base_addr%4] = buf[buf_offset++];
     //cerr << "syscall_read(): writing 0x" << std::hex << mem_data.w << " to mem[0x" << base_addr << "]" << std::endl;
     backing_store->write_word(base_addr & 0xFFFFFFFC, mem_data.w);
@@ -698,7 +698,7 @@ Syscall::syscall_read(struct syscall_struct &syscall_data) {
   while (bytes_read > 0) {
     WordByte mem_data;
 
-    mem_data.w = backing_store->read_word( base_addr & 0xFFFFFFFC);
+    mem_data.w = backing_store->read_data_word( base_addr & 0xFFFFFFFC);
     mem_data.b[base_addr%4] = buf[buf_offset++];
 		//cerr << "syscall_read(): writing 0x" << std::hex << mem_data.w << " to mem[0x" << base_addr << "]" << std::endl;
     backing_store->write_word( base_addr & 0xFFFFFFFC, mem_data.w);
@@ -734,7 +734,7 @@ Syscall::syscall_open(struct syscall_struct &syscall_data) {
 
   do {
     WordByte mem_data;
-    mem_data.w = backing_store->read_word((pathname) & 0xFFFFFFFC);
+    mem_data.w = backing_store->read_data_word((pathname) & 0xFFFFFFFC);
     buf[buf_offset] = mem_data.b[pathname % 4];
     pathname++;
 

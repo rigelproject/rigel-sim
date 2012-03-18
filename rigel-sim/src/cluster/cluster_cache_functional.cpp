@@ -66,7 +66,7 @@ ClusterCacheFunctional::doMemoryAccess(PacketPtr p) {
     // loads
     case IC_MSG_READ_REQ:
     case IC_MSG_GLOBAL_READ_REQ: {
-      uint32_t data = mem_backing_store->read_word(p->addr());
+      uint32_t data = mem_backing_store->read_data_word(p->addr());
       p->data(data);
       p->setCompleted();
       break;
@@ -118,7 +118,7 @@ ClusterCacheFunctional::doGlobalAtomic(PacketPtr p) {
   switch (p->msgType()) {
     // atomics that return a copy of the OLD value before atomic update
     case IC_MSG_ATOMCAS_REQ: {
-      uint32_t oldval = mem_backing_store->read_word(target_addr);
+      uint32_t oldval = mem_backing_store->read_data_word(target_addr);
       uint32_t newval = swapval.u32();
       if (oldval == operand.u32()) { 
         mem_backing_store->write_word(target_addr, newval); 
@@ -128,14 +128,14 @@ ClusterCacheFunctional::doGlobalAtomic(PacketPtr p) {
       break;
     }
     case IC_MSG_ATOMXCHG_REQ: {
-      uint32_t oldval = mem_backing_store->read_word(target_addr); 
+      uint32_t oldval = mem_backing_store->read_data_word(target_addr); 
       uint32_t newval = swapval.u32();
       mem_backing_store->write_word(target_addr, newval);
       temp_result = oldval;
       break;
     }
     case IC_MSG_ATOMADDU_REQ: {
-      uint32_t oldval = mem_backing_store->read_word(target_addr); 
+      uint32_t oldval = mem_backing_store->read_data_word(target_addr); 
       uint32_t newval = oldval + operand.u32();
       mem_backing_store->write_word(target_addr, newval);
       temp_result = oldval;
@@ -144,14 +144,14 @@ ClusterCacheFunctional::doGlobalAtomic(PacketPtr p) {
     // atomics that return the NEW value after atomic update
     // arithmetic
     case IC_MSG_ATOMINC_REQ: {
-      uint32_t oldval = mem_backing_store->read_word(target_addr); 
+      uint32_t oldval = mem_backing_store->read_data_word(target_addr); 
       uint32_t newval = oldval + 1;
       mem_backing_store->write_word(target_addr, newval);
       temp_result = newval;
       break;
     }
     case IC_MSG_ATOMDEC_REQ: {
-      uint32_t oldval = mem_backing_store->read_word(target_addr); 
+      uint32_t oldval = mem_backing_store->read_data_word(target_addr); 
       uint32_t newval = oldval - 1;
       mem_backing_store->write_word(target_addr, newval);
       temp_result = newval;
@@ -159,14 +159,14 @@ ClusterCacheFunctional::doGlobalAtomic(PacketPtr p) {
     }
     // min,max
     case IC_MSG_ATOMMIN_REQ: {
-      uint32_t oldval = mem_backing_store->read_word(target_addr);
+      uint32_t oldval = mem_backing_store->read_data_word(target_addr);
       uint32_t newval = std::min(oldval,operand.u32());
       mem_backing_store->write_word(target_addr, newval);
       temp_result = newval;
       break;
     }
     case IC_MSG_ATOMMAX_REQ: {
-      uint32_t oldval = mem_backing_store->read_word(target_addr);
+      uint32_t oldval = mem_backing_store->read_data_word(target_addr);
       uint32_t newval = std::max(oldval,operand.u32());
       mem_backing_store->write_word(target_addr, newval);
       temp_result = newval;
@@ -174,21 +174,21 @@ ClusterCacheFunctional::doGlobalAtomic(PacketPtr p) {
     }
     // logical
     case IC_MSG_ATOMAND_REQ: {
-      uint32_t oldval = mem_backing_store->read_word(target_addr);
+      uint32_t oldval = mem_backing_store->read_data_word(target_addr);
       uint32_t newval = oldval & operand.u32();
       mem_backing_store->write_word(target_addr, newval);
       temp_result = newval;
       break;
     }
     case IC_MSG_ATOMOR_REQ: {
-      uint32_t oldval = mem_backing_store->read_word(target_addr);
+      uint32_t oldval = mem_backing_store->read_data_word(target_addr);
       uint32_t newval = oldval | operand.u32();
       mem_backing_store->write_word(target_addr, newval);
       temp_result = newval;
       break;
     }
     case IC_MSG_ATOMXOR_REQ: {
-      uint32_t oldval = mem_backing_store->read_word(target_addr);
+      uint32_t oldval = mem_backing_store->read_data_word(target_addr);
       uint32_t newval = oldval ^ operand.u32();
       mem_backing_store->write_word(target_addr, newval);
       temp_result = newval;
@@ -220,7 +220,7 @@ ClusterCacheFunctional::doLocalAtomic(PacketPtr p) {
       LinkTable[tid].valid = true;
       LinkTable[tid].addr  = p->addr();
       LinkTable[tid].size  = sizeof(uint32_t); // TODO FIXME: non-32-bit-word sizes
-      uint32_t readval = mem_backing_store->read_word(p->addr());
+      uint32_t readval = mem_backing_store->read_data_word(p->addr());
       DPRINT(DB_CC,"LDL: tid %d read %08x at %08x\n",tid,readval,p->addr());
       p->data(readval);
       p->msgType(IC_MSG_LDL_REPLY);

@@ -6,10 +6,12 @@
 #include <cassert>
 #include <queue>
 #include <inttypes.h>
+#include <sstream> //For strinstream
 
 #include "define.h" //For rigel_log2()
 #include "sim.h"    //For rigel::WARN_ON_UNINITIALIZED_MEMORY_ACCESSES
 #include "memory/backing_store_callbacks.h"
+#include "util/util.h" //For ExitSim
 #include "util/construction_payload.h"
 #include "util/checkpointable.h"
 #include "rigelsim.pb.h" //Unfortunately, can't forward declare MemoryState because
@@ -37,7 +39,24 @@ class BackingStore : public rigelsim::Checkpointable {
     BackingStore(rigel::ConstructionPayload cp, const WORD_T _init_val);
     ~BackingStore();
     void write_word(const ADDR_T addr, const WORD_T value);
-    WORD_T read_word(const ADDR_T addr) const;
+    ///Perform a read that's supposed to come from a readable region of memory
+    ///(throws an exception if not)
+    WORD_T read_data_word(const ADDR_T addr) const;
+    ///Performs a read that's supposed to come from an executable region of memory
+    ///(throws an exception if not)
+    WORD_T read_instr_word(const ADDR_T addr) const;
+    ///Performs a read that can come from any region of memory
+    ///Should only be done for host-specific reads, like memory dumps and reads to
+    ///satisfy user queries in interactive mode, because it bypasses error checking.
+    WORD_T read_host_word(const ADDR_T addr) const;
+
+    void set_readable_region(const ADDR_T low, const ADDR_T high);
+    void set_writable_region(const ADDR_T low, const ADDR_T high);
+    void set_executable_region(const ADDR_T low, const ADDR_T high);
+    bool is_readable(const ADDR_T addr) const;
+    bool is_writable(const ADDR_T addr) const;
+    bool is_executable(const ADDR_T addr) const;
+
     // Dump state to a file.
     void dump_to_file(const char *file_name) const;
     void dump_to_file(FILE *f) const;
@@ -46,8 +65,8 @@ class BackingStore : public rigelsim::Checkpointable {
     void traverse(BSCallbackBase<ADDR_T, WORD_T> &cb) const;
     virtual void save_state() const;
     virtual void restore_state();
-
   private:
+    WORD_T internal_read_word(const ADDR_T addr) const;
     void traverse_helper(void * const *ptrptr, ADDR_T addr, unsigned int level, BSCallbackBase<ADDR_T, WORD_T> &cb) const;
     WORD_T *get_word_pointer_or_null(ADDR_T addr) const;
     WORD_T &get_or_create_word_reference(ADDR_T addr);
@@ -64,7 +83,16 @@ class BackingStore : public rigelsim::Checkpointable {
     shift_mask *traversal_data;
     void *TOT; //FIXME should this be a union of void ** and WORD_T *?  Should make this AA-correct
     rigelsim::MemoryState *memory_state;
+
+    typedef std::pair<ADDR_T, ADDR_T> interval_type;
+    typedef std::vector<interval_type> interval_set_type;
+    static bool is_in_interval_set(const ADDR_T addr, const interval_set_type &set);
+    static void throw_access_exception(const ADDR_T addr, const char *property, const interval_set_type &set);
+    interval_set_type readable_regions;
+    interval_set_type writable_regions;
+    interval_set_type executable_regions;
 };
+
 BS_TEMPLATE_DECL
 BS_TEMPLATE_CLASSNAME::BackingStore(rigel::ConstructionPayload cp, const WORD_T _init_val)
                                        : init_val(_init_val),
@@ -122,12 +150,36 @@ BS_TEMPLATE_DECL
 void BS_TEMPLATE_CLASSNAME::write_word(const ADDR_T addr, const WORD_T value)
 {
   assert((((ADDRESS_SPACE_BITS/8) == sizeof(ADDR_T)) || (rigel_log2(addr) <= (ADDRESS_SPACE_BITS-1))) && "Address too big!");
+  if(!is_writable(addr))
+    throw_access_exception(addr, "writable", writable_regions);
   WORD_T &slot = get_or_create_word_reference(addr);
   slot = value;
 }
 
 BS_TEMPLATE_DECL
-WORD_T BS_TEMPLATE_CLASSNAME::read_word(const ADDR_T addr) const
+WORD_T BS_TEMPLATE_CLASSNAME::read_data_word(const ADDR_T addr) const
+{
+  if(!is_readable(addr))
+    throw_access_exception(addr, "readable", readable_regions);
+  return internal_read_word(addr);
+}
+
+BS_TEMPLATE_DECL
+WORD_T BS_TEMPLATE_CLASSNAME::read_instr_word(const ADDR_T addr) const
+{
+  if(!is_executable(addr))
+    throw_access_exception(addr, "executable", executable_regions);
+  return internal_read_word(addr);
+}
+
+BS_TEMPLATE_DECL
+WORD_T BS_TEMPLATE_CLASSNAME::read_host_word(const ADDR_T addr) const
+{
+  return internal_read_word(addr);
+}
+
+BS_TEMPLATE_DECL
+WORD_T BS_TEMPLATE_CLASSNAME::internal_read_word(const ADDR_T addr) const
 {
   assert((((ADDRESS_SPACE_BITS/8) == sizeof(ADDR_T)) || (rigel_log2(addr) <= (ADDRESS_SPACE_BITS-1))) && "Address too big!");
   WORD_T *ptr = get_word_pointer_or_null(addr);
@@ -138,6 +190,60 @@ WORD_T BS_TEMPLATE_CLASSNAME::read_word(const ADDR_T addr) const
   }
   else
     return (*ptr);
+}
+
+
+
+BS_TEMPLATE_DECL
+void BS_TEMPLATE_CLASSNAME::throw_access_exception(const ADDR_T addr, const char *property, const BS_TEMPLATE_CLASSNAME::interval_set_type &set) {
+  std::stringstream error;
+  error << std::hex << std::showbase << std::setw(8) << std::setfill('0');
+  error << "Error: Address " << addr << " is not " << property << "\n";
+  error << "The " << property << " regions are:" << "\n";
+  for(typename BS_TEMPLATE_CLASSNAME::interval_set_type::const_iterator it = set.begin(), end = set.end(); it != end; ++it) {
+    error << "[" << it->first << ", " << it->second << "]\n";
+  }
+  throw ExitSim(error.str().c_str());
+}
+
+BS_TEMPLATE_DECL
+void BS_TEMPLATE_CLASSNAME::set_readable_region(const ADDR_T low, const ADDR_T high) {
+  readable_regions.push_back(interval_type(low, high));
+}
+
+BS_TEMPLATE_DECL
+void BS_TEMPLATE_CLASSNAME::set_writable_region(const ADDR_T low, const ADDR_T high) {
+  writable_regions.push_back(interval_type(low, high));
+}
+
+BS_TEMPLATE_DECL
+void BS_TEMPLATE_CLASSNAME::set_executable_region(const ADDR_T low, const ADDR_T high) {
+  executable_regions.push_back(interval_type(low, high));
+}
+
+BS_TEMPLATE_DECL
+bool BS_TEMPLATE_CLASSNAME::is_in_interval_set(const ADDR_T addr, const typename BS_TEMPLATE_CLASSNAME::interval_set_type &set) {
+  if(set.empty())
+    return true;
+  for(typename BS_TEMPLATE_CLASSNAME::interval_set_type::const_iterator it = set.begin(), end = set.end(); it != end; ++it)
+    if(addr >= it->first && addr <= it->second)
+      return true;
+  return false;
+}
+
+BS_TEMPLATE_DECL
+bool BS_TEMPLATE_CLASSNAME::is_readable(const ADDR_T addr) const {
+  return this->is_in_interval_set(addr, readable_regions);
+}
+
+BS_TEMPLATE_DECL
+bool BS_TEMPLATE_CLASSNAME::is_writable(const ADDR_T addr) const {
+  return this->is_in_interval_set(addr, writable_regions);
+}
+
+BS_TEMPLATE_DECL
+bool BS_TEMPLATE_CLASSNAME::is_executable(const ADDR_T addr) const {
+  return this->is_in_interval_set(addr, executable_regions);
 }
 
 BS_TEMPLATE_DECL

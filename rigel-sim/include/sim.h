@@ -197,9 +197,8 @@ namespace rigel {
   const uint32_t INVALID_REG = 0xDEAD;
   // Maximum number of SimTimers to allow in simulation. Arbitrary.
   static const int NUM_TIMERS = 0x1000;
-  // This get set to the maximum address occupied by a code word.  For
-  // debugging/sanity since we have no SMC.  Set in util: LoadELF
-  extern uint32_t CODEPAGE_HIGHWATER_MARK;
+	///These track the addresses of libpar and locks data sections,
+	///so accesses to them can be counted separately.  Set in the ELF loader.
   extern uint32_t CODEPAGE_LIBPAR_BEGIN;
   extern uint32_t CODEPAGE_LIBPAR_END;
   extern uint32_t LOCKS_REGION_BEGIN;

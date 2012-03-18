@@ -68,7 +68,7 @@ BroadcastManager::getData(uint32_t address, int whichCluster)
       if(it->seen[whichCluster] != 0) { return it->newVal; }
       // Otherwise, return the old data still present in memory.
       else {
-        return backing_store.read_word(address);
+        return backing_store.read_data_word(address);
       }
     }
   }

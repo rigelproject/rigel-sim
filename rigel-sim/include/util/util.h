@@ -10,10 +10,14 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include "sim.h"
+#include "sim.h" //FIXME this would seem to violate "does not include any files itself" :)
 #include <cstdlib>
 #include <cassert>
 #include <string>
+
+//Use e.g. "STRINGIZE(__LINE__)" to emit the current line as a string literal
+#define STRINGIZE(x) STRINGIZE2(x)
+#define STRINGIZE2(x) #x
 
 ////////////////////////////////////////////////////////////////////////////////
 // Class ExitSim

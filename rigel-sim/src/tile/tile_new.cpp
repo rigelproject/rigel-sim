@@ -42,6 +42,15 @@ TileNew::TileNew(
 
 }
 
+//FIXME This is not modular and pokes into cluster/core/thread state; redo once generic interfaces for PC,
+//retired instr count, etc. are implemented.
+void
+TileNew::Heartbeat() {
+  for (int c = 0; c < rigel::CLUSTERS_PER_TILE; c++) {
+    clusters[c]->Heartbeat();
+  } // end cluster
+}
+
 int
 TileNew::PerCycle() {
 

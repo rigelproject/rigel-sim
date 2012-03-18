@@ -107,7 +107,7 @@ CacheModel::helper_return_read_success(bool &stall,
   if (broadcast_manager->isBroadcastOutstanding(addr)) {
     data = broadcast_manager->getData(addr, cluster_num);
   } else {
-    data = backing_store.read_word(addr);
+    data = backing_store.read_data_word(addr);
   }
 
   // Reset the NoL1D so that no real caching occurs
@@ -251,14 +251,6 @@ CacheModel::read_access(InstrLegacy &instr, int core, uint32_t addr,
   stall = true;
   data = 0xDEADBEEF;
   icmsg_type_t icmsg_type = rigel::instr_to_icmsg(instr.get_type());
-
-  // Should not inspect code pages.  If a core attempts to access an area of
-  // memory loaded as instructions (.text section of the ELF), exit.
-  if (addr < CODEPAGE_HIGHWATER_MARK) {
-    DEBUG_HEADER();
-    fprintf(stderr, "Attempting to read to a code word! addr: 0x%08x core: %d tid: %d\n", addr, core,tid);
-    assert(0);
-  }
 
   // If a miss request is already pending at the L2, the core waits.  There is a
   // little bit of an inaccuracy in modeling the L2 this way since a core does

@@ -151,7 +151,7 @@ UserInterfaceLegacy::run_interface(InstrSlot instrs[rigel::ISSUE_WIDTH])
         for (uint32_t i = 0; i < count; i++) {
           std::cout << "0x" << std::hex << std::setfill('0') << std::setw(8) << addr << ": ";
           uint32_t val;
-          val = cores[core_num]->getBackingStore()->read_word(addr);
+          val = cores[core_num]->getBackingStore()->read_host_word(addr);
           std::cout << std::hex << std::setfill('0') << std::setw(8) << val << "\n";
           addr+=4;
         }

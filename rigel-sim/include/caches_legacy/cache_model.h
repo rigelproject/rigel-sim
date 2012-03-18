@@ -205,9 +205,6 @@ class CacheModel
     helper_L2D_free_write(InstrLegacy &instr, int core, uint32_t addr,
       net_prio_t net_priority, MemoryAccessStallReason &masr, bool &stall, 
       const uint32_t &data, int tid);
-    // Check to see if the current address violates the maximum codw word
-    // boundary set by the loader.
-    void helper_check_code_highwater_mark(uint32_t addr);
     // Handle arbitration for a read/write request.  Returns true on no stall.
     bool helper_arbitrate_L2D_access(uint32_t addr, int core, int tid, RES_TYPE type);
     bool helper_arbitrate_L2D_return(uint32_t addr, int core, int tid, RES_TYPE type);

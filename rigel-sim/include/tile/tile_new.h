@@ -21,7 +21,7 @@ class TileNew: public TileBase {
     int PerCycle();
 
     void Dump()      { assert(0&&"unimplemented"); }
-    void Heartbeat() { printf("%s unimplemented\n",__func__ ); }
+    void Heartbeat();// { printf("%s unimplemented\n",__func__ ); }
     void EndSim();
     void PreSimInit();
 

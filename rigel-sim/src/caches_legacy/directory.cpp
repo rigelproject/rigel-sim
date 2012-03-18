@@ -236,6 +236,11 @@ CacheDirectory::get_num_valid_entries(uint64_t &code, uint64_t &stack, uint64_t 
       i = valid_bits.findNextSet(i))
   {
       dir_entry_t &entry = dir_array[i];
+			//FIXME CODEPAGE_HIGHWATER_MARK no longer exists; information of whether address are code or data
+			//is held in the backing store, which is not exposed to us.  Once we expose that API everywhere in
+			//the simulator, reimplement the below in a better way.  Error out on this code path for now.
+			throw ExitSim("Error: See FIXME at " __FILE__ ":" STRINGIZE(__LINE__) );
+#if 0
       if (entry.get_addr() < CODEPAGE_HIGHWATER_MARK) { 
         code++;
       } else 
@@ -244,6 +249,7 @@ CacheDirectory::get_num_valid_entries(uint64_t &code, uint64_t &stack, uint64_t 
       } else {
         other++;
       }
+#endif
   }
 }
 

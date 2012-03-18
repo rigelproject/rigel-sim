@@ -1,3 +1,0 @@
-To compile interval_skip_list test code (#if 0'd out in interval_skip_list.h):
-*Copy interval_skip_list.h to interval_skip_list.cpp
-*g++ interval_skip_list.cpp -O3 -lCGAL -frounding-math -o interval_skip_list -I../ ../../build/release/librandom.a

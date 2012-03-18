@@ -159,7 +159,7 @@ CacheModel::read_access_instr(int core, uint32_t addr,
     // is updated.
     L1I[core].touch(addr);
     // Read the actual bits from the memory model.
-    data = backing_store.read_word(addr);
+    data = backing_store.read_instr_word(addr);
     // Since it is a hit, no stalling.  Return the fetch this cycle.
     return helper_return_instr_success(stall, NoStall, data, addr, core, tid);
   }
