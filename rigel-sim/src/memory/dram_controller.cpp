@@ -20,7 +20,7 @@
 #include "memory/dram.h"           // for BANKS, RANKS, WL, CL, etc
 #include "memory/dram_channel_model.h"  // for DRAMChannelModel
 #include "memory/dram_controller.h"  // for DRAMController, etc
-#include "mshr.h"           // for MissHandlingEntry, etc
+#include "caches_legacy/mshr_legacy.h"           // for MissHandlingEntry, etc
 #include "profile/profile.h"        // for ProfileStat, MemStat, etc
 #include "profile/profile_names.h"
 #include "sim.h"            // for PENDING_PER_BANK, stats, etc

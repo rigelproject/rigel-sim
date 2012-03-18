@@ -9,7 +9,7 @@
 
 #include "sim.h"
 #include "memory/dram_channel_model.h"
-#include "mshr.h"
+#include "caches_legacy/mshr_legacy.h"
 #include "memory/address_mapping.h"
 
 // Forward declarations

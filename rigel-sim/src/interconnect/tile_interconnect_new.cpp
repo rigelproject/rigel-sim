@@ -12,7 +12,7 @@
 #include "define.h"
 #include "icmsg.h"          // for ICMsg
 #include "interconnect.h"   // for TileInterconnectNew, etc
-#include "mshr.h"           // for MissHandlingEntry, etc
+#include "caches_legacy/mshr_legacy.h"           // for MissHandlingEntry, etc
 #include "seqnum.h"         // for seq_num_t
 #include "sim.h"            // for CLUSTERS_PER_TILE, etc
 #include "util/util.h"           // for SimTimer

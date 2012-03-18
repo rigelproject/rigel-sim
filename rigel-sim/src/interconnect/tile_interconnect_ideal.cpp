@@ -10,7 +10,7 @@
 #include "define.h"         // for ::IC_MSG_NULL, icmsg_type_t, etc
 #include "icmsg.h"          // for ICMsg
 #include "interconnect.h"   // for TileInterconnectIdeal, etc
-#include "mshr.h"           // for MissHandlingEntry
+#include "caches_legacy/mshr_legacy.h"           // for MissHandlingEntry
 #include "seqnum.h"         // for seq_num_t
 #include "sim.h"            // for LINESIZE, CURR_CYCLE, etc
 #include "util/util.h"           // for SimTimer

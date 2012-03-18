@@ -22,7 +22,7 @@
 #include "util/debug.h"          // for DebugSim, GLOBAL_debug_sim
 #include "define.h"         // for DEBUG_HEADER, etc
 #include "locality_tracker.h"  // for LocalityTracker
-#include "mshr.h"           // for MissHandlingEntry, etc
+#include "caches_legacy/mshr_legacy.h"           // for MissHandlingEntry, etc
 #include "sim.h"            // for CURR_CYCLE, etc
 
 using namespace rigel;

@@ -22,7 +22,7 @@
 #include "icmsg.h"                  // for ICMsg
 #include "instr.h"                  // for InstrLegacy
 #include "instrstats.h"             // for InstrStats
-#include "mshr.h"                   // for MissHandlingEntry
+#include "caches_legacy/mshr_legacy.h"                   // for MissHandlingEntry
 #include "profile/profile.h"        // for ProfileStat
 #include "profile/profile_names.h"
 #include "sim.h"                    // for L1D_ENABLED, etc

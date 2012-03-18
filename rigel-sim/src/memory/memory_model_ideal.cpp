@@ -11,7 +11,7 @@
 #include "memory/address_mapping.h"  // for AddressMapping
 #include "memory/dram.h"           // for CONTROLLERS
 #include "memory/memory_model_ideal.h"
-#include "mshr.h"           // for MissHandlingEntry
+#include "caches_legacy/mshr_legacy.h"           // for MissHandlingEntry
 #include "sim.h"            // for CURR_CYCLE, etc
 #include "util/util.h"           // for CallbackInterface
 

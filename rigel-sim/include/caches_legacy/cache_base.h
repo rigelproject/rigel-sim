@@ -12,7 +12,7 @@
 
 #include "util/dynamic_bitset.h"
 #include "caches_legacy/cache_tags.h"
-#include "mshr.h"
+#include "caches_legacy/mshr_legacy.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 /// CacheBase

@@ -27,7 +27,7 @@
 #include "define.h"         // for ::IC_INVALID_DO_NOT_USE, etc
 #include "instr.h"          // for InstrLegacy
 #include "instrstats.h"     // for InstrCycleStats, InstrStats
-#include "mshr.h"           // for MissHandlingEntry
+#include "caches_legacy/mshr_legacy.h"           // for MissHandlingEntry
 #include "profile/profile.h"        // for CacheStat, Profile, etc
 #include "sim.h"            // for LINESIZE, etc
 

@@ -19,7 +19,7 @@
 #include "define.h"         // for DEBUG_HEADER, icmsg_type_t, etc
 #include "util/dynamic_bitset.h"  // for DynamicBitset
 #include "icmsg.h"          // for ICMsg
-#include "mshr.h"           // for MissHandlingEntry
+#include "caches_legacy/mshr_legacy.h"           // for MissHandlingEntry
 #include "seqnum.h"         // for seq_num_t
 #include "sim.h"            // for CORES_PER_CLUSTER, etc
 

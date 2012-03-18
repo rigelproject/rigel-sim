@@ -26,7 +26,7 @@
 #include "icmsg.h"          // for ICMsg
 #include "interconnect.h"   // for TileInterconnectBase
 #include "locality_tracker.h"  // for LocalityTracker
-#include "mshr.h"           // for MissHandlingEntry
+#include "caches_legacy/mshr_legacy.h"           // for MissHandlingEntry
 #include "profile/profile.h"        // for ProfileStat, Profile, etc
 #include "profile/profile_names.h"
 #include "seqnum.h"         // for seq_num_t

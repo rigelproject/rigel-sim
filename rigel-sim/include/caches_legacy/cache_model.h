@@ -15,7 +15,7 @@
 
 // Includes CacheTags and MSHRs
 #include "caches_legacy/cache_tags.h"
-#include "mshr.h"
+#include "caches_legacy/mshr_legacy.h"
 // Each of the caches is kept in a separate file, but they are all interrelated
 // so we pull them in here.
 

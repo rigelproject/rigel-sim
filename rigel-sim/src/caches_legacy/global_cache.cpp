@@ -31,7 +31,7 @@
 #include "instrstats.h"     // for InstrCycleStats, InstrStats
 #include "interconnect.h"
 #include "locality_tracker.h"  // for LocalityTracker, etc
-#include "mshr.h"           // for MissHandlingEntry
+#include "caches_legacy/mshr_legacy.h"           // for MissHandlingEntry
 #include "overflow_directory.h"  // for dir_of_timing_t, etc
 #include "profile/profile.h"        // for ProfileStat
 #include "profile/profile_names.h"  // for ::STATNAME_GCACHE_PORT, etc

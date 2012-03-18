@@ -12,7 +12,7 @@
 #define __MEMORY_MODEL_IDEAL_H__
 
 #include "sim.h"
-#include "mshr.h"
+#include "caches_legacy/mshr_legacy.h"
 #include "util/util.h"
 #include <queue>
 #include <set>

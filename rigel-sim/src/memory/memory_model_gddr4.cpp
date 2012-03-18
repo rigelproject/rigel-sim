@@ -27,7 +27,7 @@
 #include "memory/dram_controller.h"  // for DRAMController, etc
 #include "locality_tracker.h"  // for LocalityTracker, etc
 #include "memory/memory_timing_dram.h"
-#include "mshr.h"           // for MissHandlingEntry
+#include "caches_legacy/mshr_legacy.h"           // for MissHandlingEntry
 #include "profile/profile.h"        // for ProfileStat
 #include "sim.h"            // for TARGET_ARGS, LINESIZE, etc
 #include "util/util.h"           // for ELFAccess, ExitSim

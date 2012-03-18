@@ -21,7 +21,7 @@
 #include "icmsg.h"          // for ICMsg
 #include "instr.h"          // for InstrLegacy
 #include "instrstats.h"     // for InstrStats
-#include "mshr.h"           // for MissHandlingEntry
+#include "caches_legacy/mshr_legacy.h"           // for MissHandlingEntry
 #include "sim.h"
 #include "memory/backing_store.h" // for GlobalBackingStoreType definition
 #if 0

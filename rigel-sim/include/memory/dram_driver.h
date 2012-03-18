@@ -7,7 +7,7 @@
 #include <set>
 #include "sim.h"
 #include "util/util.h"
-#include "mshr.h"
+#include "caches_legacy/mshr_legacy.h"
 #include "stream_generator.h"
 #include "memory_timing.h"
 using namespace rigel;

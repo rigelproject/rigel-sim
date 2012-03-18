@@ -8,7 +8,7 @@
 #define __MEMORY_TIMING_DRAM_H__
 
 #include "sim.h"
-#include "mshr.h"
+#include "caches_legacy/mshr_legacy.h"
 #include "util/util.h"
 #include "memory/memory_model_ideal.h"
 #include <queue>
