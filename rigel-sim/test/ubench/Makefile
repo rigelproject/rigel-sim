@@ -3,7 +3,7 @@ MAKE=make
 
 test:
 	@for i in $(SUBDIRS); do \
-	echo "[[ -> CWD test: $$i ]]"; \
+	echo "[$$i]"; \
 	(cd $$i; $(MAKE) -s test); done
 
 dtest:
@@ -11,6 +11,6 @@ dtest:
 
 clean:
 	@for i in $(SUBDIRS); do \
-	echo "[[ -> CWD clean: $$i ]]"; \
+	echo "[$$i]"; \
 	(cd $$i; $(MAKE) -s clean); done
 

@@ -13,7 +13,7 @@ STDOUT_FILE="syscalls.stdout.out"
 ARGS="-tstdout $STDOUT_FILE"
 echo "$STDIN_INPUT" | $RIGELSIM $ARGS -clusters $CLUSTERS $BENCHMARK 2> cout.out 1> cerr.out 
 if (diff $STDOUT_FILE syscalls.stdout.out.GOLD > diff.out) then
-   echo "===== Passed ($NAME_STRING $TEST_STRING) ====="
+   passed "===== Passed ($NAME_STRING $TEST_STRING) ====="
 else
-   echo "===== Failed ($NAME_STRING $TEST_STRING) ====="
+   failed "===== Failed ($NAME_STRING $TEST_STRING) ====="
 fi

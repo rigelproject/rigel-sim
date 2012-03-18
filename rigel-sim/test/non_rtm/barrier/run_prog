@@ -13,10 +13,10 @@ CLUSTERS=1
 TEST_STRING="clusters: ${CLUSTERS}"
 $RIGELSIM $ARGS -clusters $CLUSTERS $BENCHMARK 1> cout.out 2> cerr.out
 cat RUN_OUTPUT/rigelprint.out | sed 's/0x[0-9a-f]* (PC 0x[0-9a-f]*)//' | sed 's/ thread: [0-9]*//' > RUN_OUTPUT/compare.out ;
-if(diff RUN_OUTPUT/compare.out rigelprint.out.GOLD > diff1.out) then
-  echo "===== Passed ===== ($NAME_STRING,$TEST_STRING)"
+if (diff RUN_OUTPUT/compare.out rigelprint.out.GOLD > diff1.out) then
+  passed "$NAME_STRING $TEST_STRING"
 else
-  echo "===== Failed ===== ($NAME_STRING,$TEST_STRING)"
+  failed "$NAME_STRING $TEST_STRING"
 fi
 
 rm -rf RUN_OUTPUT
@@ -26,8 +26,8 @@ TILES=2
 TEST_STRING="clusters: ${CLUSTERS} tiles: $TILES"
 $RIGELSIM $ARGS -clusters $CLUSTERS -tiles $TILES $BENCHMARK 1> cout.out 2> cerr.out
 cat RUN_OUTPUT/rigelprint.out | sed 's/0x[0-9a-f]* (PC 0x[0-9a-f]*)//' | sed 's/ thread: [0-9]*//' > RUN_OUTPUT/compare.out ;
-if(diff RUN_OUTPUT/compare.out rigelprint.out.GOLD > diff2.out) then
-  echo "===== Passed ===== ($NAME_STRING,$TEST_STRING)"
+if (diff RUN_OUTPUT/compare.out rigelprint.out.GOLD > diff2.out) then
+  passed "$NAME_STRING $TEST_STRING"
 else
-  echo "===== Failed ===== ($NAME_STRING,$TEST_STRING)"
+  failed "$NAME_STRING $TEST_STRING"
 fi

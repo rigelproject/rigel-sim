@@ -13,9 +13,9 @@ TILES=1
 $RIGELSIM $ARGS -clusters $CLUSTERS -tiles $TILES $NAME.tasks 1> cout.out 2> cerr.out
 cat RUN_OUTPUT/rigelprint.out | sed 's/0x[0-9a-f]* (PC 0x[0-9a-f]*)//' | sed 's/ thread: [0-9]*//' > RUN_OUTPUT/compare.out ;
 if (diff RUN_OUTPUT/compare.out rigelprint.out.${CLUSTERS}c.${TILES}t.GOLD > diff1.out) then
-  echo "===== Passed $NAME ($CLUSTERS c, $TILES t) ====="
+  passed "===== Passed $NAME ($CLUSTERS c, $TILES t) ====="
 else
-  echo "===== Failed $NAME ($CLUSTERS c, $TILES t) ====="
+  failed "===== Failed $NAME ($CLUSTERS c, $TILES t) ====="
 fi
 
 CLUSTERS=4
@@ -23,7 +23,7 @@ TILES=4
 $RIGELSIM $ARGS -clusters $CLUSTERS -tiles $TILES $NAME.tasks 1> cout.out 2> cerr.out
 cat RUN_OUTPUT/rigelprint.out | sed 's/0x[0-9a-f]* (PC 0x[0-9a-f]*)//' | sed 's/ thread: [0-9]*//' > RUN_OUTPUT/compare.out ;
 if (diff RUN_OUTPUT/compare.out rigelprint.out.${CLUSTERS}c.${TILES}t.GOLD > diff2.out) then
-  echo "===== Passed $NAME ($CLUSTERS c, $TILES t) ====="
+  passed "===== Passed $NAME ($CLUSTERS c, $TILES t) ====="
 else
-  echo "===== Failed $NAME ($CLUSTERS c, $TILES t) ====="
+  failed "===== Failed $NAME ($CLUSTERS c, $TILES t) ====="
 fi

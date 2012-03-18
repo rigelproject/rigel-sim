@@ -10,7 +10,7 @@ echo "0 test.bin" | $RIGELSIM ${ARGS} -clusters 2 cg.tasks 1> cout.out 2> cerr.o
 # Use sed to extract out all by the N-2 most-significant digits of the FP result.
 cat RUN_OUTPUT/rigelprint.out | sed 's/0x[0-9a-f]* (PC 0x[0-9a-f]*).*(\(.*\)[0-9]\{2\} f).*/\1/' > RUN_OUTPUT/compare.out
 if(diff RUN_OUTPUT/compare.out rigelprint.out.GOLD) then
-  echo "===== Passed ===== (Benchmark: RTM CG)"
+  passed "===== Passed ===== (Benchmark: RTM CG)"
 else
-  echo "===== Failed ===== (Benchmark: RTM CG)"
+  failed "===== Failed ===== (Benchmark: RTM CG)"
 fi

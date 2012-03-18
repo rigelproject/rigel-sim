@@ -4,9 +4,9 @@ source ../../common.sh
 
 function test_cerr {
  if (grep -q SIM_CYCLE cerr.out) then
-   echo "===== Passed ===== (Benchmark: Coherence cl: $1 tiles: $2 Run: $3)"
+   passed "===== Passed ===== (Benchmark: Coherence cl: $1 tiles: $2 Run: $3)"
  else
-   echo "===== FAILED ===== (Benchmark: Coherence cl: $1 tiles: $2 Run: $3)"
+   failed "===== FAILED ===== (Benchmark: Coherence cl: $1 tiles: $2 Run: $3)"
  fi
  rm cerr.out
 }

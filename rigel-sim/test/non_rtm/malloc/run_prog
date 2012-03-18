@@ -12,8 +12,8 @@ CLUSTERS=1
 TILES=1
 $RIGELSIM $ARGS -clusters $CLUSTERS -tiles $TILES $NAME.tasks 1> cout.out 2> cerr.out
 cat RUN_OUTPUT/rigelprint.out | sed 's/0x[0-9a-f]* (PC 0x[0-9a-f]*)//' | sed 's/ thread: [0-9]*//' > RUN_OUTPUT/compare.out ;
-if(diff RUN_OUTPUT/compare.out rigelprint.out.GOLD) then
-  echo "===== Passed $NAME ($CLUSTERS c, $TILES t) ====="
+if (diff RUN_OUTPUT/compare.out rigelprint.out.GOLD) then
+  passed "===== Passed $NAME ($CLUSTERS c, $TILES t) ====="
 else
-  echo "===== Failed $NAME ($CLUSTERS c, $TILES t) ====="
+  failed "===== Failed $NAME ($CLUSTERS c, $TILES t) ====="
 fi

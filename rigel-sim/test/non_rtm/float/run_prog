@@ -15,7 +15,7 @@ TEST_STRING="$THREADS thread $CLUSTERS cluster"
 $RIGELSIM $ARGS -threads $THREADS -clusters $CLUSTERS $BENCHMARK 2> threads_1.out 1> cerr.out 
 cat RUN_OUTPUT/rigelprint.out | sed 's/0x[0-9a-f]* (PC 0x[0-9a-f]*)//' > RUN_OUTPUT/compare.out
 if (diff RUN_OUTPUT/compare.out rigelprint.out.GOLD > mt1diff.out) then
-  echo "===== Passed ($NAME_STRING $TEST_STRING) ====="
+  passed "===== Passed ($NAME_STRING $TEST_STRING) ====="
 else
-  echo "===== Failed ($NAME_STRING $TEST_STRING) ====="
+  failed "===== Failed ($NAME_STRING $TEST_STRING) ====="
 fi
