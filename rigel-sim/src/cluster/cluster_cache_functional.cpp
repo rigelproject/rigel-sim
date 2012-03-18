@@ -35,13 +35,19 @@ ClusterCacheFunctional::ClusterCacheFunctional(
 /// component interface
 
 int
-ClusterCacheFunctional::PerCycle()  { return 0; };
+ClusterCacheFunctional::PerCycle()  { 
+  return 0; 
+};
 
 void
-ClusterCacheFunctional::EndSim()  {};
+ClusterCacheFunctional::EndSim()  {
+
+};
 
 void
-ClusterCacheFunctional::Dump()  {};
+ClusterCacheFunctional::Dump()  {
+  
+};
 
 void 
 ClusterCacheFunctional::Heartbeat()  {};

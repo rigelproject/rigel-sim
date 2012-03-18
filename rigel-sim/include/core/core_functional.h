@@ -66,29 +66,18 @@ class CoreFunctional : public CoreBase {
     uint32_t pc(int tid)     { return thread_state[tid]->pc_; } 
 
     /// FIXME TODO REMOVE ME HACK: replace with general connection interface
-    OutPortBase<Packet*>* getOutPort() {return &to_ccache;}
+    OutPortBase<Packet*>* getOutPort() { return &to_ccache;   }
     InPortBase<Packet*>*  getInPort()  { return &from_ccache; }
 
   private:
 
     // private methods
     void doMem(PipePacket* instr);
-    void doMemAddress(PipePacket* p);
-    void doMemoryAccess(PipePacket* instr, Packet* p);
-
-    void doALU(PipePacket* instr);
-    void doFPU(PipePacket* instr);
-    void doShift(PipePacket* instr);
-    void doCompare(PipePacket* instr);
-
+    void sendMemoryRequest(Packet* p);
+    void checkMemoryRequest(PipePacket* p);
 
     void doSimSpecial(PipePacket* instr);
 
-    void doBranch(PipePacket* instr);
-    void doBranchTarget(PipePacket* instr);
-    void doBranchPredicate(PipePacket* instr);
-
-   
     int width;      /// issue width
     int numthreads; /// numthreads
 

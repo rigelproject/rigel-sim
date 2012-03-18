@@ -63,8 +63,8 @@ class InPortBase : public PortBase {
 
   private:
     T    data;
-    bool valid; // data is valid
-    bool ready; // ready to accept a message
+    bool valid; /// data is valid
+    bool ready; /// ready to accept a message
 
 };
 

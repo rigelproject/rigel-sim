@@ -14,6 +14,9 @@
 
 #define DB_INSTR 0
 
+// forward declarations
+class Packet;
+
 extern const char isa_reg_names[NUM_ISA_OPERAND_REGS][8];
 
 struct string_descriptor;
@@ -36,10 +39,11 @@ class PipePacket { // : public InstrBase { // maybe later...
       _pc(pc),
       raw_instr_bits(raw),
       _tid(tid),
+      _mem_request(0),
       _sdInfo(decode()),
       _target_addr(0),
       _branch_predicate(0),
-      nextPC_(0)
+      _nextPC(0)
     { 
       //_sdInfo = decode(); 
     }
@@ -48,7 +52,7 @@ class PipePacket { // : public InstrBase { // maybe later...
     /// accessors
     ///
   
-    uint32_t nextPC()           { return nextPC_; }
+    uint32_t nextPC()           { return _nextPC; }
     uint32_t pc()               { return _pc; }
     uint32_t tid()              { return _tid; }
     uint32_t target_addr()      { return _target_addr; }
@@ -56,7 +60,7 @@ class PipePacket { // : public InstrBase { // maybe later...
 
     void     nextPC(uint32_t p) { 
       assert(p%4 == 0 && "pc must be aligned!");
-      nextPC_ = p; 
+      _nextPC = p; 
     }
     void target_addr(uint32_t ta) { _target_addr = ta; }
     void branch_predicate(bool p) { _branch_predicate = p; }
@@ -209,7 +213,6 @@ class PipePacket { // : public InstrBase { // maybe later...
       return regvals[SREG_T];
     }
 
-    // TODO FIXME: relete me, move functionality into sdInfo
     bool has_imm5()   { return _sdInfo.has_imm5;   }
     bool has_imm16()  { return _sdInfo.has_imm16;  }
     bool has_imm26()  { return _sdInfo.has_imm26;  }
@@ -227,6 +230,9 @@ class PipePacket { // : public InstrBase { // maybe later...
 
     bool isCompleted()  { return _completed; }
     void setCompleted() { _completed = true; }
+
+    Packet* memRequest() { return _mem_request; }
+    void memRequest(Packet* p) { _mem_request = p; }
     
   /// private methods
   private:
@@ -254,6 +260,8 @@ class PipePacket { // : public InstrBase { // maybe later...
 
     int _tid;  /// thread id: whose data is in this pipe packet?
 
+    Packet* _mem_request; ///< pointer to outstanding memory request
+
     /// pointer to static decode information
     StaticDecodeInfo& _sdInfo;
 
@@ -266,7 +274,7 @@ class PipePacket { // : public InstrBase { // maybe later...
 
     uint32_t _target_addr;
     bool _branch_predicate;
-    uint32_t nextPC_;
+    uint32_t _nextPC;
 
     /// input values
     regval32_t regvals[NUM_ISA_OPERAND_REGS]; /// for storing temporary register values

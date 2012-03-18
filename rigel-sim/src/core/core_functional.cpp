@@ -135,14 +135,7 @@ CoreFunctional::PerCycle() {
         memory(ts->instr);  
       } else { // check on the existing instruction
         // handle memory stall
-        Packet* reply;
-        reply = from_ccache.read();
-        if (reply) { // handle reply
-          DPRINT(true,"got reply! %d\n", reply->msgType());
-          ts->instr->setRegVal(DREG, reply->data()); // FIXME: NOT ALL have results! 
-          ts->instr->setCompleted(); // just for now...
-          delete reply; // because we are done (for now)
-        } 
+        checkMemoryRequest(ts->instr);
       }
       
       // writeback
@@ -395,11 +388,8 @@ CoreFunctional::Dump() {
 void 
 CoreFunctional::doMem(PipePacket* instr) {
 
-  regval32_t result;
   rword32_t sreg_t = instr->regval(SREG_T);
   rword32_t sreg_s = instr->regval(SREG_S);
-
-  //doMemAddress(instr); already done
 
   uint32_t addr = instr->target_addr();
 
@@ -411,41 +401,30 @@ CoreFunctional::doMem(PipePacket* instr) {
 
     // split me into Local and Global atomic sections?
     switch (instr->type()) {
-
       // local atomics
       // these require intra-cluster synchronization 
       // (or for alternate implementations at least _some_ cross-core synch)
-      case I_LDL: {
+      case I_LDL:
         // perform a regular LDW, but also set a link bit
         p->initCorePacket(addr, 0, id(), GTID(instr->tid()));
-        doMemoryAccess(instr, p);
         break;
-      }
-      case I_STC: {
+      case I_STC:
         // perform a store only if the link bit is set
         p->initCorePacket(addr, sreg_s.u32, id(), GTID(instr->tid()));
-        doMemoryAccess(instr, p);
         break;
-      }
       // atomics that return a copy of the OLD value before atomic update
-      case I_ATOMCAS: {
+      case I_ATOMCAS:
         p->initCorePacket(addr, instr->regval(DREG).u32(), id(), GTID(instr->tid()));
         p->gAtomicOperand(sreg_s.u32);
-        doMemoryAccess(instr, p);
         break;
-      }
-      case I_ATOMXCHG: {
+      case I_ATOMXCHG:
         p->initCorePacket(addr, instr->regval(DREG).u32(), id(), GTID(instr->tid()));
-        doMemoryAccess(instr, p);
         break;
-      }
       // arithmetic
       case I_ATOMINC: 
-      case I_ATOMDEC: {
+      case I_ATOMDEC:
         p->initCorePacket(addr, 0, id(), GTID(instr->tid()));
-        doMemoryAccess(instr, p);
         break;
-      }
       case I_ATOMADDU:
       // atomics that return the NEW value after atomic update
       // min,max
@@ -454,17 +433,16 @@ CoreFunctional::doMem(PipePacket* instr) {
       // logical
       case I_ATOMAND:
       case I_ATOMOR:
-      case I_ATOMXOR: {
+      case I_ATOMXOR:
         p->initCorePacket(addr, 0, id(), GTID(instr->tid()));
         p->gAtomicOperand(sreg_s.u32);
-        doMemoryAccess(instr, p);
         break;
-      }
       default:
         instr->Dump();
         assert(0 && "unknown or unimplemented ATOMICOP");
         break;
     }
+    sendMemoryRequest(p);
   // store value
   }
   else if (instr->isStore()) {
@@ -476,7 +454,7 @@ CoreFunctional::doMem(PipePacket* instr) {
       case I_BCAST_UPDATE: {
         uint32_t data        = instr->regval(DREG).u32();
         p->initCorePacket(addr ,data, id(), GTID(instr->tid()));
-        doMemoryAccess(instr, p); // no result for stores
+        sendMemoryRequest(p); // no result for stores
         break;
       }
       default:
@@ -491,7 +469,7 @@ CoreFunctional::doMem(PipePacket* instr) {
       case I_LDW:
       case I_GLDW: {
         p->initCorePacket(addr, 0, id(), GTID(instr->tid()));
-        doMemoryAccess(instr, p);
+        sendMemoryRequest(p);
         break;
       }
       default:
@@ -518,53 +496,67 @@ CoreFunctional::doMem(PipePacket* instr) {
     throw ExitSim("unknown memory operation!");
   }
 
-  if (p->isCompleted()) {
-    result = p->data();
-    delete p; // because we are done (for now)
-    instr->setRegVal(DREG,result); // FIXME: NOT ALL have results! 
-    instr->setCompleted(); // just for now...
-  } else {
-    throw ExitSim("unimplemented for incompleted operation\n");
-  }
+  instr->memRequest(p); // save pointer to incomplete request
+  checkMemoryRequest(instr);
+
 }
 
-// doMemoryAccess
+// sendMemoryRequest
 // actually poke the ports
 void
-CoreFunctional::doMemoryAccess(PipePacket* instr, Packet* p) {
+CoreFunctional::sendMemoryRequest(Packet* p) {
 
   port_status_t status;
-  Packet* reply;
 
   status = to_ccache.sendMsg(p);
 
   if (status == ACK) { // port accepted message
-    reply = from_ccache.read();
-    if (reply) { // handle reply
-      DPRINT(DB_CF_MEM,"got reply! %d\n", reply->msgType());
-      // FIXME: some operations DO NOT HAVE a result!
-      assert( reply == p ); // for now
-    } else { 
-      // NULL message means we have nothing to process
-    }
-  } else {
-    reply = NULL;
-    throw ExitSim("unhandled path doMemoryAccess()");
-  }
 
-  if (reply->msgType()==IC_MSG_STC_REPLY_NACK) {
-    DPRINT(DB_CF_STC,"[fail]");
-  } else if (reply->msgType()==IC_MSG_STC_REPLY_ACK) {
-    DPRINT(DB_CF_STC,"[success]");
+  } else {
+    throw ExitSim("unhandled path sendMemoryRequest()");
   }
-  // TODO: FIXME: re-enable checking for _all_ proper message request/reply pairs
-  //else {
-  //  throw ExitSim("Invalid response to STC request!\n");
-  //}
 
 }
 
+void
+CoreFunctional::checkMemoryRequest(PipePacket* instr) {
 
+  Packet* reply;
+  regval32_t result;
+  Packet* p = instr->memRequest();
+
+  reply = from_ccache.read();
+  if (reply) { // handle reply
+    DPRINT(DB_CF_MEM,"got reply! %d\n", reply->msgType());
+    // FIXME: some operations DO NOT HAVE a result!
+    assert( reply == p ); // for now
+
+    // check response types
+    if (reply->msgType()==IC_MSG_STC_REPLY_NACK) {
+      DPRINT(DB_CF_STC,"[fail]");
+    } else if (reply->msgType()==IC_MSG_STC_REPLY_ACK) {
+      DPRINT(DB_CF_STC,"[success]");
+    }
+    // TODO: FIXME: re-enable checking for _all_ proper message request/reply pairs
+    //else {
+    //  throw ExitSim("Invalid response to STC request!\n");
+    //}
+
+    if (reply->isCompleted()) {
+      result = reply->data();
+      instr->setRegVal(DREG, result); // FIXME: NOT ALL have results! 
+      instr->setCompleted(); // just for now...
+      delete p; // because we are done (for now)
+    } else {
+      throw ExitSim("unimplemented for incompleted operation\n");
+    }
+
+  } else { 
+    // NULL message means we have nothing to process
+    throw ExitSim("unhandled path sendMemoryRequest()");
+  }
+
+}
 
 void
 CoreFunctional::doSimSpecial(PipePacket* instr) {
