@@ -50,6 +50,7 @@ class CacheAccess_t {
                                       // how best to integrate this)
   // Set if the BCAST_REQ initiating *this* BCAST_REP was to a line valid in the L2.
   bool bcast_was_valid;
+
   //////////////////////////////////////////////////////////////////////////////
   // Public Methods
   //////////////////////////////////////////////////////////////////////////////
@@ -84,23 +85,31 @@ class CacheAccess_t {
   //////////////////////////////////////////////////////////////////////////////
   // FIXME: make all these check if internal value is VALID before returning!
   // use the msg type to determine if a subfield should be accessible?
+
   uint32_t get_addr() const { return _addr; }
+
   std::set<uint32_t> const &get_addrs() const { return _addrs; }
+
   const std::set<uint32_t>::const_iterator get_addrs_begin() const { return _addrs.begin(); }
+
   const std::set<uint32_t>::const_iterator get_addrs_end() const { return _addrs.end(); } 
+
   int get_core_id() const {
     //assert( _core_id >= 0 && "Invalid Core number");
     return _core_id;
   };
+
   int get_tid() const {
     //if( _tid < 0 ) { fprintf(stderr, "Illegal tid (%d) in CCacheAccess_t \n",_tid); }
     //assert( _tid >=0 && "Invalid ThreadID");
     return _tid;
   };
+
   icmsg_type_t get_icmsg_type() const {
     //assert( _icmsg_type != IC_MSG_ERROR && "attempting to read invalid message type" );
     return _icmsg_type;
   };
+
   InstrLegacy* get_instr() const {
     // FIXME this assertion seems too agressive, or our discipline for accessing when
     // Null is to check in the accessing function?
@@ -108,8 +117,11 @@ class CacheAccess_t {
     //  "attempting to access invalid instr field (NullInstr) of cache_access_t!");
     return _instr;
   }
+
   bool get_nonblocking_atomic() const { return nonblocking_atomic; }
+
   bool get_bcast_resp_valid() const { return bcast_was_valid; }
+
   // end get accessors
   //////////////////////////////////////////////////////////////////////////////
 
@@ -120,20 +132,24 @@ class CacheAccess_t {
   void set_tid(     int      t ) { _tid     = t; }
   void set_addr(    uint32_t a ) { _addrs.clear(); _addrs.insert(a); _addr = a; }
   void add_addr(    uint32_t a ) { _addrs.insert(a); }
-  template<class InputIterator> void add_addrs( InputIterator begin, InputIterator end)
-  {
+
+  template<class InputIterator> void add_addrs( InputIterator begin, InputIterator end) {
     _addrs.insert(begin, end);
   }
+
   void set_icmsg_type( icmsg_type_t i ) { _icmsg_type = i; }
   void set_instr     ( InstrLegacy*   i ) { _instr      = i; }
   void set_nonblocking_atomic(bool atomic = true) { nonblocking_atomic = atomic; }
   void set_bcast_resp_valid() { bcast_was_valid = true; }
   void clear_bcast_resp_valid() { bcast_was_valid = false; }
+
   // end set accessors
   //////////////////////////////////////////////////////////////////////////////
 };
 // end Class CacheAccess_t
 ////////////////////////////////////////////////////////////////////////////////
+
+
 
 #define CACHE_TEMPLATE \
 template < \
@@ -145,24 +161,31 @@ template < \
  int CACHE_EVICTION_BUFFER_SIZE \
 >
 
+////////////////////////////////////////////////////////////////////////////////
+/// class CacheBase
+////////////////////////////////////////////////////////////////////////////////
 template <
   int ways, int sets, int linesize,
   int MAX_OUTSTANDING_MISSES, int WB_POLICY, int CACHE_EVICTION_BUFFER_SIZE
 >
-class CacheBase
-{
+class CacheBase {
 
   public: /* ACCESSORS */
+
     // Default constructor
     CacheBase ();
     virtual ~CacheBase () { };
 
     void PM_set_acked(int i) { pendingMiss[i].SetRequestAcked(); }
+
     // Sanity check to make sure we are actually using our cache effectively
     uint32_t get_insert_count(int set, int way) { return (TagArray[set][way].insert_count()); }
+
     uint32_t get_touch_count(int set, int way) { return (TagArray[set][way].touch_count()); }
+
     // Change the coherence state of a line in the cache.
     void set_coherence_state(uint32_t addr, coherence_state_t state);
+
     // Returns true if the line has been accessed while it has been in the
     // cache, false otherwise.
     bool get_accessed_bit(uint32_t addr) const;
@@ -172,15 +195,17 @@ class CacheBase
   //private: /* ACCESSORS */
   //protected: /* ACCESSORS */
   public:
+
     // Called once at begining of cycle by the cache model.
     void PerCycle();
+
     // Return the set for the address.
-    virtual int get_set(uint32_t addr) const
-      { int set = ((addr >> SET_SHIFT) & SET_MASK); return set; };
+    virtual int get_set(uint32_t addr) const { 
+      int set = ((addr >> SET_SHIFT) & SET_MASK); return set; 
+    };
 
     //Returns pointer to matching, valid MSHR if it exists, NULL otherwise.
-    virtual MissHandlingEntry<linesize> * IsPending(uint32_t addr)
-    {
+    virtual MissHandlingEntry<linesize> * IsPending(uint32_t addr) {
       addr &= rigel::cache::LINE_MASK;
       int i = validBits.findFirstSet();
       while(i != -1)
@@ -198,14 +223,18 @@ class CacheBase
     // Returns way number based on whether a particular word if found, -1 if not
     // found.  The line may be valid, but the particular word is not.
     int get_way_word(uint32_t addr) const;
+
     // Optimization for when set is already calculated
     int get_way_word(uint32_t addr, int set) const;
+
     // Return way number if the line is present (any valid bits set).  The
     // particular word requested may not be available. Returns -1 if nothing
     // found.
     int get_way_line(uint32_t addr) const;
+
     // Optimization for when set is already calculated
     int get_way_line(uint32_t addr, int set) const;
+
     //Return whether or not this line is currently
     //being evicted (selected as a victim, but awaiting an MSHR or something else).
     // NOTE:
@@ -220,43 +249,61 @@ class CacheBase
     // can never stall waiting for an MSHR, so subsequent accesses can never bypass them, but that
     // seems like it'd require a lot of MSHRs.
     bool is_being_evicted(uint32_t addr) const;
+
     // returns true if all MSHRs are full
     bool mshr_full(bool = false);
+
     // Update LRU info in the cache
     void touch(uint32_t addr);
+
     // Clear HW prefetch bit for line.
     void ClearHWPrefetch(uint32_t addr);
+
     // Query HW prefetch bit for line.
     bool IsHWPrefetch(uint32_t addr);
+
     // Clear bulk prefetch bit for line.
     void ClearBulkPrefetch(uint32_t addr);
+
     // Query bulk prefetch bit for line.
     bool IsBulkPrefetch(uint32_t addr);
+
     // Get the proper word bit for the address.
     static uint32_t getWordBitsForLine(uint32_t addr);
+
     // Set word valid on a line that is already valid in the cache.
     void setValidWord(uint32_t addr);
+
     // Return the words that are valid for a line as a bitmask.
     uint32_t getValidMask(uint32_t addr);
+
     // Dirty the line (on write).  Can be called even if cache line is invalid
     // and will have no effect.
     void setDirtyWord(uint32_t addr);
     void setDirtyLine(uint32_t addr);
+
     // Return true if the word is dirty.  The addr is word-aligned.
     bool IsDirtyWord(uint32_t addr);
+
     // Return true if any of the words are dirty.  The addr is cacheline aligned.
     bool IsDirtyLine(uint32_t addr);
+
     // Clears the dirty bit for line.  Writeback handled separately
     void clearDirtyWord(uint32_t addr);
     void clearDirtyLine(uint32_t addr);
+
     // Return true if the word is valid in the cache.
     bool IsValidWord(uint32_t addr);
+
     // Return true if any of the words are valid in the cache.
     bool IsValidLine(uint32_t addr);
+
     // Invalidate all entries in cache
     void invalidate_all();
+
     // Invalidate a single line
     void invalidate_line(uint32_t addr);
+
     // Invalidate a single word
     void invalidate_word(uint32_t addr);
 
@@ -266,60 +313,79 @@ class CacheBase
 
     // Make line of addr valid in cache.
     bool Fill(uint32_t addr);
+
     // Make line of addr valid in the cache and set the prefetch bit on the line
     // if necessary.
     bool Fill(uint32_t addr, bool was_prefetch);
+
     // Evict a cache line that shares the same way as addr (BUT NOT ADDR)
     // Returns the newly available way
     int evict(uint32_t addr, bool &stall);
+
     // This was pure virtual, but the L1's do not need it so I
     //  changed it.
     // It was just dead code in G$ as well.  Removed.
     virtual void
       Schedule(int size, MissHandlingEntry<rigel::cache::LINESIZE> *MSHR) {}
+
     // PendingMiss interface.  I added this so that we can control access to the
     // list of MSHRs for the cache.  Right now they are all over the place.  I
     // would like to make the pendingMiss array private ASAP.  I would also like
     // to move this into a separate class/interface to tidy up CacheBase.
     // Return valid status of a miss register.
     bool PM_get_valid(int i) const { return validBits.test(i); }
+
     // Return the address of the pending miss.
     std::set<uint32_t> &PM_get_addrs(int i) { return pendingMiss[i].get_addrs(); }
+
     // Return the ICMsg type of the miss.
     icmsg_type_t PM_get_icmsg_type(int i) const { return pendingMiss[i].GetICMsgType(); }
+
     // Callbacks used to set the delay from outside of the cache.
     // Used by memory controller/cluster controller to set delay in the future
     // for GC/CC scheduling.
     bool PM_get_sched(int i) { return pendingMiss[i].IsScheduled(); }
+
     // Return true if the message has been scheduled/acked at the global/cluster
     // cache.
     bool PM_get_acked(int i) { return pendingMiss[i].IsRequestAcked(); }
+
     // Return the timing waiting since the last WDT reset
     int PM_get_WDTwait(int i) { return(rigel::CURR_CYCLE-pendingMiss[i].watchdog_last_set_time); }
+
     // Return true if the MISS is ready to be filled into the cache.
     bool PM_get_ready(int i) { return (pendingMiss[i].IsDone()); }
+
     // Return the instruction associated with the miss.  May return NULL.
     InstrLegacy *PM_get_instr(int i) { return pendingMiss[i].instr; }
+
     // Printout status of the MSHR to the console.  For debug purposes.
     void PM_dump(int i) const { pendingMiss[i].dump(); }
+
     // Return a reference to the MSHR for the index.
     MissHandlingEntry<linesize> &PM_get_mshr(int idx) { return pendingMiss[idx]; }
+
     // Clearning an MSHR is a two-phase process.  First:Try to clear() the MSHR.
     // May be undone later with unclear().
     void PM_clear(int i) { pendingMiss[i].clear(); }
     void PM_unclear(int i) { pendingMiss[i].unclear(); }
+
     // Return the index of an unused MSHR in idx.  Returns true on success.
     bool PM_find_unused_mshr(int & idx);
+
     //Get the fill address for MSHR[i]
     uint32_t PM_get_fill_addr(int i) const { return pendingMiss[i].get_fill_addr(); }
+
     //Are one or more lines waiting to be filled into the cache?
     bool PM_has_ready_line(int i) const { return pendingMiss[i].has_ready_line(); }
+
     //Tell the MSHR that a fill has occurred for the specified address
     void PM_notify_fill(int i, uint32_t addr) { pendingMiss[i].notify_fill(addr); }
-    void PM_set_line_ready(int i, uint32_t addr, uint64_t ready_cycle)
-    {
+
+    void PM_set_line_ready(int i, uint32_t addr, uint64_t ready_cycle) {
       pendingMiss[i].set_line_ready(addr, ready_cycle);
     }
+
     // Insert a new request into the pending misses pool. Returns a reference to the MSHR that
     // it generates.
     MissHandlingEntry<linesize> &
@@ -332,14 +398,19 @@ class CacheBase
     // Returns true if there are no requests pending.
     // TODO this would be faster if the free list were a used list (reverse the sense)
     bool PM_none_pending() const { return validBits.allClear(); }
+
     // Dump the contents of all of the MSHRs in the cache.
     void dump() const;
+
     // Decrement the WDT for ack's.  When it hits zero, return true, else return false.
-    bool PM_DEBUG_inc_acked_WDT(int idx)
-      { if (pendingMiss[idx].ack_WDT-- < 0) { return true; } return false; }
+    bool PM_DEBUG_inc_acked_WDT(int idx) { 
+      if (pendingMiss[idx].ack_WDT-- < 0) { return true; } return false; 
+    }
+
     // Decrement the WDT for sched's.  When it hits zero, return true, else return false.
-    bool PM_DEBUG_inc_sched_WDT(int idx)
-      { if (pendingMiss[idx].sched_WDT-- < 0) { return true; } return false; }
+    bool PM_DEBUG_inc_sched_WDT(int idx) {
+      if (pendingMiss[idx].sched_WDT-- < 0) { return true; } return false; 
+    }
 
   public: /* DATA */
     MissHandlingEntry<linesize> pendingMiss[MAX_OUTSTANDING_MISSES];

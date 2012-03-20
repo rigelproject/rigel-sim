@@ -7,8 +7,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef __MSHR_H__
-#define __MSHR_H__
+#ifndef __MSHR_LEGACY_H__
+#define __MSHR_LEGACY_H__
 
 #include <bitset>
 #include <set>
