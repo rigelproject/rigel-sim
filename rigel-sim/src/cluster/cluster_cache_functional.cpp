@@ -9,6 +9,8 @@
 
 #define DB_CC 0
 
+#define CF_FIXED_LATENCY 0
+
 /// constructor
 ClusterCacheFunctional::ClusterCacheFunctional(
   rigel::ConstructionPayload cp
@@ -16,7 +18,8 @@ ClusterCacheFunctional::ClusterCacheFunctional(
   ClusterCacheBase(cp.change_name("ClusterCacheFunctional")),
   LinkTable(rigel::THREADS_PER_CLUSTER), // TODO FIXME dynamic
   ins(rigel::CORES_PER_CLUSTER), // FIXME: make this non-const
-  outs(rigel::CORES_PER_CLUSTER) // FIXME: make this non-const
+  outs(rigel::CORES_PER_CLUSTER), // FIXME: make this non-const
+  fixed_latency(CF_FIXED_LATENCY)
 {
 
   CallbackWrapper<Packet*>* mcb
@@ -37,11 +40,13 @@ ClusterCacheFunctional::ClusterCacheFunctional(
 int
 ClusterCacheFunctional::PerCycle()  { 
 
-  Packet* p;
   if (!outpackets.empty()) {
-    p = outpackets.front();
-    outs[p->local_coreid()]->sendMsg(p);
-    outpackets.pop(); 
+    if (outpackets.front().first <= rigel::CURR_CYCLE) {
+      Packet* p;
+      p = outpackets.front().second;
+      outs[p->local_coreid()]->sendMsg(p);
+      outpackets.pop(); 
+    }
   }
 
   return 0; 
@@ -64,11 +69,15 @@ ClusterCacheFunctional::Heartbeat()  {};
 /// CCFunctional specific 
 void 
 ClusterCacheFunctional::FunctionalMemoryRequest(Packet* p) {
+
   doMemoryAccess(p);
   assert(p!=0);
-  // send immediately
-  //outs[p->local_coreid()]->sendMsg(p);
-  outpackets.push(p);
+  
+  if (fixed_latency == 0) { // send immediately
+    outs[p->local_coreid()]->sendMsg(p);
+  } else {
+    outpackets.push( std::make_pair(rigel::CURR_CYCLE + fixed_latency, p) );
+  }
 }
 
 void
@@ -132,106 +141,6 @@ ClusterCacheFunctional::doGlobalAtomic(PacketPtr p) {
   p->data( result );
   p->setCompleted();
 }
-#if 0
-#include "core/regfile.h" // TODO FIXME REMOVE ME, bad, for regval32_t
-void 
-ClusterCacheFunctional::doGlobalAtomic(PacketPtr p) {
-
-  uint32_t target_addr = p->addr();
-  uint32_t temp_result;
-  regval32_t operand = p->gAtomicOperand();
-  regval32_t swapval = p->data();
-
-  switch (p->msgType()) {
-    // atomics that return a copy of the OLD value before atomic update
-    case IC_MSG_ATOMCAS_REQ: {
-      uint32_t oldval = mem_backing_store->read_data_word(target_addr);
-      uint32_t newval = swapval.u32();
-      if (oldval == operand.u32()) { 
-        mem_backing_store->write_word(target_addr, newval); 
-      };
-      temp_result = oldval;
-      DPRINT(false,"cas target_addr: %08x \n",target_addr);
-      break;
-    }
-    case IC_MSG_ATOMXCHG_REQ: {
-      uint32_t oldval = mem_backing_store->read_data_word(target_addr); 
-      uint32_t newval = swapval.u32();
-      mem_backing_store->write_word(target_addr, newval);
-      temp_result = oldval;
-      break;
-    }
-    case IC_MSG_ATOMADDU_REQ: {
-      uint32_t oldval = mem_backing_store->read_data_word(target_addr); 
-      uint32_t newval = oldval + operand.u32();
-      mem_backing_store->write_word(target_addr, newval);
-      temp_result = oldval;
-      break;
-    }
-    // atomics that return the NEW value after atomic update
-    // arithmetic
-    case IC_MSG_ATOMINC_REQ: {
-      uint32_t oldval = mem_backing_store->read_data_word(target_addr); 
-      uint32_t newval = oldval + 1;
-      mem_backing_store->write_word(target_addr, newval);
-      temp_result = newval;
-      break;
-    }
-    case IC_MSG_ATOMDEC_REQ: {
-      uint32_t oldval = mem_backing_store->read_data_word(target_addr); 
-      uint32_t newval = oldval - 1;
-      mem_backing_store->write_word(target_addr, newval);
-      temp_result = newval;
-      break;
-    }
-    // min,max
-    case IC_MSG_ATOMMIN_REQ: {
-      uint32_t oldval = mem_backing_store->read_data_word(target_addr);
-      uint32_t newval = std::min(oldval,operand.u32());
-      mem_backing_store->write_word(target_addr, newval);
-      temp_result = newval;
-      break;
-    }
-    case IC_MSG_ATOMMAX_REQ: {
-      uint32_t oldval = mem_backing_store->read_data_word(target_addr);
-      uint32_t newval = std::max(oldval,operand.u32());
-      mem_backing_store->write_word(target_addr, newval);
-      temp_result = newval;
-      break;
-    }
-    // logical
-    case IC_MSG_ATOMAND_REQ: {
-      uint32_t oldval = mem_backing_store->read_data_word(target_addr);
-      uint32_t newval = oldval & operand.u32();
-      mem_backing_store->write_word(target_addr, newval);
-      temp_result = newval;
-      break;
-    }
-    case IC_MSG_ATOMOR_REQ: {
-      uint32_t oldval = mem_backing_store->read_data_word(target_addr);
-      uint32_t newval = oldval | operand.u32();
-      mem_backing_store->write_word(target_addr, newval);
-      temp_result = newval;
-      break;
-    }
-    case IC_MSG_ATOMXOR_REQ: {
-      uint32_t oldval = mem_backing_store->read_data_word(target_addr);
-      uint32_t newval = oldval ^ operand.u32();
-      mem_backing_store->write_word(target_addr, newval);
-      temp_result = newval;
-      break;
-    }
-    default:
-      p->Dump();
-      throw ExitSim("unknown or unimplemented Global ATOMICOP");
-      break;
-  }
-  // convert the request to a reply
-  p->msgType( rigel::icmsg_convert(p->msgType()) );
-  p->data( temp_result );
-  p->setCompleted();
-}
-#endif
 
 /// side effect: updates p
 void

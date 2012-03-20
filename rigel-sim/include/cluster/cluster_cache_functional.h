@@ -4,6 +4,7 @@
 #include "cluster/cluster_cache_base.h"
 #include "util/util.h"
 #include <queue>
+#include <utility>
 
 
 // forward declarations
@@ -49,7 +50,9 @@ class ClusterCacheFunctional : public ClusterCacheBase {
     std::vector< InPortBase<Packet*>* > ins;
     std::vector< OutPortBase<Packet*>* > outs;
 
-    std::queue<Packet*> outpackets;
+    std::queue< std::pair<uint64_t,Packet*> > outpackets;
+
+    int fixed_latency;
 
 };
 
