@@ -5,33 +5,45 @@
 #include "util/construction_payload.h"
 
 /// constructor
-ClusterSimple::ClusterSimple(
+ClusterFunctional::ClusterFunctional(
   rigel::ConstructionPayload cp
 ) : 
-  ClusterBase(cp.change_name("ClusterSimple")),
+  ClusterBase(cp.change_name("ClusterFunctional")),
   numcores(rigel::CORES_PER_CLUSTER), // TODO: set dynamic
-  halted_(0)
-  //LoadLinkFIXME(numcores)
+  halted_(0),
+  to_interconnect(),
+  from_interconnect()
 {
+
   cp.parent = this;
 	cp.component_name.clear();
 
-  ccache = new ClusterCacheFunctional(cp);
+  ccache = new ClusterCacheFunctional(cp, from_interconnect, to_interconnect);
+
+  // connect ccache to cluster ports
+  // this just assigns the ccache ports to be the cluster's ports
+  // we like this because the cluster is contained, but the ccache is a separate object
+  // we could instead try to use a DUMMY port object that basically does this assignment via attach
+  //from_interconnect = ccache->getMemSideInPort();
+  //to_interconnect   = ccache->getMemSideOutPort();
 
 	cores = new CoreFunctional*[numcores];
 
+  // make port connections:
+  // TODO: do this somewhere more generic
   for (int i = 0; i < numcores; ++i) {
+    DPRINT(true,"CF ports: %d\n", i);
     cp.core_state = cp.cluster_state->add_cores();
     cp.component_index = i;
     cores[i] = new CoreFunctional(cp,ccache);     
-    ccache->getInPort(i)->attach( cores[i]->getOutPort() );
-    cores[i]->getInPort()->attach( ccache->getOutPort(i) );
+    ccache->getCoreSideInPort(i)->attach( cores[i]->getOutPort() );
+    cores[i]->getInPort()->attach( ccache->getCoreSideOutPort(i) );
   }
 
 };
 
 /// destructor
-ClusterSimple::~ClusterSimple() {
+ClusterFunctional::~ClusterFunctional() {
   if (cores) {
     for (int i=0; i<numcores; i++) {
       delete cores[i];
@@ -41,7 +53,7 @@ ClusterSimple::~ClusterSimple() {
 }
 
 void
-ClusterSimple::Heartbeat() {
+ClusterFunctional::Heartbeat() {
 
   // p: core
   for (int p = 0; p < rigel::CORES_PER_CLUSTER; p++) {
@@ -53,7 +65,7 @@ ClusterSimple::Heartbeat() {
 
 /// PerCycle
 int
-ClusterSimple::PerCycle() {
+ClusterFunctional::PerCycle() {
 
   if (halted()) {
     return halted();
@@ -75,24 +87,24 @@ ClusterSimple::PerCycle() {
 };
 
 void 
-ClusterSimple::Dump() { 
+ClusterFunctional::Dump() { 
   assert( 0 && "unimplemented!");
 };
 
 void 
-ClusterSimple::EndSim() {
+ClusterFunctional::EndSim() {
 	profiler->end_sim();
 	profiler->accumulate_stats();
   //assert( 0 && "unimplemented!");
 };
 
-void ClusterSimple::save_state() const {
+void ClusterFunctional::save_state() const {
   for(int i = 0; i < rigel::CORES_PER_CLUSTER; i++) {
     cores[i]->save_state();
   }
 }
 
-void ClusterSimple::restore_state() {
+void ClusterFunctional::restore_state() {
   for(int i = 0; i < rigel::CORES_PER_CLUSTER; i++) {
     cores[i]->restore_state();
   }

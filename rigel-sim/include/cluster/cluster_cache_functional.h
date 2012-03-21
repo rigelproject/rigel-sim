@@ -23,7 +23,11 @@ class ClusterCacheFunctional : public ClusterCacheBase {
   public:
 
     /// constructor
-    ClusterCacheFunctional(rigel::ConstructionPayload cp);
+    ClusterCacheFunctional(
+      rigel::ConstructionPayload cp,
+      InPortBase<Packet*>* in,       ///< unused
+      OutPortBase<Packet*>* out      ///< unused 
+    );
 
     /// component interface functions
     int  PerCycle();
@@ -34,21 +38,29 @@ class ClusterCacheFunctional : public ClusterCacheBase {
 
     /// REMOVE ME: FIXME TODO HACK -- replace this with proper generic
     //connections
-    InPortBase<Packet*>*  getInPort(int p)   { return ins[p]; }
-    OutPortBase<Packet*>* getOutPort(int p)  { return outs[p]; }
+    InPortBase<Packet*>*  getCoreSideInPort(int p)  { return coreside_ins[p];  }
+    OutPortBase<Packet*>* getCoreSideOutPort(int p) { return coreside_outs[p]; }
 
-  private:
+    //InPortBase<Packet*>*  getMemSideInPort()        { return memside_in;       }
+    //OutPortBase<Packet*>* getMemSideOutPort()       { return memside_out;      }
+
+  protected:
+
+    std::vector<clustercache::LDLSTC_entry_t> LinkTable;
+
+    std::vector< InPortBase<Packet*>* > coreside_ins;
+    std::vector< OutPortBase<Packet*>* > coreside_outs;
+
+    //InPortBase<Packet*>* memside_in;
+    //OutPortBase<Packet*>* memside_out;
+
+  private: // we don't want these visible to inherited classes
 
     void doMemoryAccess(PacketPtr p);
     void doLocalAtomic(PacketPtr p);
     void doGlobalAtomic(PacketPtr p);
   
     void FunctionalMemoryRequest(Packet* p);
-
-    std::vector<clustercache::LDLSTC_entry_t> LinkTable;
-
-    std::vector< InPortBase<Packet*>* > ins;
-    std::vector< OutPortBase<Packet*>* > outs;
 
     std::queue< std::pair<uint64_t,Packet*> > outpackets;
 

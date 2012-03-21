@@ -7,13 +7,13 @@
 #include "core.h"
 #include "cluster/cluster_cache.h"
 
-class ClusterSimple : public ClusterBase {
+class ClusterFunctional : public ClusterBase {
 
   public:
 
-    ClusterSimple(rigel::ConstructionPayload cp);
+    ClusterFunctional(rigel::ConstructionPayload cp);
 
-    ~ClusterSimple();
+    ~ClusterFunctional();
 
     /// Component interface
     void Heartbeat();
@@ -38,7 +38,8 @@ class ClusterSimple : public ClusterBase {
 
     int halted_; /// halted cores (threads?)
 
-    std::vector<uint32_t> LoadLinkFIXME;
+    OutPortBase<Packet*>* to_interconnect;   ///< outport to the interconnect
+    InPortBase<Packet*>*  from_interconnect; ///< inport from the interconnect
 
 };
 

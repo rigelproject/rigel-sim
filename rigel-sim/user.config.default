@@ -16,7 +16,7 @@
   // ClusterType
   class ClusterBase;
   class ClusterLegacy;
-  class ClusterSimple;
+  class ClusterFunctional;
   #define CLUSTER_TYPE RIGEL_CFG_NUM
 namespace rigel {
   #if CLUSTER_TYPE == 1

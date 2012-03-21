@@ -13,24 +13,28 @@
 
 /// constructor
 ClusterCacheFunctional::ClusterCacheFunctional(
-  rigel::ConstructionPayload cp
+  rigel::ConstructionPayload cp,
+  InPortBase<Packet*>* in,
+  OutPortBase<Packet*>* out
 ) : 
   ClusterCacheBase(cp.change_name("ClusterCacheFunctional")),
   LinkTable(rigel::THREADS_PER_CLUSTER), // TODO FIXME dynamic
-  ins(rigel::CORES_PER_CLUSTER), // FIXME: make this non-const
-  outs(rigel::CORES_PER_CLUSTER), // FIXME: make this non-const
+  coreside_ins(rigel::CORES_PER_CLUSTER), // FIXME: make this non-const
+  coreside_outs(rigel::CORES_PER_CLUSTER), // FIXME: make this non-const
+  outpackets(),
   fixed_latency(CF_FIXED_LATENCY)
 {
+
 
   CallbackWrapper<Packet*>* mcb
     = new MemberCallbackWrapper<ClusterCacheFunctional,Packet*,
                                 &ClusterCacheFunctional::FunctionalMemoryRequest>(this);
-  for (int i=0; i<ins.size(); i++) {
-    ins[i] = new InPortCallback<Packet*>(mcb);
+  for (int i = 0; i < coreside_ins.size(); i++) {
+    coreside_ins[i] = new InPortCallback<Packet*>(mcb);
   }
 
-  for (int i=0; i<outs.size(); i++) {
-    outs[i] = new OutPortBase<Packet*>();
+  for (int i = 0; i < coreside_outs.size(); i++) {
+    coreside_outs[i] = new OutPortBase<Packet*>( );
   }
 
 }
@@ -44,7 +48,7 @@ ClusterCacheFunctional::PerCycle()  {
     if (outpackets.front().first <= rigel::CURR_CYCLE) {
       Packet* p;
       p = outpackets.front().second;
-      outs[p->local_coreid()]->sendMsg(p);
+      coreside_outs[p->local_coreid()]->sendMsg(p);
       outpackets.pop(); 
     }
   }
@@ -74,7 +78,7 @@ ClusterCacheFunctional::FunctionalMemoryRequest(Packet* p) {
   assert(p!=0);
   
   if (fixed_latency == 0) { // send immediately
-    outs[p->local_coreid()]->sendMsg(p);
+    coreside_outs[p->local_coreid()]->sendMsg(p);
   } else {
     outpackets.push( std::make_pair(rigel::CURR_CYCLE + fixed_latency, p) );
   }
@@ -133,6 +137,9 @@ ClusterCacheFunctional::doMemoryAccess(PacketPtr p) {
 
 }
 
+/// doGlobalAtomic
+/// call a generic handler for Global Atomic operations
+/// side effect: updates p
 void
 ClusterCacheFunctional::doGlobalAtomic(PacketPtr p) {
   uint32_t result = RigelISA::execGlobalAtomic(p, mem_backing_store);
@@ -142,6 +149,8 @@ ClusterCacheFunctional::doGlobalAtomic(PacketPtr p) {
   p->setCompleted();
 }
 
+/// doLocalAtomics
+/// local atomics (LDL/STC) require local state where they are completed
 /// side effect: updates p
 void
 ClusterCacheFunctional::doLocalAtomic(PacketPtr p) {
@@ -153,6 +162,8 @@ ClusterCacheFunctional::doLocalAtomic(PacketPtr p) {
   }
   assert(tid < LinkTable.size());
   switch(p->msgType()) {
+
+    // Load Linked
     case IC_MSG_LDL_REQ: {
       LinkTable[tid].valid = true;
       LinkTable[tid].addr  = p->addr();
@@ -163,7 +174,10 @@ ClusterCacheFunctional::doLocalAtomic(PacketPtr p) {
       p->msgType(IC_MSG_LDL_REPLY);
       break;
     }
+
+    // Store Conditional
     case IC_MSG_STC_REQ:
+
       // STC succeeds if we have a valid addr match
       // FIXME: check the addr size overlap as below
       if (LinkTable[tid].valid && LinkTable[tid].addr == p->addr()) {

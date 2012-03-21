@@ -32,9 +32,9 @@ class TileNew: public TileBase {
     virtual void restore_state();
 
     // accessors
-    TileInterconnectBase*  getInterconnect() const { return interconnect; }
+    //TileInterconnectBase*  getInterconnect() const { return interconnect; }
     rigel::ClusterType** getClusters()     const { return (rigel::ClusterType**)clusters; }
-    GlobalNetworkBase*     getGNet()         const { return gnet; }
+    //GlobalNetworkBase*     getGNet()         const { return gnet; }
 
   protected:
 

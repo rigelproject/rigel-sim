@@ -98,9 +98,7 @@ namespace rigel {
 // FIXME remove me temporary
 class ClusterBase;
 class ClusterLegacy;
-class ClusterSimple;
-//typedef ClusterLegacy ClusterType;
-//typedef ClusterSimple ClusterType;
+class ClusterFunctional;
 
 // Memory Model Classes
 class MemoryModelSimple;

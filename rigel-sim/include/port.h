@@ -3,10 +3,13 @@
 
 #define DEBUG_PORT 0
 
+#include "include/port/portmanager.h"
+
 /// this base class is meaningless, either get rid of or define a general port
 /// concept with meaning
 class PortBase {
     public:
+    protected:
     private:
 };
 
@@ -27,10 +30,24 @@ class InPortBase : public PortBase {
 
   public:
 
-    InPortBase() : 
+    InPortBase() : //( std::string name ) : 
+      //name(name),
       valid(false),
       ready(true)
-    { }
+    { 
+
+      // PortManager<T>::InPorts;
+      // typename std::map< std::string, InPortBase<T>* >::iterator it;
+      // PortManager<T>::InPorts.find(name);
+
+      // // register this port by name
+      // if (it != PortManager<T>::InPorts.end()) {
+      //   throw ExitSim("port name conflict!");
+      // } else {
+      //   PortManager<T>::InPorts[name] = this;
+      // }
+
+    }
 
     virtual port_status_t recvMsg(T msg) {
       DPRINT(DEBUG_PORT,"%s\n", __PRETTY_FUNCTION__);   
@@ -58,13 +75,18 @@ class InPortBase : public PortBase {
       }
     }
 
-    virtual void attach( OutPortBase<T>* op ) { op->attach(this); }
+    virtual void attach( OutPortBase<T>* op ) { 
+      DPRINT(DEBUG_PORT,"%s\n", __PRETTY_FUNCTION__);   
+      op->attach(this); 
+    }
     
+    friend class PortManager<T>;
 
   private:
     T    data;
     bool valid; /// data is valid
     bool ready; /// ready to accept a message
+    std::string name; ///< port name
 
 };
 
@@ -75,10 +97,11 @@ class InPortCallback : public InPortBase<T> {
   
   public:
 
-    InPortCallback( CallbackWrapper<T>* handler ) 
-      : handler(handler)
-    { 
-    }
+    InPortCallback( //std::string name, 
+                    CallbackWrapper<T>* handler 
+    ) : //InPortBase<T>(name),
+        handler(handler)
+    { }
 
     virtual port_status_t recvMsg(T msg) {
       DPRINT(DEBUG_PORT,"%s\n", __PRETTY_FUNCTION__);
@@ -101,21 +124,40 @@ class OutPortBase : public PortBase {
 
   public:
 
+    OutPortBase() // std::string name ) 
+     : _connection(NULL) // no connections
+    {
+
+      // PortManager<T>::OutPorts;
+      // typename std::map< std::string, OutPortBase<T>* >::iterator it;
+      // PortManager<T>::OutPorts.find(name);
+
+      // if (it != PortManager<T>::OutPorts.end()) {
+      //   throw ExitSim("port name conflict!");
+      // } else {
+      //   PortManager<T>::OutPorts[name] = this;
+      // }
+
+    }
+
     virtual port_status_t sendMsg( T msg ) {
       //msg->Dump();   
-      return connection_->recvMsg(msg);
+      return _connection->recvMsg(msg);
     }
 
     virtual void attach( InPortBase<T>* op ) {
       DPRINT(DEBUG_PORT,"%s\n", __func__);   
-      if (connection_) {
+      if (_connection) {
         throw ExitSim("OutPort already connected, this port does not support >1 connection");
       }
-      connection_ = op;
+      _connection = op;
     }
 
+    friend class PortManager<T>;
+
   private:
-    InPortBase<T>* connection_;
+    InPortBase<T>* _connection;
+    std::string name; ///< port name
 
 };
 

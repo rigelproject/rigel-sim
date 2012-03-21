@@ -27,14 +27,17 @@ class TileBase : public ComponentBase, public rigelsim::Checkpointable
     virtual void Dump()        = 0;
     virtual int  halted()      = 0;
     virtual void Heartbeat()   = 0;
+
 	  //FIXME We may not want this, I just hacked it in to get profiler output for the time being.
 	  //Note that it's not pure virtual, so all derived classes don't *have* to override it. 
     virtual rigel::ClusterType** getClusters() const { 
 	  	assert(0 && "Sorry, your TileBase derived class didn't override getClusters()");
 			return (rigel::ClusterType**) NULL;
 	  }
+
     virtual void save_state() const = 0;
     virtual void restore_state() = 0;
+
   private:
 
 };
