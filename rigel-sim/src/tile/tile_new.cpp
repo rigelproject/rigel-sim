@@ -13,7 +13,7 @@ TileNew::TileNew(
   TileBase(cp.parent, 
            cp.component_name.empty() ? "TileNew" : cp.component_name.c_str()),
   numclusters(rigel::CLUSTERS_PER_TILE), // TODO: dynamically set
-  halted_(0),
+  _halted(0),
   //gnet(cp.global_network),
   from_gnet(NULL),
   to_gnet(NULL),
@@ -44,12 +44,6 @@ TileNew::TileNew(
   // new interconnect
   interconnect = new TreeNetwork(cp);
 
-  // FIXME TODO: make this settable elsewhere
-  //interconnect = new TileInterconnectBroadcast(cp);
-  //interconnect = new TileInterconnectNew(cp);
-  //interconnect = new TileInterconnectIdeal(cp);
-  //gnet->addTileInterconnect(cp.component_index, interconnect);
-  
   // cp.tile_network = interconnect;
 
   clusters = new rigel::ClusterType *[numclusters];
@@ -75,6 +69,8 @@ TileNew::Heartbeat() {
   } // end cluster
 }
 
+/// called each cycle
+/// update all owned components
 int
 TileNew::PerCycle() {
 
@@ -92,7 +88,7 @@ TileNew::PerCycle() {
     idx = (idx + 1) % rigel::CLUSTERS_PER_TILE;
   }
 
-  halted_ = halted_clusters;
+  _halted = halted_clusters;
 
   return halted();
 
@@ -100,16 +96,19 @@ TileNew::PerCycle() {
 
 /// check if all internal components (clusters) are halted
 int TileNew::halted() {
-  return (halted_ == numclusters);
+  return (_halted == numclusters);
 }
 
+/// save tile state
 void TileNew::save_state() const {
   for(int i = 0; i < rigel::CLUSTERS_PER_TILE; i++)
     clusters[i]->save_state();
 }
 
+/// restore tile state
 void TileNew::restore_state() { assert(0 && "Write me!"); }
 
+/// post construction initialization to perform before simulation
 void
 TileNew::PreSimInit() {
   for(int cluster = 0; cluster < rigel::CLUSTERS_PER_TILE; cluster++) {
@@ -117,6 +116,7 @@ TileNew::PreSimInit() {
   }
 };
 
+/// called at the end of the simulation
 void
 TileNew::EndSim() {
 	for(int i = 0; i < numclusters; i++)
