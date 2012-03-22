@@ -35,6 +35,7 @@ common_SOURCES = \
  src/interconnect/tile_interconnect_new.cpp \
  src/interconnect/tile_interconnect_bcast.cpp \
  src/interconnect/tree_network.cpp \
+ src/interconnect/crossbar.cpp \
  src/memory/memory_model_ideal.cpp \
  src/memory/memory_model_gddr4.cpp \
  src/memory/dram_controller.cpp \
