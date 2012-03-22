@@ -6,6 +6,7 @@
 #include "include/port/portmanager.h"
 
 #include <string>
+#include <sstream>
 
 /// this base class is meaningless, either get rid of or define a general port
 /// concept with meaning
@@ -14,6 +15,17 @@ class PortBase {
     protected:
     private:
 };
+
+static std::string PortName( std::string parent, int id, std::string suffix, int index = -1) {
+
+    std::stringstream port_name;
+    port_name << parent << "[" << id << "]." << suffix;
+    if (index >= 0) {
+      port_name << "[" << index << "]";
+    }
+    return port_name.str();
+
+}
 
 // forward declarations
 template <class T> class OutPortBase;

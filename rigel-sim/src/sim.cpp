@@ -162,7 +162,7 @@ int main(int argc, char * argv[])
     for (rigel::CURR_CYCLE = 0; ; rigel::CURR_CYCLE++) {
       using namespace rigel;
       // TODO: interactive mode should be handled here
-      if (RIGEL_CFG_NUM==2) {
+      if (RIGEL_CFG_NUM != 1) {
         sim.do_shell_loop();
       }
       sim.clock_sim();

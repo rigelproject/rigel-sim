@@ -53,10 +53,10 @@ CoreFunctional::CoreFunctional(
 	cp.component_name.clear();
 
 
-  std::stringstream pname;  
-  pname << name() << "[" << id() << "]" << ".";
-  to_ccache   =  new OutPortBase<Packet*>(pname.str() + "cache_out");
-  from_ccache =  new InPortBase<Packet*>(pname.str() + "cache_in");
+  std::string pname_out = PortName(name(), id(), "cache_out");
+  std::string pname_in  = PortName(name(), id(), "cache_in");
+  to_ccache   =  new OutPortBase<Packet*>(pname_out);
+  from_ccache =  new InPortBase<Packet*>(pname_in);
 
   // per thread init
   thread_state.resize(numthreads);

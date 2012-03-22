@@ -5,7 +5,7 @@
 #include "corebase.h"
 #include "core/regfile.h"
 #include "sim.h"
-#include "port.h"
+#include "port/port.h"
 
 
 // forward declarations

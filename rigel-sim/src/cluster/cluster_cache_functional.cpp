@@ -2,7 +2,7 @@
 #include "sim/component_count.h"
 #include "util/construction_payload.h"
 #include "memory/backing_store.h"
-#include "port.h"
+#include "port/port.h"
 #include "util/callback.h"
 
 #include "isa/rigel_isa.h"
@@ -32,15 +32,13 @@ ClusterCacheFunctional::ClusterCacheFunctional(
     = new MemberCallbackWrapper<ClusterCacheFunctional,Packet*,
                                 &ClusterCacheFunctional::FunctionalMemoryRequest>(this);
   for (int i = 0; i < coreside_ins.size(); i++) {
-    std::stringstream pname;
-    pname << name() << "[" << id() << "]" << ".coreside_in[" << i << "]";
-    coreside_ins[i] = new InPortCallback<Packet*>(pname.str(),mcb);
+    std::string n = PortName( name(), id(), "coreside_in", i );
+    coreside_ins[i] = new InPortCallback<Packet*>(n, mcb);
   }
 
   for (int i = 0; i < coreside_outs.size(); i++) {
-    std::stringstream pname;
-    pname << name() << "[" << id() << "]" << ".coreside_out[" << i << "]";
-    coreside_outs[i] = new OutPortBase<Packet*>(pname.str());
+    std::string n = PortName( name(), id(), "coreside_out", i );
+    coreside_outs[i] = new OutPortBase<Packet*>(n);
   }
 
 }
