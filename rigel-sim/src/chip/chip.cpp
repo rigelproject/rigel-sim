@@ -18,25 +18,41 @@
 Chip::Chip(rigel::ConstructionPayload cp) :
   ComponentBase(cp.parent,
                 cp.component_name.empty() ? "Chip" : cp.component_name.c_str()),
+  _tiles(NULL),
+  _global_cache(NULL),
+  _bm(NULL),
+  _gnet(NULL),
   _memory_timing(cp.memory_timing),
   _backing_store(cp.backing_store),
   _chip_state(cp.chip_state)
 {
   cp.parent = this;
 	cp.component_name.clear();
-  init_bm(cp);           // initialize broadcast manager (FIXME: make conditional)
-  init_global_cache(cp); // initialize the global cache
-  init_gnet(cp);         // initialize the global tile-gcache interconnect
+  // legacy component init
+  GLOBAL_CACHE_PTR = NULL; // in case we never init
+  if (RIGEL_CFG_NUM == 1) {
+    init_bm(cp);           // initialize broadcast manager (FIXME: make conditional)
+    init_global_cache(cp); // initialize the global cache
+    init_gnet(cp);         // initialize the global tile-gcache interconnect
+  }
   init_tiles(cp);        // finally, init tiles (depends on some above)
 }
 
 // chip destructor
 Chip::~Chip() {
-  for (int i = 0; i < rigel::NUM_GCACHE_BANKS; i++) {
-    delete _global_cache[i];
+  if (_global_cache) {
+    for (int i = 0; i < rigel::NUM_GCACHE_BANKS; i++) {
+      if (_global_cache[i]) {
+        delete _global_cache[i];
+      }
+    }
   }
-  delete   _gnet;
-  delete   _bm;
+  if (_gnet) {
+    delete   _gnet;
+  }
+  if (_bm) {
+    delete   _bm;
+  }
   for(int i = 0; i < rigel::NUM_TILES; i++) {
     delete _tiles[i];
   }
@@ -50,17 +66,22 @@ Chip::PerCycle() {
   // Clock G$ banks in round-robin priority order
   // so that banks 0,1,2 do not starve bank 3 for a given channel.
   using namespace rigel::cache;
-  for (unsigned int i = 0; i < rigel::DRAM::CONTROLLERS; i++)
-  {
-    for (int j = (rigel::CURR_CYCLE % GCACHE_BANKS_PER_MC), count = 0; count < GCACHE_BANKS_PER_MC;
-        count++, j = (j + 1) % GCACHE_BANKS_PER_MC)
+  if (_global_cache) {
+    for (unsigned int i = 0; i < rigel::DRAM::CONTROLLERS; i++)
     {
-      _global_cache[i*rigel::cache::GCACHE_BANKS_PER_MC + j]->PerCycle();
+      for (int j = (rigel::CURR_CYCLE % GCACHE_BANKS_PER_MC), count = 0; count < GCACHE_BANKS_PER_MC;
+          count++, j = (j + 1) % GCACHE_BANKS_PER_MC)
+      {
+        _global_cache[i*rigel::cache::GCACHE_BANKS_PER_MC + j]->PerCycle();
+      }
     }
   }
 
   // Clock the global network.
-  _gnet->PerCycle();
+  if (_gnet) {
+    _gnet->PerCycle();
+  }
+
   // Clock each of the tiles.
   // Due to the way per-instruction profiling (particularly
   // InstrLegacy.stats.cycles.stall_accounted_for) is implemented, the cores
@@ -103,7 +124,9 @@ Chip::EndSim() {
   using namespace rigel;
   // Dump any remaining BCASTs.  Any remaining at the end of a successful run is bad times..
   // FIXME: move this to a cleanup sim function
-  _bm->dump();
+  if (_bm) {
+    _bm->dump();
+  }
 
   for(int t = 0; t < NUM_TILES; t++) {
     _tiles[t]->EndSim();
@@ -115,16 +138,20 @@ Chip::EndSim() {
     GLOBAL_ZERO_TRACKER_PTR->report(std::cout);
   }
 
-  for(int i = 0; i < NUM_GCACHE_BANKS; i++) {
-    _global_cache[i]->gather_end_of_simulation_stats();
+  if (_global_cache) {
+    for(int i = 0; i < NUM_GCACHE_BANKS; i++) {
+      _global_cache[i]->gather_end_of_simulation_stats();
+    }
   }
 
-  if(ENABLE_LOCALITY_TRACKING) {
-    _gnet->dump_locality();
-    for (int i = 0; i < NUM_GCACHE_BANKS; i++) {
-      _global_cache[i]->dump_locality();
+  if (RIGEL_CFG_NUM == 1) {
+    if(ENABLE_LOCALITY_TRACKING) {
+      _gnet->dump_locality();
+      for (int i = 0; i < NUM_GCACHE_BANKS; i++) {
+        _global_cache[i]->dump_locality();
+      }
+      _memory_timing->dump_locality();
     }
-    _memory_timing->dump_locality();
   }
 
 #if CLUSTER_TYPE == 1

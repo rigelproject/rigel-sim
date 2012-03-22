@@ -191,7 +191,9 @@ class RigelSim {
         GlobalTaskQueue->PerCycle();
       
         // Clock the memory timing model.
-        memory_timing->PerCycle();
+        if (RIGEL_CFG_NUM == 1) { // skip for functional, developmental modes
+          memory_timing->PerCycle();
+        }
 
         bool halted = false;
         halted = chip_->PerCycle();

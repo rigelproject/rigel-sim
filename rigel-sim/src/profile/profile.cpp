@@ -1262,9 +1262,13 @@ Profile::global_dump_profile(int argc, char *argv[])
       for (int set = 0; set < GCACHE_SETS; set++) {
         fprintf(f_gcache_usage, "SET [%3d] ", set);
         for (int way = 0; way < GCACHE_WAYS; way++) {
-          fprintf(f_gcache_usage, " (%6d, %6d), ", 
-            GLOBAL_CACHE_PTR[bank]->get_insert_count(set, way),
-            GLOBAL_CACHE_PTR[bank]->get_touch_count(set, way));
+          if (GLOBAL_CACHE_PTR) {
+            fprintf(f_gcache_usage, " (%6d, %6d), ", 
+              GLOBAL_CACHE_PTR[bank]->get_insert_count(set, way),
+              GLOBAL_CACHE_PTR[bank]->get_touch_count(set, way));
+          } else {
+            fprintf(f_gcache_usage, "disabled, ");
+          }
         }
         fprintf(f_gcache_usage, "\n");
       }
