@@ -6,33 +6,34 @@
 #include "sim.h"
 #include "util/checkpointable.h"
 
+#include "interconnect.h"
+
+/// a newer, more modular chip class
+/// named ChipTiled to distinguish from ChipLegacy
+/// (also, assumes the classic tiled Rigel top-level architecture)
+
 // forward declarations
 class TileBase;
 class GlobalCache;
 class BroadcastManager;
 class GlobalNetworkNew;
 
-class Chip : public ComponentBase, public rigelsim::Checkpointable {
+class ChipTiled : public ComponentBase, public rigelsim::Checkpointable {
 
   public:
-  
-    Chip(rigel::ConstructionPayload cp);
+ 
+    // constructor 
+    ChipTiled(rigel::ConstructionPayload cp);
 
-    virtual ~Chip();
+    virtual ~ChipTiled();
 
+
+    TileBase** tiles() { return _tiles; }
+   
+    /// Component interface 
+    /// required interface 
     int PerCycle();
 
-    void init_tiles(rigel::ConstructionPayload &cp);
-    void init_bm(rigel::ConstructionPayload &cp);
-    void init_gnet(rigel::ConstructionPayload &cp);
-    void init_global_cache(rigel::ConstructionPayload &cp);
-
-    //BroadcastManager *bm()                    { return _bm;           }
-    //GlobalCache     **global_cache()          { return _global_cache; }
-    //GlobalNetworkNew *gnet()                  { return _gnet;         }
-    //rigel::MemoryTimingType *memory_timing() { return _memory_timing; }
-    TileBase** tiles()                       { return _tiles;        }
-    
     /// dump object state 
     void Dump();
     
@@ -42,25 +43,30 @@ class Chip : public ComponentBase, public rigelsim::Checkpointable {
     /// called at end of simulation
     void EndSim();
 
-    virtual void save_state() const;
-
-    virtual void restore_state();
-
     /// return true if all children are halted
     // TODO, don't rely up "TILES", but more general
-    bool halted() { return (halted_ == rigel::NUM_TILES); }
+    bool halted() { return ( _halted == rigel::NUM_TILES); }
+
+    // for checkpoint save, recovery
+    virtual void save_state() const;
+    virtual void restore_state();
 
   private:
 
+    void init_tiles(rigel::ConstructionPayload &cp);
+    void init_gnet(rigel::ConstructionPayload &cp);
+    void init_global_cache(rigel::ConstructionPayload &cp);
+
+    int _halted;
+
     TileBase                        **_tiles;
-    GlobalCache                     **_global_cache;
-    BroadcastManager                *_bm;
-    rigel::GlobalNetworkType      *_gnet;
-    rigel::MemoryTimingType       *_memory_timing;
-    rigel::GlobalBackingStoreType *_backing_store;
+    //GlobalCache                     **_global_cache;
+    CrossBar                        *_gnet;
+    rigel::MemoryTimingType         *_memory_timing;
+    rigel::GlobalBackingStoreType   *_backing_store;
+
     rigelsim::ChipState             *_chip_state;
 
-    int halted_;
 };
 
 #endif

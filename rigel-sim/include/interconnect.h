@@ -14,6 +14,7 @@
 #include "interconnect/tile_interconnect_broadcast.h"
 
 #include "interconnect/tree_network.h"
+#include "interconnect/crossbar.h"
 
 // Necessary evil for timers.  util.h is copesetic otherwise.
 #include "util/util.h"

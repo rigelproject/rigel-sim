@@ -8,7 +8,8 @@
 #define RIGEL_DISABLE 0
 
 // 1 for LEGACY classic rigelsim
-// 2 for NEW stuff (in development, experimental)
+// 2 for NEW stuff FUNCTIONAL (in development, experimental)
+// 3 for NEW stuff STRUCTURAL (in development, experimental)
 #define RIGEL_CFG_NUM 1
 
 // typedefs for polymorphism
@@ -21,10 +22,41 @@
 namespace rigel {
   #if CLUSTER_TYPE == 1
     typedef ClusterLegacy ClusterType;
-  #elif CLUSTER_TYPE == 2
-    typedef ClusterSimple ClusterType;
+  #elif CLUSTER_TYPE == 2 || CLUSTER_TYPE == 3
+    typedef ClusterFunctional ClusterType;
   #else
     #error invalid value for CLUSTER_TYPE
+  #endif
+}
+
+  // ClusterCacheType
+  class ClusterCacheFunctional;
+  class ClusterCacheStructural;
+  #define CCACHE_TYPE RIGEL_CFG_NUM
+namespace rigel {
+  #if CCACHE_TYPE == 1
+    // LEGACY does not use this
+    typedef ClusterCacheFunctional CCacheType;
+  #elif CCACHE_TYPE == 2
+    typedef ClusterCacheFunctional CCacheType;
+  #elif CCACHE_TYPE == 3
+    typedef ClusterCacheStructural CCacheType;
+  #else
+    #error invalid value for CCACHE_TYPE
+  #endif
+}
+
+  // ChipType
+  class ChipTiled;
+  class ChipLegacy;
+  #define RIGEL_CHIP_TYPE RIGEL_CFG_NUM
+namespace rigel {
+  #if RIGEL_CHIP_TYPE == 1
+    typedef ChipLegacy ChipType;
+  #elif RIGEL_CHIP_TYPE == 2 || RIGEL_CHIP_TYPE == 3
+    typedef ChipTiled ChipType;
+  #else
+    #error invalid RIGEL_CHIP_TYPE
   #endif
 }
   
@@ -84,7 +116,7 @@ namespace rigel {
 namespace rigel {
   #if TILE_TYPE == 1
     typedef TileLegacy TileType;
-  #elif TILE_TYPE == 2
+  #elif TILE_TYPE == 2 || TILE_TYPE == 3
     typedef TileNew TileType;
   #else
     #error invalid TILE_TYPE

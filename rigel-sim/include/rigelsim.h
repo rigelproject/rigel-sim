@@ -9,6 +9,7 @@
 
 #include "sim.h"
 #include "chip/chip.h"
+#include "chip/chip_legacy.h" // todo, don't include this directly
 #include "shell/shell.h"
 #include "broadcast_manager.h"  // for BroadcastManager
 #include "memory/dram.h"           // for CONTROLLERS, RANKS, ROWS, etc
@@ -166,7 +167,8 @@ class RigelSim {
         close(fd);
       }
     }
-  
+ 
+    // enter the interactive shell loop 
     void do_shell_loop() {
       shell->DoInteractiveShellLoop();
     };
@@ -226,7 +228,8 @@ class RigelSim {
       chip_->Heartbeat();
     }
 
-    Chip* chip() { return chip_; }
+    // return a pointer to the chip
+    rigel::ChipType* chip() { return chip_; }
 
     void printHierarchy() {
       // TODO: list of children not just chip
@@ -252,7 +255,7 @@ class RigelSim {
       cp.parent = NULL;
       cp.component_name = "Chip";
       cp.component_index = 0;
-      chip_ = new Chip(cp);
+      chip_ = new rigel::ChipType(cp);
       chip_->setRootComponent();       // designate this as a root component
     }
 
@@ -354,7 +357,7 @@ class RigelSim {
     InteractiveShell  * shell;
 
     /// chip component
-    Chip              * chip_;
+    rigel::ChipType            * chip_;
     rigel::MemoryTimingType *memory_timing;
     rigel::GlobalBackingStoreType *backing_store;
 

@@ -70,6 +70,7 @@ common_SOURCES = \
  src/stages/bpredict.cpp \
  src/stages/stage_base.cpp \
  src/chip/chip.cpp \
+ src/chip/chip_legacy.cpp \
  src/cluster/cluster_legacy.cpp \
  src/cluster/clusterbase.cpp \
  src/cluster/cluster_functional.cpp \
