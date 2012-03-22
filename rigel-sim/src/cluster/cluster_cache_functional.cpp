@@ -7,6 +7,8 @@
 
 #include "isa/rigel_isa.h"
 
+#include <sstream>
+
 #define DB_CC 0
 
 #define CF_FIXED_LATENCY 0
@@ -30,11 +32,15 @@ ClusterCacheFunctional::ClusterCacheFunctional(
     = new MemberCallbackWrapper<ClusterCacheFunctional,Packet*,
                                 &ClusterCacheFunctional::FunctionalMemoryRequest>(this);
   for (int i = 0; i < coreside_ins.size(); i++) {
-    coreside_ins[i] = new InPortCallback<Packet*>(mcb);
+    std::stringstream pname;
+    pname << name() << "[" << id() << "]" << ".coreside_in[" << i << "]";
+    coreside_ins[i] = new InPortCallback<Packet*>(pname.str(),mcb);
   }
 
   for (int i = 0; i < coreside_outs.size(); i++) {
-    coreside_outs[i] = new OutPortBase<Packet*>( );
+    std::stringstream pname;
+    pname << name() << "[" << id() << "]" << ".coreside_out[" << i << "]";
+    coreside_outs[i] = new OutPortBase<Packet*>(pname.str());
   }
 
 }

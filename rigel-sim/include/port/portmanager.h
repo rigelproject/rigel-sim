@@ -12,21 +12,55 @@ class PortManager {
 
       // inports
       {
-        typename std::map< std::string, InPortBase<T*> >::iterator it;
+        typename std::map< std::string, InPortBase<T>* >::iterator it;
         for ( it = InPorts.begin(); it != InPorts.end(); ++it ) {
-          std::cout << (*it).first << " => " << (*it).second << std::endl;
+          std::cout << "InPort: " << (*it).first << std::endl;
         }
       }
 
       // outports
+      typename std::map< std::string, OutPortBase<T>* >::iterator it;
       {
-        typename std::map< std::string, OutPortBase<T*> >::iterator it;
         for ( it = OutPorts.begin(); it != OutPorts.end(); ++it ) {
-          std::cout << (*it).first << " => " << (*it).second << std::endl;
+          std::cout << "OutPort: " << (*it).first << " -> " << (*it).second->connection_name() << std::endl;
         }
       }
 
     }
+
+    static void registerInPort( InPortBase<T>* p ) {
+
+      printf("%s\n", __func__);
+
+      typename std::map< std::string, InPortBase<T>* >::iterator it;
+      it = InPorts.find(p->name());
+
+      // register this port by name
+      if (it == InPorts.end()) {
+        InPorts[p->name()] = p;
+      } else {
+        printf("port name exists: %s\n", p->name().c_str());
+        throw ExitSim("port name conflict!");
+      }
+
+    }
+
+    static void registerOutPort( OutPortBase<T>* p ) {
+
+      printf("%s\n", __func__);
+
+      typename std::map< std::string, OutPortBase<T>* >::iterator it;
+      it = OutPorts.find(p->name());
+
+      if (it == OutPorts.end()) {
+        OutPorts[p->name()] = p;
+      } else {
+        printf("port name exists: %s\n", p->name().c_str());
+        throw ExitSim("port name conflict!");
+      }
+
+    }
+
 
   private:
 

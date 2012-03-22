@@ -25,8 +25,8 @@ class ClusterCacheFunctional : public ClusterCacheBase {
     /// constructor
     ClusterCacheFunctional(
       rigel::ConstructionPayload cp,
-      InPortBase<Packet*>* in,       ///< unused
-      OutPortBase<Packet*>* out      ///< unused 
+      InPortBase<Packet*>* in,       ///< unused, the functional cache don't care!
+      OutPortBase<Packet*>* out      ///< unused, the functional cache don't care!
     );
 
     /// component interface functions
@@ -41,18 +41,12 @@ class ClusterCacheFunctional : public ClusterCacheBase {
     InPortBase<Packet*>*  getCoreSideInPort(int p)  { return coreside_ins[p];  }
     OutPortBase<Packet*>* getCoreSideOutPort(int p) { return coreside_outs[p]; }
 
-    //InPortBase<Packet*>*  getMemSideInPort()        { return memside_in;       }
-    //OutPortBase<Packet*>* getMemSideOutPort()       { return memside_out;      }
-
   protected:
 
     std::vector<clustercache::LDLSTC_entry_t> LinkTable;
 
     std::vector< InPortBase<Packet*>* > coreside_ins;
     std::vector< OutPortBase<Packet*>* > coreside_outs;
-
-    //InPortBase<Packet*>* memside_in;
-    //OutPortBase<Packet*>* memside_out;
 
   private: // we don't want these visible to inherited classes
 

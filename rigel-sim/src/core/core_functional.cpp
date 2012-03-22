@@ -16,6 +16,8 @@
 
 #include "cluster/cluster_cache_functional.h" // FIXME: remove this dep!
 
+#include <sstream>
+
 
 #define DB_CF 0
 #define DB_CF_WB 0
@@ -45,13 +47,16 @@ CoreFunctional::CoreFunctional(
   current_tid(0),
   ccache(ccache),
   syscall_handler(cp.syscall),
-  to_ccache(),
-  from_ccache(),
-  icache(),
   thread_state(numthreads)
 {
   cp.parent = this;
 	cp.component_name.clear();
+
+
+  std::stringstream pname;  
+  pname << name() << "[" << id() << "]" << ".";
+  to_ccache   =  new OutPortBase<Packet*>(pname.str() + "cache_out");
+  from_ccache =  new InPortBase<Packet*>(pname.str() + "cache_in");
 
   // per thread init
   thread_state.resize(numthreads);
@@ -381,7 +386,7 @@ CoreFunctional::memory(PipePacket* instr) {
 /// dump information about this object
 void 
 CoreFunctional::Dump() {
-  printf("%s[%d]::%s\n",name(),id(),__func__);
+  printf("%s[%d]::%s\n",name().c_str(),id(),__func__);
   for (int t=0; t<numthreads; t++) {
     printf("tid[%d]\n",t);
     CoreFunctionalThreadState *ts = thread_state[t];
@@ -523,7 +528,7 @@ CoreFunctional::sendMemoryRequest(Packet* p) {
 
   port_status_t status;
 
-  status = to_ccache.sendMsg(p);
+  status = to_ccache->sendMsg(p);
 
   if (status == ACK) { // port accepted message
 
@@ -540,7 +545,7 @@ CoreFunctional::checkMemoryRequest(PipePacket* instr) {
   regval32_t result;
   Packet* p = instr->memRequest();
 
-  reply = from_ccache.read();
+  reply = from_ccache->read();
 
   if (reply) { // handle reply
     DPRINT(DB_CF_MEM,"got reply! %d\n", reply->msgType());

@@ -75,7 +75,7 @@ class ComponentBase {
     
     uint32_t ComponentID()                 { return component_id;  }
     int      id()                          { return id_;           }
-    const char* name()                     { return name_.c_str(); }
+    std::string name()                     { return name_;         }
     std::vector<ComponentBase*> &children(){ return children_;     }
     ComponentBase* parent()                { return parent_;       }
 
