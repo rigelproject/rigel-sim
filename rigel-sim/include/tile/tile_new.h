@@ -10,6 +10,11 @@ class TileInterconnectBase;
 class GlobalNetworkBase;
 class ClusterLegacy;
 class CommandLineArgs;
+class TreeNetwork;
+
+class Packet;
+template <class T> class InPortBase;
+template <class T> class OutPortBase;
 
 class TileNew: public TileBase {
 
@@ -42,8 +47,16 @@ class TileNew: public TileBase {
     int halted_;
 
     rigel::ClusterType **clusters;
-    TileInterconnectBase *interconnect;
-    GlobalNetworkBase    *gnet;
+    //TileInterconnectBase *interconnect;
+    //GlobalNetworkBase    *gnet;
+
+    TreeNetwork *interconnect;
+
+    InPortBase<Packet*>*  from_gnet;
+    OutPortBase<Packet*>* to_gnet;
+
+    std::vector< InPortBase<Packet*>* >  cluster_ins;
+    std::vector< OutPortBase<Packet*>* > cluster_outs;
 
 };
 

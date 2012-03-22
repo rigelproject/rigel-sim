@@ -1,4 +1,8 @@
 
+#include <map>
+#include <iostream>
+#include "util/util.h" // for ExitSim
+
 // forward declarations
 template<class T> class InPortBase;
 template<class T> class OutPortBase;

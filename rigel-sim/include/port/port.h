@@ -151,13 +151,19 @@ class OutPortBase : public PortBase {
 
     std::string name() { return _name; }
 
-    std::string connection_name() { return _connection->name(); }
+    std::string connection_name() { 
+      if (_connection) {
+        return _connection->name(); 
+      } else {
+        return std::string("unconnected");
+      }
+    }
 
     friend class PortManager<T>;
 
   private:
     InPortBase<T>* _connection;
-    std::string _name; ///< port name
+    std::string     _name; ///< port name
 
 };
 

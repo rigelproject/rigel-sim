@@ -12,6 +12,9 @@
 #include "interconnect/tile_interconnect_ideal.h"
 #include "interconnect/tile_interconnect_new.h"
 #include "interconnect/tile_interconnect_broadcast.h"
+
+#include "interconnect/tree_network.h"
+
 // Necessary evil for timers.  util.h is copesetic otherwise.
 #include "util/util.h"
 #include "icmsg.h"

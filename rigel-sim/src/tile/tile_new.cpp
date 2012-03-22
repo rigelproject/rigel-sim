@@ -4,6 +4,7 @@
 #include "sim.h"            // for CLUSTERS_PER_TILE, etc
 #include "cluster.h"        // for ClusterType (typedef'd to Cluster in sim.h)
 #include "util/construction_payload.h"
+#include "port/port.h"
 
 /// constructor
 TileNew::TileNew(
@@ -13,18 +14,43 @@ TileNew::TileNew(
            cp.component_name.empty() ? "TileNew" : cp.component_name.c_str()),
   numclusters(rigel::CLUSTERS_PER_TILE), // TODO: dynamically set
   halted_(0),
-  gnet(cp.global_network)
+  //gnet(cp.global_network),
+  from_gnet(NULL),
+  to_gnet(NULL),
+  cluster_ins(numclusters),
+  cluster_outs(numclusters)
 {
 
   cp.parent = this;
 	cp.component_name.clear();
+
+  // contruct ports with outside world
+  // TODO: relocate construction?
+  from_gnet = new InPortBase<Packet*>( PortName(name(), id(), "memside_in") );
+  to_gnet   = new OutPortBase<Packet*>( PortName(name(), id(), "memside_out") );
+
+  // contruct ports with Clusters
+  for (int i = 0; i < cluster_ins.size(); i++) {
+    std::string n = PortName( name(), id(), "cluster_in", i );
+    cluster_ins[i] = new InPortBase<Packet*>(n);
+  }
+
+  for (int i = 0; i < cluster_outs.size(); i++) {
+    std::string n = PortName( name(), id(), "cluster_out", i );
+    cluster_outs[i] = new OutPortBase<Packet*>(n);
+  }
+  //< end contruction of ports
+
+  // new interconnect
+  interconnect = new TreeNetwork(cp);
+
   // FIXME TODO: make this settable elsewhere
-  interconnect = new TileInterconnectBroadcast(cp);
+  //interconnect = new TileInterconnectBroadcast(cp);
   //interconnect = new TileInterconnectNew(cp);
   //interconnect = new TileInterconnectIdeal(cp);
-  gnet->addTileInterconnect(cp.component_index, interconnect);
+  //gnet->addTileInterconnect(cp.component_index, interconnect);
   
-  cp.tile_network = interconnect;
+  // cp.tile_network = interconnect;
 
   clusters = new rigel::ClusterType *[numclusters];
   for (int i = 0; i < numclusters; ++i) {

@@ -24,8 +24,8 @@ ClusterFunctional::ClusterFunctional(
   // this just assigns the ccache ports to be the cluster's ports
   // we like this because the cluster is contained, but the ccache is a separate object
   // we could instead try to use a DUMMY port object that basically does this assignment via attach
-  //from_interconnect = ccache->getMemSideInPort();
-  //to_interconnect   = ccache->getMemSideOutPort();
+  from_interconnect = new InPortBase<Packet*>(  PortName(name(), id(), "in") );
+  to_interconnect   = new OutPortBase<Packet*>( PortName(name(), id(), "out") );
 
 	cores = new CoreFunctional*[numcores];
 
