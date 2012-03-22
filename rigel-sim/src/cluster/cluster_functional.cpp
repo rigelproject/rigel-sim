@@ -32,7 +32,6 @@ ClusterFunctional::ClusterFunctional(
   // make port connections:
   // TODO: do this somewhere more generic
   for (int i = 0; i < numcores; ++i) {
-    DPRINT(true,"CF ports: %d\n", i);
     cp.core_state = cp.cluster_state->add_cores();
     cp.component_index = i;
     cores[i] = new CoreFunctional(cp,ccache);     

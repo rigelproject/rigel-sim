@@ -1,6 +1,8 @@
 
 #include "core/regfile.h"
 
+#define DB_RF 0
+
 namespace rigel {
   extern const char * sprf_strings[];
 }
@@ -74,7 +76,7 @@ void
 SPRegisterFile::assign(sprf_names_t i, uint32_t val) {
   assert((unsigned)i < numregs && "attempting to assign invalid out-of-range register");
   // warn if simcycle > 0?
-  printf("sprf::assign[%20s:%d]: %8d (%08x)\n", rigel::sprf_strings[i], i, val, val);
+  DPRINT(DB_RF,"sprf::assign[%20s:%d]: %8d (%08x)\n", rigel::sprf_strings[i], i, val, val);
   rf[i] = regval32_t(val);
 }
 

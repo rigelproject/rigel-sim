@@ -5,7 +5,7 @@
 ComponentCount TreeNetworkCount;
 
 TreeNetwork::TreeNetwork(
-  rigel::ConstructionPayload &cp,
+  rigel::ConstructionPayload cp,
   ComponentCount& count
 ) :
   ComponentBase(cp.parent,
@@ -20,14 +20,14 @@ TreeNetwork::TreeNetwork(
 
   // construct ports
   root_inport  = new InPortBase<Packet*>( PortName(name(), id(), "root_in") );  
-  root_outport = new OutPortBase<Packet*>( PortName(name(), id(), "root_in") );  
+  root_outport = new OutPortBase<Packet*>( PortName(name(), id(), "root_out") );  
 
   for (int i = 0; i < leaf_inports.size(); i++) {
     leaf_inports[i] = new InPortBase<Packet*>( PortName(name(), id(), "leaf_in", i) );
   } 
 
   for (int i = 0; i < leaf_outports.size(); i++) {
-    leaf_outports[i] = new OutPortBase<Packet*>( PortName(name(), id(), "leaf_in", i) );
+    leaf_outports[i] = new OutPortBase<Packet*>( PortName(name(), id(), "leaf_out", i) );
   }
 }
 

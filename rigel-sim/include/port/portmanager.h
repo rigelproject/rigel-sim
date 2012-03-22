@@ -34,8 +34,6 @@ class PortManager {
 
     static void registerInPort( InPortBase<T>* p ) {
 
-      printf("%s\n", __func__);
-
       typename std::map< std::string, InPortBase<T>* >::iterator it;
       it = InPorts.find(p->name());
 
@@ -50,8 +48,6 @@ class PortManager {
     }
 
     static void registerOutPort( OutPortBase<T>* p ) {
-
-      printf("%s\n", __func__);
 
       typename std::map< std::string, OutPortBase<T>* >::iterator it;
       it = OutPorts.find(p->name());

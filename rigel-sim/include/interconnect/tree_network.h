@@ -1,5 +1,5 @@
-#ifndef __TREE_NETWORK__
-#define __TREE_NETWORK__
+#ifndef __TREE_NETWORK_H__
+#define __TREE_NETWORK_H__
 
 #include "sim/componentbase.h"
 #include "util/construction_payload.h"
@@ -18,8 +18,9 @@ namespace rigel {
 class TreeNetwork : public ComponentBase {
 
   public:
+
 	  TreeNetwork(
-      rigel::ConstructionPayload &cp,
+      rigel::ConstructionPayload cp,
       ComponentCount& count = TreeNetworkCount
     );
 
