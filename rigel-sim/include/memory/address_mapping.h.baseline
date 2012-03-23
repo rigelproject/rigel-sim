@@ -35,7 +35,7 @@ class AddressMapping
     // it).  An additional locality optimization is that we map the DRAM
     // channel's address space to global cache banks in blocks of a few
     // contiguous cache lines (set by
-    // siminfo::cache::GCACHE_CONTIGUOUS_CACHE_LINES).  See sim.h for constraints
+    // rigel::cache::GCACHE_CONTIGUOUS_CACHE_LINES).  See sim.h for constraints
     // on GCACHE_CONTIGUOUS_CACHE_LINES.
 
     // The bit-order for mapping 1 (DRAM) is as follows, from MSBit to LSBit: Row
@@ -49,43 +49,43 @@ class AddressMapping
 
     // Returns the DRAM column number for the given address
     inline static unsigned int GetCol(uint32_t addr) { 
-      using namespace siminfo::DRAM;
+      using namespace rigel::DRAM;
       uint32_t col = (addr/COLSIZE) % COLS;
       return col;
     }
     // Returns the ID of the DRAM channel/controller
-    // (0..siminfo::DRAM::CONTROLLERS-1) which handles the given address
+    // (0..rigel::DRAM::CONTROLLERS-1) which handles the given address
 
     // NOTE: The implementation of this function is intertwined with that of GetGCacheSet
     inline static unsigned int GetController(uint32_t addr) {
-      using namespace siminfo::DRAM;
+      using namespace rigel::DRAM;
       uint32_t ctrl = (addr/(COLSIZE*COLS)) % CONTROLLERS;
       return ctrl;
     }
     // Returns the DRAM bank number corresponding to the given address
     inline static unsigned int GetBank(uint32_t addr) { 
-      using namespace siminfo::DRAM;
+      using namespace rigel::DRAM;
       uint32_t bank = (addr/(COLSIZE*COLS*CONTROLLERS)) % BANKS;
       return bank;
     }
     // Returns the DRAM rank number corresponding to the given address
     inline static unsigned int GetRank(uint32_t addr) {
-      using namespace siminfo::DRAM;
+      using namespace rigel::DRAM;
       uint32_t rank = (addr/(COLSIZE*COLS*CONTROLLERS*BANKS)) % RANKS;
       return rank;
     }
     // Returns the DRAM row number corresponding to the given address
     inline static unsigned int GetRow(uint32_t addr) {
-      using namespace siminfo::DRAM;
+      using namespace rigel::DRAM;
       uint32_t row = addr/(COLSIZE*COLS*CONTROLLERS*BANKS*RANKS);
       return row;
     }
     // Returns the ID of the global cache bank which maps to the given address
     inline static unsigned int GetGCacheBank(uint32_t addr) 
     {
-      using namespace siminfo;
-      using namespace siminfo::DRAM;
-      using namespace siminfo::cache;
+      using namespace rigel;
+      using namespace rigel::DRAM;
+      using namespace rigel::cache;
       return ((GetController(addr)*GCACHE_BANKS_PER_MC) + 
               ((addr / (LINESIZE * GCACHE_CONTIGUOUS_LINES)) % GCACHE_BANKS_PER_MC));
     }
@@ -109,15 +109,15 @@ class AddressMapping
     // then use 1 or more bits between these bank select bits and the bits which
     // choose the *tile* an address maps to.  Note that this means the
     // GetController() bits MINUS the low-order
-    // rigel_log2(siminfo::cache::MCS_PER_TILE) bits.  This function will only use
+    // rigel_log2(rigel::cache::MCS_PER_TILE) bits.  This function will only use
     // these "middle bits" if they exist for current configuration.  Finally, the
     // high-order bits of the set number will be those address bits above the
     // GetController() bits.  These 2 or 3 sets of bits are concatenated together,
     // modulo the number of sets in a global cache bank, to obtain the set number.
     inline static unsigned int GetGCacheSet(uint32_t addr, int numSets) {
-      using namespace siminfo;
-      using namespace siminfo::DRAM;
-      using namespace siminfo::cache;
+      using namespace rigel;
+      using namespace rigel::DRAM;
+      using namespace rigel::cache;
       uint32_t cacheLineNumber = addr >> rigel_log2(LINESIZE);
       uint32_t lineWithinContiguousBlock = cacheLineNumber % GCACHE_CONTIGUOUS_LINES;
       uint32_t blockNumber = cacheLineNumber / (GCACHE_CONTIGUOUS_LINES*NUM_GCACHE_BANKS);
