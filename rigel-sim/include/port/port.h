@@ -7,6 +7,8 @@
 
 #include <string>
 #include <sstream>
+#include <iomanip>
+#include <iostream>
 
 /// this base class is meaningless, either get rid of or define a general port
 /// concept with meaning
@@ -19,9 +21,9 @@ class PortBase {
 static std::string PortName( std::string parent, int id, std::string suffix, int index = -1) {
 
     std::stringstream port_name;
-    port_name << parent << "[" << id << "]." << suffix;
+    port_name << parent << "[" << std::setw(4) << id << "]." << suffix;
     if (index >= 0) {
-      port_name << "[" << index << "]";
+      port_name << "[" << std::setw(4) << index << "]";
     }
     return port_name.str();
 

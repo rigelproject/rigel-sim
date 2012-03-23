@@ -61,7 +61,8 @@ class ChipTiled : public ComponentBase, public rigelsim::Checkpointable {
 
     TileBase                        **_tiles;
     //GlobalCache                     **_global_cache;
-    CrossBar                        *_gnet;
+    CrossBar                        *_gnet_requests;
+    CrossBar                        *_gnet_replies;
     rigel::MemoryTimingType         *_memory_timing;
     rigel::GlobalBackingStoreType   *_backing_store;
 

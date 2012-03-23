@@ -34,9 +34,10 @@ class TileNew: public TileBase {
     virtual void restore_state();
 
     // accessors
-    //TileInterconnectBase*  getInterconnect() const { return interconnect; }
     rigel::ClusterType** getClusters()     const { return (rigel::ClusterType**)clusters; }
-    //GlobalNetworkBase*     getGNet()         const { return gnet; }
+
+    InPortBase<Packet*>* get_inport()   { return from_gnet; }
+    OutPortBase<Packet*>* get_outport() { return to_gnet;   }
 
   protected:
 
@@ -50,10 +51,6 @@ class TileNew: public TileBase {
     /// memory side ports
     InPortBase<Packet*>*  from_gnet;
     OutPortBase<Packet*>* to_gnet;
-
-    /// core side ports (one per cluster)
-    std::vector< InPortBase<Packet*>* >  cluster_ins;
-    std::vector< OutPortBase<Packet*>* > cluster_outs;
 
 };
 

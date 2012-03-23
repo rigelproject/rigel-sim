@@ -20,7 +20,6 @@ CrossBar::CrossBar(
   for (int i = 0; i < inports.size(); i++) {
     inports[i] = new InPortBase<Packet*>( PortName(name(), id(), "in", i) );
   } 
-
   for (int i = 0; i < outports.size(); i++) {
     outports[i] = new OutPortBase<Packet*>( PortName(name(), id(), "out", i) );
   }

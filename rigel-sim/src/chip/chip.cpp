@@ -21,7 +21,8 @@ ChipTiled::ChipTiled(rigel::ConstructionPayload cp) :
   _halted(0),
   _tiles(NULL),
   //_global_cache(NULL),
-  _gnet(NULL),
+  _gnet_requests(NULL),
+  _gnet_replies(NULL),
   _memory_timing(cp.memory_timing),
   _backing_store(cp.backing_store),
   _chip_state(cp.chip_state)
@@ -34,14 +35,19 @@ ChipTiled::ChipTiled(rigel::ConstructionPayload cp) :
   init_global_cache(cp); // initialize the global cache
   init_gnet(cp);         // initialize the global tile-gcache interconnect
   init_tiles(cp);        // finally, init tiles (depends on some above)
+
+  for (int i = 0; i < rigel::NUM_TILES; i++) {
+    _gnet_requests->get_inport(i)->attach( _tiles[i]->get_outport() );
+    _tiles[i]->get_inport()->attach( _gnet_replies->get_outport(i) );
+  }
+
 }
 
 /// chip destructor
 /// free dynamic memory
 ChipTiled::~ChipTiled() {
-  if (_gnet) {
-    delete   _gnet;
-  }
+  delete _gnet_requests;
+  delete _gnet_replies;
   for(int i = 0; i < rigel::NUM_TILES; i++) {
     delete _tiles[i];
   }
@@ -68,9 +74,9 @@ ChipTiled::PerCycle() {
   // }
 
   // Clock the global network.
-  if (_gnet) {
-    _gnet->PerCycle();
-  }
+  _gnet_requests->PerCycle();
+  _gnet_replies->PerCycle();
+ 
 
   // Clock each of the tiles.
   for(int t = 0; t < rigel::NUM_TILES; t++) { 
@@ -146,7 +152,19 @@ ChipTiled::init_global_cache(rigel::ConstructionPayload &cp) {
 /// Instantiate, initialize global network
 void 
 ChipTiled::init_gnet(rigel::ConstructionPayload &cp) {
-  _gnet = new CrossBar(cp);
+
+  cp.parent = this;
+
+  // FIXME: this name cleaning business is hacky, annoying, probably wrong...
+  cp.component_name.clear();
+  cp.change_name("CrossBarRequest");
+  _gnet_requests = new CrossBar(cp);
+
+  cp.component_name.clear();
+  cp.change_name("CrossBarReply");
+  _gnet_replies  = new CrossBar(cp);
+
+  cp.component_name.clear();
 }
 
 void ChipTiled::save_state() const {

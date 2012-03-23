@@ -16,9 +16,7 @@ TileNew::TileNew(
   _halted(0),
   //gnet(cp.global_network),
   from_gnet(NULL),
-  to_gnet(NULL),
-  cluster_ins(numclusters),
-  cluster_outs(numclusters)
+  to_gnet(NULL)
 {
 
   cp.parent = this;
@@ -28,37 +26,24 @@ TileNew::TileNew(
   // TODO: relocate construction?
   from_gnet = new InPortBase<Packet*>( PortName(name(), id(), "memside_in") );
   to_gnet   = new OutPortBase<Packet*>( PortName(name(), id(), "memside_out") );
-
-  // contruct ports with Clusters
-  for (int i = 0; i < cluster_ins.size(); i++) {
-    std::string n = PortName( name(), id(), "cluster_in", i );
-    cluster_ins[i] = new InPortBase<Packet*>(n);
-  }
-
-  for (int i = 0; i < cluster_outs.size(); i++) {
-    std::string n = PortName( name(), id(), "cluster_out", i );
-    cluster_outs[i] = new OutPortBase<Packet*>(n);
-  }
   //< end contruction of ports
 
   // new interconnect
-  interconnect = new TreeNetwork(cp);
-
-  // cp.tile_network = interconnect;
+  interconnect = new TreeNetwork(cp, from_gnet, to_gnet);
 
   clusters = new rigel::ClusterType *[numclusters];
   for (int i = 0; i < numclusters; ++i) {
-    //NOTE: The following line creates a new ClusterState for each
-    //new cluster.  Due to the way our protobuf state is currently
-    //organized, we rely on the Tile constructors being called in the same
-    //order between checkpoint save and restore.  To fix this, we could do
-    //some combination of making Tiles be explicitly represented entities in
-    //the protobuf with their own ID numbers, and/or putting ID numbers in the
-    //Cluster-level protobuf state.
+    // creates a new ClusterState for each new cluster
     cp.cluster_state = cp.chip_state->add_clusters();
     cp.component_index = numclusters * id() + i; // remove this, cluster ID assigned via ComponentCounter
     clusters[i] = new rigel::ClusterType(cp);
+    // connect to tree network
+    interconnect->get_inport(i)->attach( clusters[i]->get_outport() );
+    clusters[i]->get_inport()->attach( interconnect->get_outport(i) );
   }
+
+  // contruct ports with Clusters
+  //< end contruction of ports
 
 }
 

@@ -28,6 +28,10 @@ class ClusterFunctional : public ClusterBase {
 
     /// cluster simple only
 
+    /// replace with generic port connections
+    InPortBase<Packet*>* get_inport() { return from_interconnect; }
+    OutPortBase<Packet*>* get_outport() { return to_interconnect; }
+
   private:
 
     CoreFunctional** cores; /// array of cores

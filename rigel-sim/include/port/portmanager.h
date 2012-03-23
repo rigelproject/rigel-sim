@@ -15,12 +15,14 @@ class PortManager {
     static void Dump() {
 
       // inports
+      #if 0 
       {
         typename std::map< std::string, InPortBase<T>* >::iterator it;
         for ( it = InPorts.begin(); it != InPorts.end(); ++it ) {
           std::cout << "InPort: " << (*it).first << std::endl;
         }
       }
+      #endif
 
       // outports
       typename std::map< std::string, OutPortBase<T>* >::iterator it;

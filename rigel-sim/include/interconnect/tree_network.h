@@ -21,6 +21,8 @@ class TreeNetwork : public ComponentBase {
 
 	  TreeNetwork(
       rigel::ConstructionPayload cp,
+      InPortBase<Packet*>* in,
+      OutPortBase<Packet*>* out,
       ComponentCount& count = TreeNetworkCount
     );
 
@@ -28,6 +30,9 @@ class TreeNetwork : public ComponentBase {
     void Heartbeat() {};
     void EndSim()    {};
     int PerCycle()   {};
+
+    InPortBase<Packet*>* get_inport(int p) { return leaf_inports[p]; }
+    OutPortBase<Packet*>* get_outport(int p) { return leaf_outports[p]; }
 
   private:
 

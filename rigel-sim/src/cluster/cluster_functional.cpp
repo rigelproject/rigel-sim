@@ -18,14 +18,15 @@ ClusterFunctional::ClusterFunctional(
   cp.parent = this;
 	cp.component_name.clear();
 
-  ccache = new ClusterCacheFunctional(cp, from_interconnect, to_interconnect);
-
   // connect ccache to cluster ports
   // this just assigns the ccache ports to be the cluster's ports
   // we like this because the cluster is contained, but the ccache is a separate object
   // we could instead try to use a DUMMY port object that basically does this assignment via attach
   from_interconnect = new InPortBase<Packet*>(  PortName(name(), id(), "in") );
   to_interconnect   = new OutPortBase<Packet*>( PortName(name(), id(), "out") );
+
+  // the ccache will actually be responsible for reading, writing to the cluster's ports
+  ccache = new ClusterCacheFunctional(cp, from_interconnect, to_interconnect);
 
 	cores = new CoreFunctional*[numcores];
 

@@ -31,6 +31,9 @@ class CrossBar : public ComponentBase {
     void EndSim()    {};
     int PerCycle()   {};
 
+    InPortBase<Packet*>* get_inport(int p) { return inports[p]; }
+    OutPortBase<Packet*>* get_outport(int p) { return outports[p]; }
+
   private:
 
     int _numports;
