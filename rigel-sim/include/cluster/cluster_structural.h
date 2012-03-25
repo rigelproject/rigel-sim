@@ -1,19 +1,19 @@
 
-#ifndef __CLUSTER_FUNCTIONAL_H__
-#define __CLUSTER_FUNCTIONAL_H__
+#ifndef __CLUSTER_STRUCTURAL_H__
+#define __CLUSTER_STRUCTURAL_H__
 
 #include "sim.h" //For GlobalBackingStoreType
 #include "cluster/clusterbase.h"
 #include "core.h"
 #include "cluster/cluster_cache.h"
 
-class ClusterFunctional : public ClusterBase {
+class ClusterStructural : public ClusterBase {
 
   public:
 
-    ClusterFunctional(rigel::ConstructionPayload cp);
+    ClusterStructural(rigel::ConstructionPayload cp);
 
-    ~ClusterFunctional();
+    ~ClusterStructural();
 
     /// Component interface
     void Heartbeat();
@@ -36,7 +36,7 @@ class ClusterFunctional : public ClusterBase {
 
     CoreFunctional** cores; /// array of cores
 
-    ClusterCacheFunctional *ccache; /// cluster cache object
+    ClusterCacheStructural *ccache; /// cluster cache object
 
     int numcores;           /// cores in this cluster
 

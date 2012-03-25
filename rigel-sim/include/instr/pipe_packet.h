@@ -36,6 +36,7 @@ class PipePacket { // : public InstrBase { // maybe later...
     ) :
       _valid(true),
       _completed(false),
+      _request_pending(false),
       _pc(pc),
       raw_instr_bits(raw),
       _tid(tid),
@@ -110,18 +111,20 @@ class PipePacket { // : public InstrBase { // maybe later...
 
     void pretty_print(FILE * stream = stdout) {
       dis_print(); 
-      fprintf(stream,"\n");
+      //fprintf(stream,"\n");
     }
 
     /// dump useful internal state
     void Dump() {
       pretty_print();
       _sdInfo.Dump();
+      printf("valid:%d completed:%d request_pending:%d\n", _valid, _completed, _request_pending);
       // print regvals
       printf("regs: ");
       for(int i=0;i<NUM_ISA_OPERAND_REGS;i++) {
         printf("%s:%08x ",isa_reg_names[i],regvals[i].i32()); /// for storing temporary register values
-      } printf("\n");
+      } 
+      printf("\n");
     };
 
     disassemble_info dis_info;
@@ -231,6 +234,9 @@ class PipePacket { // : public InstrBase { // maybe later...
     bool isCompleted()  { return _completed; }
     void setCompleted() { _completed = true; }
 
+    bool requestPending()    { return _request_pending; }
+    void setRequestPending() { _request_pending = true; }
+
     Packet* memRequest() { return _mem_request; }
     void memRequest(Packet* p) { _mem_request = p; }
     
@@ -255,6 +261,8 @@ class PipePacket { // : public InstrBase { // maybe later...
     /// basic attributes
     bool _valid;
     bool _completed;
+    bool _request_pending;
+
     uint32_t _pc;        /// program counter associated with this instruction
     uint32_t raw_instr_bits;  /// for internal class use only
 

@@ -30,8 +30,8 @@ class CoreFunctional : public CoreBase {
 
   public:
     /// constructor
-    CoreFunctional(rigel::ConstructionPayload cp,
-                   ClusterCacheFunctional* ccache);
+    CoreFunctional(rigel::ConstructionPayload cp);
+                   //ClusterCacheFunctional* ccache);
 
     /// destructor
     ~CoreFunctional();
@@ -71,9 +71,11 @@ class CoreFunctional : public CoreBase {
 
   private:
 
+    int stall;
+
     // private methods
     void doMem(PipePacket* instr);
-    void sendMemoryRequest(Packet* p);
+    void sendMemoryRequest(PipePacket* p);
     void checkMemoryRequest(PipePacket* p);
 
     void doSimSpecial(PipePacket* instr);
@@ -106,7 +108,7 @@ class CoreFunctional : public CoreBase {
 
     int current_tid; // local thread id
 
-    ClusterCacheFunctional* ccache;
+    //ClusterCacheFunctional* ccache;
 
     // TODO FIXME: this should be a core base class member...
     Syscall* syscall_handler;

@@ -74,8 +74,10 @@ common_SOURCES = \
  src/cluster/cluster_legacy.cpp \
  src/cluster/clusterbase.cpp \
  src/cluster/cluster_functional.cpp \
+ src/cluster/cluster_structural.cpp \
  src/cluster/cluster_cache_base.cpp \
  src/cluster/cluster_cache_functional.cpp \
+ src/cluster/cluster_cache_structural.cpp \
  src/core/corebase.cpp \
  src/core/core_functional.cpp \
  src/core/core_inorder_legacy.cpp \

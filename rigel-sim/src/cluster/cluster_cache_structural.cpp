@@ -1,4 +1,4 @@
-#include "cluster/cluster_cache_functional.h"
+#include "cluster/cluster_cache_structural.h"
 #include "sim/component_count.h"
 #include "util/construction_payload.h"
 #include "memory/backing_store.h"
@@ -11,29 +11,29 @@
 
 #define DB_CC 0
 
-#define CF_FIXED_LATENCY 20
+#define CF_FIXED_LATENCY 2
 
 /// constructor
-ClusterCacheFunctional::ClusterCacheFunctional(
+ClusterCacheStructural::ClusterCacheStructural(
   rigel::ConstructionPayload cp,
   InPortBase<Packet*>* in,
   OutPortBase<Packet*>* out
 ) : 
-  ClusterCacheBase(cp.change_name("ClusterCacheFunctional")),
+  ClusterCacheBase(cp.change_name("ClusterCacheStructural")),
   LinkTable(rigel::THREADS_PER_CLUSTER), // TODO FIXME dynamic
-  //coreside_ins(rigel::CORES_PER_CLUSTER), // FIXME: make this non-const
-  //coreside_outs(rigel::CORES_PER_CLUSTER), // FIXME: make this non-const
-  outpackets(99), // make this really big functional, TODO make it unsized
+//  coreside_ins(rigel::CORES_PER_CLUSTER), // FIXME: make this non-const
+//  coreside_outs(rigel::CORES_PER_CLUSTER), // FIXME: make this non-const
+  outpackets(1),
   fixed_latency(CF_FIXED_LATENCY)
 {
 
   // TODO: make this an internal class of the port, so we don't have to specify port_status_t ?
   CallbackWrapper<Packet*,port_status_t>* mcb
     = new MemberCallbackWrapper<
-            ClusterCacheFunctional,
+            ClusterCacheStructural,
             Packet*,
             port_status_t,
-            &ClusterCacheFunctional::FunctionalMemoryRequest>(this);
+            &ClusterCacheStructural::FunctionalMemoryRequest>(this);
 
   for (int i = 0; i < coreside_ins.size(); i++) {
     std::string n = PortName( name(), id(), "coreside_in", i );
@@ -50,44 +50,41 @@ ClusterCacheFunctional::ClusterCacheFunctional(
 /// component interface
 
 int
-ClusterCacheFunctional::PerCycle()  { 
+ClusterCacheStructural::PerCycle()  { 
 
-  // return all ready responses
-  // functional sim does not bandwith limit responses right now (we could if we wanted to)
-  // this assumes packets in front are ready first, only true for silly fixed latency model
-  // otherwise, ready responses after waiting responses will be blocked here
+  if (!outpackets.empty()) {
+    if (outpackets.front().first <= rigel::CURR_CYCLE) {
+      Packet* p;
+      p = outpackets.front().second;
 
-  while (!outpackets.empty() && outpackets.front().first <= rigel::CURR_CYCLE) {
-    Packet* p;
-    p = outpackets.front().second;
+      doMemoryAccess(p);
+      assert(p!=0);
 
-    doMemoryAccess(p);
-    assert(p!=0);
-
-    coreside_outs[p->local_coreid()]->sendMsg(p);
-    outpackets.pop(); 
+      coreside_outs[p->local_coreid()]->sendMsg(p);
+      outpackets.pop(); 
+    }
   }
 
   return 0; 
 };
 
 void
-ClusterCacheFunctional::EndSim()  {
+ClusterCacheStructural::EndSim()  {
 
 };
 
 void
-ClusterCacheFunctional::Dump()  {
+ClusterCacheStructural::Dump()  {
   
 };
 
 void 
-ClusterCacheFunctional::Heartbeat()  {};
+ClusterCacheStructural::Heartbeat()  {};
 
 
 /// CCFunctional specific 
 port_status_t 
-ClusterCacheFunctional::FunctionalMemoryRequest(Packet* p) {
+ClusterCacheStructural::FunctionalMemoryRequest(Packet* p) {
 
   if (fixed_latency == 0) { // send immediately
     doMemoryAccess(p);
@@ -98,13 +95,14 @@ ClusterCacheFunctional::FunctionalMemoryRequest(Packet* p) {
     if ( outpackets.push( std::make_pair(rigel::CURR_CYCLE + fixed_latency, p) ) ) {
       return ACK;
     } else {
-      throw ExitSim("unhandled fifo overrun in cluster_cache_functional!");
+      return NACK;
+      throw ExitSim("unhandled fifo overrun!");
     }
   }
 }
 
 void
-ClusterCacheFunctional::doMemoryAccess(PacketPtr p) {
+ClusterCacheStructural::doMemoryAccess(PacketPtr p) {
 
   //p->Dump();
 
@@ -160,7 +158,7 @@ ClusterCacheFunctional::doMemoryAccess(PacketPtr p) {
 /// call a generic handler for Global Atomic operations
 /// side effect: updates p
 void
-ClusterCacheFunctional::doGlobalAtomic(PacketPtr p) {
+ClusterCacheStructural::doGlobalAtomic(PacketPtr p) {
   uint32_t result = RigelISA::execGlobalAtomic(p, mem_backing_store);
   // convert the request to a reply
   p->msgType( rigel::icmsg_convert(p->msgType()) );
@@ -172,7 +170,7 @@ ClusterCacheFunctional::doGlobalAtomic(PacketPtr p) {
 /// local atomics (LDL/STC) require local state where they are completed
 /// side effect: updates p
 void
-ClusterCacheFunctional::doLocalAtomic(PacketPtr p) {
+ClusterCacheStructural::doLocalAtomic(PacketPtr p) {
   int tid; // cluster-level thread ID
   tid = p->cluster_tid();
   if(tid >= LinkTable.size() ) { 

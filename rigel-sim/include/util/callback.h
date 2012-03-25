@@ -1,25 +1,27 @@
 #ifndef __CALLBACK_H__
 #define __CALLBACK_H__
 
-template <class P> 
+template <class Payload, class ReturnType> 
 class CallbackWrapper {
   public:
-    virtual void operator() (P p) = 0;
+    virtual ReturnType operator() (Payload p) = 0;
     CallbackWrapper() { };
   private:
 };
 
+// for wrapping a member function
 template < class Obj, 
            class Payload,
-           void (Obj::*Func)(Payload) 
+           class ReturnType,
+           ReturnType (Obj::*Func)(Payload) 
 >
-class MemberCallbackWrapper : public CallbackWrapper<Payload> {
+class MemberCallbackWrapper : public CallbackWrapper<Payload,ReturnType> {
 
   public: 
     MemberCallbackWrapper(Obj *o)
       : object(o) { }
 
-    void operator() (Payload p) {
+    ReturnType operator() (Payload p) {
       (object->*Func)(p);
     }
 

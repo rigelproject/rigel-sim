@@ -1,14 +1,14 @@
 
-#include "cluster/cluster_functional.h"
-#include "cluster/cluster_cache_functional.h"
+#include "cluster/cluster_structural.h"
+#include "cluster/cluster_cache_structural.h"
 #include "sim.h"
 #include "util/construction_payload.h"
 
 /// constructor
-ClusterFunctional::ClusterFunctional(
+ClusterStructural::ClusterStructural(
   rigel::ConstructionPayload cp
 ) : 
-  ClusterBase(cp.change_name("ClusterFunctional")),
+  ClusterBase(cp.change_name("ClusterStructural")),
   numcores(rigel::CORES_PER_CLUSTER), // TODO: set dynamic
   halted_(0),
   to_interconnect(),
@@ -26,7 +26,7 @@ ClusterFunctional::ClusterFunctional(
   to_interconnect   = new OutPortBase<Packet*>( PortName(name(), id(), "out") );
 
   // the ccache will actually be responsible for reading, writing to the cluster's ports
-  ccache = new ClusterCacheFunctional(cp, from_interconnect, to_interconnect);
+  ccache = new ClusterCacheStructural(cp, from_interconnect, to_interconnect);
 
 	cores = new CoreFunctional*[numcores];
 
@@ -43,7 +43,7 @@ ClusterFunctional::ClusterFunctional(
 };
 
 /// destructor
-ClusterFunctional::~ClusterFunctional() {
+ClusterStructural::~ClusterStructural() {
   if (cores) {
     for (int i=0; i<numcores; i++) {
       delete cores[i];
@@ -53,7 +53,7 @@ ClusterFunctional::~ClusterFunctional() {
 }
 
 void
-ClusterFunctional::Heartbeat() {
+ClusterStructural::Heartbeat() {
 
   // p: core
   for (int p = 0; p < rigel::CORES_PER_CLUSTER; p++) {
@@ -65,7 +65,7 @@ ClusterFunctional::Heartbeat() {
 
 /// PerCycle
 int
-ClusterFunctional::PerCycle() {
+ClusterStructural::PerCycle() {
 
   if (halted()) {
     return halted();
@@ -73,9 +73,10 @@ ClusterFunctional::PerCycle() {
 
   ccache->PerCycle(); 
 
-  // HACK: clock the cores in rotating priority to avoid starvation (should not be any)
-  // OK for FUNCTIONAL simulation, we are not limiting bandwidth or modelling contention
-  int idx = rigel::CURR_CYCLE % numcores; 
+  // HACK: clock the cores in rotating priority to avoid starvation
+  // ideally, this should be done via multi-cycle arbitration and handled transparently
+  // on the other side of the port interface
+  int idx = rand() % numcores; 
   int halted_cores = 0;
   for (int offset = 0; offset < numcores; offset++) {
     halted_cores += cores[idx]->PerCycle();
@@ -91,24 +92,24 @@ ClusterFunctional::PerCycle() {
 };
 
 void 
-ClusterFunctional::Dump() { 
+ClusterStructural::Dump() { 
   assert( 0 && "unimplemented!");
 };
 
 void 
-ClusterFunctional::EndSim() {
+ClusterStructural::EndSim() {
 	profiler->end_sim();
 	profiler->accumulate_stats();
   //assert( 0 && "unimplemented!");
 };
 
-void ClusterFunctional::save_state() const {
+void ClusterStructural::save_state() const {
   for(int i = 0; i < rigel::CORES_PER_CLUSTER; i++) {
     cores[i]->save_state();
   }
 }
 
-void ClusterFunctional::restore_state() {
+void ClusterStructural::restore_state() {
   for(int i = 0; i < rigel::CORES_PER_CLUSTER; i++) {
     cores[i]->restore_state();
   }

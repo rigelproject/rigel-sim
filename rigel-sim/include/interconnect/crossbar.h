@@ -29,7 +29,7 @@ class CrossBar : public ComponentBase {
     void Dump()      {};
     void Heartbeat() {};
     void EndSim()    {};
-    int PerCycle()   {};
+    int PerCycle()   { return 0;};
 
     InPortBase<Packet*>* get_inport(int p) { return inports[p]; }
     OutPortBase<Packet*>* get_outport(int p) { return outports[p]; }

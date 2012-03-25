@@ -99,6 +99,7 @@ namespace rigel {
 class ClusterBase;
 class ClusterLegacy;
 class ClusterFunctional;
+class ClusterStructural;
 
 // Memory Model Classes
 class MemoryModelSimple;

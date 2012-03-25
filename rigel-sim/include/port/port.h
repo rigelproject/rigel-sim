@@ -32,7 +32,7 @@ static std::string PortName( std::string parent, int id, std::string suffix, int
 // forward declarations
 template <class T> class OutPortBase;
 template <class T> class InPortBase;
-template <class P> class CallbackWrapper;
+template <class, class> class CallbackWrapper;
 
 
 typedef enum {
@@ -47,9 +47,9 @@ class InPortBase : public PortBase {
   public:
 
     InPortBase(std::string name) : 
-      _name(name),
-      valid(false),
-      ready(true)
+      _valid(false),
+      _ready(true),
+      _name(name)
     { 
       PortManager<T>::registerInPort(this);
     }
@@ -58,10 +58,10 @@ class InPortBase : public PortBase {
       DPRINT(DEBUG_PORT,"%s\n", __PRETTY_FUNCTION__);   
       //msg->Dump();
       // save msg
-      if (ready) {
+      if (_ready) {
         data = msg;
-        valid = true;
-        ready = false;
+        _valid = true;
+        _ready = false;
         DPRINT(DEBUG_PORT,"%s ACK\n", __PRETTY_FUNCTION__);
         return ACK;
       } else {
@@ -71,9 +71,9 @@ class InPortBase : public PortBase {
     };
 
     virtual T read() {
-      if (valid) {
-        valid = false;
-        ready = true;
+      if (_valid) {
+        _valid = false;
+        _ready = true;
         return data;
       } else {
         return NULL; // FIXME this is evil...and stupid
@@ -89,10 +89,12 @@ class InPortBase : public PortBase {
     
     friend class PortManager<T>;
 
+    bool ready() { return _ready; }
+
   private:
+    bool _valid; /// data is valid
+    bool _ready; /// ready to accept a message
     T    data;
-    bool valid; /// data is valid
-    bool ready; /// ready to accept a message
     std::string _name; ///< port name
 
 };
@@ -105,20 +107,19 @@ class InPortCallback : public InPortBase<T> {
   public:
 
     InPortCallback( std::string name, 
-                    CallbackWrapper<T>* handler 
+                    CallbackWrapper<T,port_status_t>* handler 
     ) : InPortBase<T>(name),
         handler(handler)
     { }
 
     virtual port_status_t recvMsg(T msg) {
       DPRINT(DEBUG_PORT,"%s\n", __PRETTY_FUNCTION__);
-      (*handler)(msg);
-      return ACK; // assume handler always works, since it doesn't return anything
+      return (*handler)(msg);
     }
 
   private:
 
-    CallbackWrapper<T> *handler; 
+    CallbackWrapper<T,port_status_t> *handler; 
 
 };
 

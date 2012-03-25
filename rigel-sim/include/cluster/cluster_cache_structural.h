@@ -1,5 +1,5 @@
-#ifndef __CLUSTER_CACHE_FUNCTIONAL_H__
-#define __CLUSTER_CACHE_FUNCTIONAL_H__
+#ifndef __CLUSTER_CACHE_STRUCTURAL_H__
+#define __CLUSTER_CACHE_STRUCTURAL_H__
 
 #include "cluster/cluster_cache_base.h"
 #include "util/util.h"
@@ -7,19 +7,23 @@
 #include "util/fifo.h"
 #include "port/port.h"
 
+// forward declarations
+template<class T> class InPortBase;
+template<class T> class OutPortBase;
+class Packet;
 
-/// namespace rigel {
-/// 	class ConstructionPayload;
-/// 	class ComponentCount;
-/// }
+namespace rigel {
+	class ConstructionPayload;
+	class ComponentCount;
+}
 
 
-class ClusterCacheFunctional : public ClusterCacheBase {
+class ClusterCacheStructural : public ClusterCacheBase {
 
   public:
 
     /// constructor
-    ClusterCacheFunctional(
+    ClusterCacheStructural(
       rigel::ConstructionPayload cp,
       InPortBase<Packet*>* in,       ///< unused, the functional cache don't care!
       OutPortBase<Packet*>* out      ///< unused, the functional cache don't care!
@@ -32,8 +36,8 @@ class ClusterCacheFunctional : public ClusterCacheBase {
     void Heartbeat();
 
 
-//    /// REMOVE ME: FIXME TODO HACK -- replace this with proper generic
-//    //connections
+    /// REMOVE ME: FIXME TODO HACK -- replace this with proper generic
+    //connections
 //    InPortBase<Packet*>*  getCoreSideInPort(int p)  { return coreside_ins[p];  }
 //    OutPortBase<Packet*>* getCoreSideOutPort(int p) { return coreside_outs[p]; }
 
@@ -41,8 +45,8 @@ class ClusterCacheFunctional : public ClusterCacheBase {
 
     std::vector<clustercache::LDLSTC_entry_t> LinkTable;
 
- //   std::vector< InPortBase<Packet*>* > coreside_ins;
- //   std::vector< OutPortBase<Packet*>* > coreside_outs;
+//    std::vector< InPortBase<Packet*>* > coreside_ins;
+//    std::vector< OutPortBase<Packet*>* > coreside_outs;
 
   private: // we don't want these visible to inherited classes
 
@@ -52,7 +56,6 @@ class ClusterCacheFunctional : public ClusterCacheBase {
   
     port_status_t FunctionalMemoryRequest(Packet* p);
 
-    /// for the functional model, we should use an UNSIZED queue to never run out of space
     fifo< std::pair<uint64_t,Packet*> > outpackets;
 
     int fixed_latency;

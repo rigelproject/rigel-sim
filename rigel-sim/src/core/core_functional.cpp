@@ -38,20 +38,19 @@
 /// constructor
 ///////////////////////////////////////////////////////////////////////////////
 CoreFunctional::CoreFunctional(
-  rigel::ConstructionPayload cp,
-  ClusterCacheFunctional *ccache
+  rigel::ConstructionPayload cp
+  //ClusterCacheFunctional *ccache
 ) :
   CoreBase(cp.change_name("CoreFunctional")),
   width(CF_WIDTH),
   numthreads(rigel::THREADS_PER_CORE),
   current_tid(0),
-  ccache(ccache),
+  //ccache(ccache),
   syscall_handler(cp.syscall),
   thread_state(numthreads)
 {
   cp.parent = this;
 	cp.component_name.clear();
-
 
   std::string pname_out = PortName(name(), id(), "cache_out");
   std::string pname_in  = PortName(name(), id(), "cache_in");
@@ -139,7 +138,13 @@ CoreFunctional::PerCycle() {
         memory(ts->instr);  
       } else { // check on the existing instruction
         // handle memory stall
-        checkMemoryRequest(ts->instr);
+        //ts->instr->Dump();
+        if (!ts->instr->requestPending()) {
+          sendMemoryRequest(ts->instr);
+        }
+        if (ts->instr->requestPending()) {
+          checkMemoryRequest(ts->instr);
+        }
       }
       
       // writeback
@@ -160,7 +165,7 @@ CoreFunctional::PerCycle() {
     }
 
   } else {
-    // no thread available this cycle, stalled
+    throw ExitSim("we don't expect this at present (no thread selectable)");  // no thread available this cycle, stalled
   }
 
   if (DB_CF) { ts->rf.Dump(); }
@@ -456,19 +461,16 @@ CoreFunctional::doMem(PipePacket* instr) {
         assert(0 && "unknown or unimplemented ATOMICOP");
         break;
     }
-    sendMemoryRequest(p);
   // store value
   }
   else if (instr->isStore()) {
     DPRINT(DB_CF,"%s: isMem isStore\n", __func__);
-
     switch (instr->type()) {
       case I_STW:
       case I_GSTW:
       case I_BCAST_UPDATE: {
         uint32_t data        = instr->regval(DREG).u32();
         p->initCorePacket(addr ,data, id(), GTID(instr->tid()));
-        sendMemoryRequest(p); // no result for stores
         break;
       }
       default:
@@ -483,7 +485,6 @@ CoreFunctional::doMem(PipePacket* instr) {
       case I_LDW:
       case I_GLDW: {
         p->initCorePacket(addr, 0, id(), GTID(instr->tid()));
-        sendMemoryRequest(p);
         break;
       }
       default:
@@ -500,6 +501,7 @@ CoreFunctional::doMem(PipePacket* instr) {
         // do nothing for these in functional mode, for now, with no caches
         instr->setCompleted();
         DRIGEL( printf("ignoring CACHECONTROL instruction for now...NOP\n"); )
+        return; // since we don't actually sent this request
         break;
       default:
         throw ExitSim("unhandled CacheControl operation?");
@@ -507,16 +509,26 @@ CoreFunctional::doMem(PipePacket* instr) {
   } else if (instr->isPrefetch()) {
     instr->setCompleted();
     DRIGEL( printf("ignoring PREFETCH instruction for now...NOP\n"); )
+    return; // since we don't actually sent this request
   } else {
     instr->Dump();
     throw ExitSim("unknown memory operation!");
   }
 
   instr->memRequest(p); // save pointer to request
+
+  // send packetized memory request
+  sendMemoryRequest(instr); 
+  // no result for stores
+
   if (instr->isCompleted()) {
     return;
   } else {
-    checkMemoryRequest(instr);
+    if (instr->requestPending()) {
+      checkMemoryRequest(instr);
+    } else {
+      return; 
+    }
   }
 
 }
@@ -524,16 +536,20 @@ CoreFunctional::doMem(PipePacket* instr) {
 // sendMemoryRequest
 // actually poke the ports
 void
-CoreFunctional::sendMemoryRequest(Packet* p) {
+CoreFunctional::sendMemoryRequest(PipePacket* instr) {
 
   port_status_t status;
+
+  Packet* p = instr->memRequest();
 
   status = to_ccache->sendMsg(p);
 
   if (status == ACK) { // port accepted message
-
+    instr->setRequestPending();
   } else {
-    throw ExitSim("unhandled path sendMemoryRequest()");
+    DPRINT(false, "NACK! c%d t%d\n", id(),instr->tid());
+    return; // retry to send later
+    //throw ExitSim("unhandled path sendMemoryRequest()");
   }
 
 }

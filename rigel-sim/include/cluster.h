@@ -5,5 +5,6 @@
 #include "cluster/clusterbase.h"
 #include "cluster/cluster_legacy.h"
 #include "cluster/cluster_functional.h"
+#include "cluster/cluster_structural.h"
 
 #endif
