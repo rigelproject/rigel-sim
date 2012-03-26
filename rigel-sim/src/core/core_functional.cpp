@@ -39,13 +39,11 @@
 ///////////////////////////////////////////////////////////////////////////////
 CoreFunctional::CoreFunctional(
   rigel::ConstructionPayload cp
-  //ClusterCacheFunctional *ccache
 ) :
   CoreBase(cp.change_name("CoreFunctional")),
   width(CF_WIDTH),
   numthreads(rigel::THREADS_PER_CORE),
   current_tid(0),
-  //ccache(ccache),
   syscall_handler(cp.syscall),
   thread_state(numthreads)
 {
@@ -414,6 +412,7 @@ CoreFunctional::doMem(PipePacket* instr) {
 
   // new packet based on instr type
   Packet* p = new Packet( rigel::instr_to_icmsg_full(instr->type()) );
+  p->pc(instr->pc());
 
   if (instr->isAtomic()) {
     DPRINT(DB_CF,"%s: isMem isAtomic\n", __func__);
@@ -500,7 +499,7 @@ CoreFunctional::doMem(PipePacket* instr) {
       case I_LINE_FLUSH:
         // do nothing for these in functional mode, for now, with no caches
         instr->setCompleted();
-        DRIGEL( printf("ignoring CACHECONTROL instruction for now...NOP\n"); )
+        DRIGEL(false,printf("ignoring CACHECONTROL instruction for now...NOP\n"); )
         return; // since we don't actually sent this request
         break;
       default:
@@ -508,7 +507,7 @@ CoreFunctional::doMem(PipePacket* instr) {
     }
   } else if (instr->isPrefetch()) {
     instr->setCompleted();
-    DRIGEL( printf("ignoring PREFETCH instruction for now...NOP\n"); )
+    DRIGEL(false,printf("ignoring PREFETCH instruction for now...NOP\n"); )
     return; // since we don't actually sent this request
   } else {
     instr->Dump();
@@ -610,7 +609,7 @@ CoreFunctional::doSimSpecial(PipePacket* instr) {
       rigel::RigelSYSCALL(addr,syscall_handler,mem_backing_store); break; 
     }
     case I_EVENT:
-      DRIGEL( printf("ignore I_EVENT event instruction for now...NOP\n"); )
+      DRIGEL(false,printf("ignore I_EVENT event instruction for now...NOP\n"); )
       break;
     case I_NOP:
       break;

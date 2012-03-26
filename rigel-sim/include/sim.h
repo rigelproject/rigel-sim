@@ -19,7 +19,8 @@
 #define DPRINTOLD(...) fprintf ( stdout, __VA_ARGS__ )
 #define DPRINT(cond,...) { if (cond) {fprintf ( stdout, __VA_ARGS__ );} }
 //#define DRIGEL(blah) blah
-#define DRIGEL(blah)
+#define DRIGEL(p,blah)
+//#define DRIGEL(p,blah) if(p) {blah;}
 //#define DPRINT
 
 // XXX: user.config must be hand made for each user.  Check user.config.example

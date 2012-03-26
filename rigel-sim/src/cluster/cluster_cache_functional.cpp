@@ -11,7 +11,7 @@
 
 #define DB_CC 0
 
-#define CF_FIXED_LATENCY 20
+#define CF_FIXED_LATENCY 0
 
 /// constructor
 ClusterCacheFunctional::ClusterCacheFunctional(
@@ -235,6 +235,7 @@ ClusterCacheFunctional::doLocalAtomic(PacketPtr p) {
       }
       break;
     default:
+      p->Dump();
       throw ExitSim("invalid message type in packet!");
   }
   p->setCompleted(); // access handled, return to core

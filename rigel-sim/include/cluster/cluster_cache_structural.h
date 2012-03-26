@@ -35,30 +35,32 @@ class ClusterCacheStructural : public ClusterCacheBase {
     void Dump();
     void Heartbeat();
 
-
-    /// REMOVE ME: FIXME TODO HACK -- replace this with proper generic
-    //connections
-//    InPortBase<Packet*>*  getCoreSideInPort(int p)  { return coreside_ins[p];  }
-//    OutPortBase<Packet*>* getCoreSideOutPort(int p) { return coreside_outs[p]; }
-
   protected:
 
     std::vector<clustercache::LDLSTC_entry_t> LinkTable;
-
-//    std::vector< InPortBase<Packet*>* > coreside_ins;
-//    std::vector< OutPortBase<Packet*>* > coreside_outs;
 
   private: // we don't want these visible to inherited classes
 
     void doMemoryAccess(Packet* p);
     void doLocalAtomic(Packet* p);
     void doGlobalAtomic(Packet* p);
-  
-    port_status_t FunctionalMemoryRequest(Packet* p);
 
-    fifo< std::pair<uint64_t,Packet*> > outpackets;
+    void handleCoreSideInputs();
+    void handleCoreSideRequests();
+    void handleCoreSideReplies();
+    void handleCCacheRequests();
+    void handleCCacheReplies();
+    void memsideBypass();
+    void handleMemorySideReplies();
 
-    int fixed_latency;
+    std::vector< fifo<Packet*> > coreside_requests;
+    std::vector< fifo<Packet*> > coreside_replies;
+
+    fifo<Packet*> ccache_requests;
+    fifo<Packet*> ccache_replies;
+
+    fifo<Packet*> memside_requests;
+    fifo<Packet*> memside_replies;
 
 };
 

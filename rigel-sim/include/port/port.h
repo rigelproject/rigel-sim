@@ -165,8 +165,8 @@ class OutPortBase : public PortBase {
     friend class PortManager<T>;
 
   private:
-    InPortBase<T>* _connection;
     std::string     _name; ///< port name
+    InPortBase<T>* _connection;
 
 };
 

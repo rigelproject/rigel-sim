@@ -11,8 +11,6 @@
 
 #define DB_CC 0
 
-#define CF_FIXED_LATENCY 2
-
 /// constructor
 ClusterCacheStructural::ClusterCacheStructural(
   rigel::ConstructionPayload cp,
@@ -21,28 +19,23 @@ ClusterCacheStructural::ClusterCacheStructural(
 ) : 
   ClusterCacheBase(cp.change_name("ClusterCacheStructural")),
   LinkTable(rigel::THREADS_PER_CLUSTER), // TODO FIXME dynamic
-//  coreside_ins(rigel::CORES_PER_CLUSTER), // FIXME: make this non-const
-//  coreside_outs(rigel::CORES_PER_CLUSTER), // FIXME: make this non-const
-  outpackets(1),
-  fixed_latency(CF_FIXED_LATENCY)
+  // FIXME: resize these later
+  coreside_requests(numcores, fifo<Packet*>(rigel::THREADS_PER_CLUSTER)),
+  coreside_replies(numcores, fifo<Packet*>(rigel::THREADS_PER_CLUSTER)),
+  ccache_requests(99),
+  ccache_replies(99),
+  memside_requests(99),
+  memside_replies(99)
 {
 
-  // TODO: make this an internal class of the port, so we don't have to specify port_status_t ?
-  CallbackWrapper<Packet*,port_status_t>* mcb
-    = new MemberCallbackWrapper<
-            ClusterCacheStructural,
-            Packet*,
-            port_status_t,
-            &ClusterCacheStructural::FunctionalMemoryRequest>(this);
-
-  for (int i = 0; i < coreside_ins.size(); i++) {
-    std::string n = PortName( name(), id(), "coreside_in", i );
-    coreside_ins[i] = new InPortCallback<Packet*>(n, mcb);
+  for (unsigned i = 0; i < coreside_ins.size(); i++) {
+    std::string pname = PortName( name(), id(), "coreside_in", i );
+    coreside_ins[i] = new InPortBase<Packet*>(pname);
   }
 
-  for (int i = 0; i < coreside_outs.size(); i++) {
-    std::string n = PortName( name(), id(), "coreside_out", i );
-    coreside_outs[i] = new OutPortBase<Packet*>(n);
+  for (unsigned i = 0; i < coreside_outs.size(); i++) {
+    std::string pname = PortName( name(), id(), "coreside_out", i );
+    coreside_outs[i] = new OutPortBase<Packet*>(pname);
   }
 
 }
@@ -52,54 +45,143 @@ ClusterCacheStructural::ClusterCacheStructural(
 int
 ClusterCacheStructural::PerCycle()  { 
 
-  if (!outpackets.empty()) {
-    if (outpackets.front().first <= rigel::CURR_CYCLE) {
-      Packet* p;
-      p = outpackets.front().second;
+  //
+  handleCoreSideReplies();
 
-      doMemoryAccess(p);
-      assert(p!=0);
+  //
+  handleCCacheReplies();
+  
+  // should consume memory-side inports...
+  handleMemorySideReplies();
 
-      coreside_outs[p->local_coreid()]->sendMsg(p);
-      outpackets.pop(); 
-    }
-  }
+  // handleMemsideRequests?
+  memsideBypass();
+
+  // 
+  handleCCacheRequests();
+
+  //
+  handleCoreSideRequests();
+  
+  // consume core-side inports
+  handleCoreSideInputs();
 
   return 0; 
+
 };
 
+
+/// handleCoreSideInputs
+///
+/// check each core's port
+/// if the L1 hits, then
 void
-ClusterCacheStructural::EndSim()  {
+ClusterCacheStructural::handleCoreSideInputs() {
+  DPRINT(DB_CC,"%s\n",__func__);
 
-};
-
-void
-ClusterCacheStructural::Dump()  {
-  
-};
-
-void 
-ClusterCacheStructural::Heartbeat()  {};
-
-
-/// CCFunctional specific 
-port_status_t 
-ClusterCacheStructural::FunctionalMemoryRequest(Packet* p) {
-
-  if (fixed_latency == 0) { // send immediately
-    doMemoryAccess(p);
-    assert(p!=0);
-    coreside_outs[p->local_coreid()]->sendMsg(p);
-    return ACK;
-  } else {
-    if ( outpackets.push( std::make_pair(rigel::CURR_CYCLE + fixed_latency, p) ) ) {
-      return ACK;
-    } else {
-      return NACK;
-      throw ExitSim("unhandled fifo overrun!");
+  for (int i = 0; i < numcores; i++) {
+    Packet* p;
+    if (p = coreside_ins[i]->read()) {
+      DRIGEL(DB_CC,p->Dump();)
+      if (false) { //CheckL1(i, p)) { // HIT!
+        // put in the L1 response queue  
+        coreside_replies[i].push(p);
+      } else { // Miss
+        // put in the core's L1 miss queue
+        coreside_requests[i].push(p);
+      }
     }
   }
+
 }
+
+void
+ClusterCacheStructural::handleCoreSideRequests() {
+  DPRINT(DB_CC,"%s\n",__func__);
+
+  for (unsigned i = 0; i < coreside_requests.size(); i++) {
+    if (!coreside_requests[i].empty()) {
+      Packet* p = coreside_requests[i].front();
+      DRIGEL(DB_CC,p->Dump();)
+      ccache_requests.push(p);
+      coreside_requests[i].pop();
+    }
+  }
+
+}
+
+void 
+ClusterCacheStructural::handleCCacheRequests() {
+  DPRINT(DB_CC,"%s\n",__func__);
+
+  while (!ccache_requests.empty()) {
+    Packet* p = ccache_requests.front();
+    DRIGEL(DB_CC,p->Dump();)
+    memside_requests.push(p);
+    ccache_requests.pop();
+  }
+
+}
+
+void
+ClusterCacheStructural::handleMemorySideReplies() {
+  DPRINT(DB_CC,"%s\n",__func__);
+
+  while (!memside_replies.empty()) {
+    Packet* p = memside_replies.front();
+    DRIGEL(DB_CC,p->Dump();)
+    ccache_replies.push(p);
+    memside_replies.pop();
+  }
+  
+}
+
+void
+ClusterCacheStructural::handleCCacheReplies() {
+  DPRINT(DB_CC,"%s\n",__func__);
+
+  while (!ccache_replies.empty()) {
+    Packet* p = ccache_replies.front();
+    DRIGEL(DB_CC,p->Dump();)
+    int map = p->local_coreid();
+    coreside_replies[map].push(p);
+    ccache_replies.pop();
+  }
+
+}
+
+void
+ClusterCacheStructural::memsideBypass() {
+  DPRINT(DB_CC,"%s\n",__func__);
+
+  while (!memside_requests.empty()) {
+    Packet* p = memside_requests.front();
+    DRIGEL(DB_CC,p->Dump();)
+    doMemoryAccess(p);
+    memside_replies.push(p);
+    memside_requests.pop();
+  }
+
+}
+
+void
+ClusterCacheStructural::handleCoreSideReplies() {
+  DPRINT(DB_CC,"%s\n",__func__);
+
+  for (int i = 0; i < numcores; i++) {
+    if (!coreside_replies[i].empty()) {
+      Packet* p = coreside_replies[i].front();
+      DRIGEL(DB_CC,p->Dump();)
+      if (coreside_outs[i]->sendMsg(p) == ACK) {
+        coreside_replies[i].pop();
+      } else {
+        printf("%s: sendMsg() failed on port %d\n", __func__, i);
+      }
+    }
+  }
+
+}
+
 
 void
 ClusterCacheStructural::doMemoryAccess(PacketPtr p) {
@@ -238,3 +320,16 @@ ClusterCacheStructural::doLocalAtomic(PacketPtr p) {
   p->setCompleted(); // access handled, return to core
   return;
 };
+
+void
+ClusterCacheStructural::EndSim()  {
+
+};
+
+void
+ClusterCacheStructural::Dump()  {
+  
+};
+
+void 
+ClusterCacheStructural::Heartbeat()  {};

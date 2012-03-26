@@ -38,6 +38,10 @@ class fifo : public std::queue<T> {
 
     }
 
+    void Dump() {
+
+    }
+
     private:
       const unsigned _capacity;
 

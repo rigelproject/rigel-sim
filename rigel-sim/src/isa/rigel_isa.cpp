@@ -330,13 +330,13 @@ RigelISA::execAddressGen(PipePacket* instr) {
       case I_LINE_INV:
       case I_LINE_FLUSH:
         // do nothing for these in functional mode, for now, with no caches
-        DRIGEL( printf("ignoring CACHECONTROL instruction for now...NOP\n"); )
+        DRIGEL(false, printf("ignoring CACHECONTROL instruction for now...NOP\n"); )
         break;
       default:
         throw ExitSim("unhandled CacheControl operation?");
     }
   } else if (instr->isPrefetch()) {
-    DRIGEL( printf("ignoring PREFETCH instruction for now...NOP\n"); )
+    DRIGEL(false, printf("ignoring PREFETCH instruction for now...NOP\n"); )
   } else {
     instr->Dump();
     throw ExitSim("unknown memory operation!");

@@ -31,7 +31,6 @@ class CoreFunctional : public CoreBase {
   public:
     /// constructor
     CoreFunctional(rigel::ConstructionPayload cp);
-                   //ClusterCacheFunctional* ccache);
 
     /// destructor
     ~CoreFunctional();

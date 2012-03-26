@@ -54,6 +54,8 @@ class ClusterCacheBase : public ComponentBase {
 
   protected:
 
+    int numcores;
+
     std::vector< InPortBase<Packet*>* > coreside_ins;
     std::vector< OutPortBase<Packet*>* > coreside_outs;
 
