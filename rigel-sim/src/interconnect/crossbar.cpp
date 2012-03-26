@@ -1,6 +1,10 @@
 
+#include "sim.h"
 #include "interconnect/crossbar.h"
 #include "port/port.h"
+#include "util/fifo.h"
+
+#define DB_XBAR 1
 
 ComponentCount CrossBarCount;
 
@@ -12,16 +16,80 @@ CrossBar::CrossBar(
                 cp.change_name("CrossBar").component_name.c_str(),
                 count),
   _numports(rigel::NUM_TILES), // FIXME: set dynamically
-  inports(_numports),
-  outports(_numports)
+  _numinports(_numports),
+  _numoutports(_numports),
+  inports(_numinports),
+  outports(_numoutports),
+  inbound(_numinports, fifo<Packet*>(99)),
+  outbound(_numoutports, fifo<Packet*>(99))
 { 
   // instantiate ports
   // TODO: do elsewhere, and connect
-  for (int i = 0; i < inports.size(); i++) {
+  for (unsigned i = 0; i < inports.size(); i++) {
     inports[i] = new InPortBase<Packet*>( PortName(name(), id(), "in", i) );
   } 
-  for (int i = 0; i < outports.size(); i++) {
+  for (unsigned i = 0; i < outports.size(); i++) {
     outports[i] = new OutPortBase<Packet*>( PortName(name(), id(), "out", i) );
   }
 }
 
+int
+CrossBar::PerCycle() {
+
+  // set output ports
+  setOutports();
+
+  // route inputs
+  // FIXME: this doesn't actually make the routing decision
+  route(); 
+
+  // read input ports
+  readInports();
+
+}
+
+// this doesn't actually route right now
+void
+CrossBar::route() {
+  DPRINT(DB_XBAR,"%s\n",__func__);
+
+  for (int i = 0; i < _numinports; i++) {
+    if (!inbound[i].empty()) {
+      Packet* p = inbound[i].front();
+      DRIGEL(DB_XBAR, p->Dump();)
+      outbound[i].push(p);
+      inbound[i].pop();
+    }
+  }
+
+}
+
+void 
+CrossBar::readInports() {
+  DPRINT(DB_XBAR,"%s\n",__func__);
+
+  for (int i = 0; i < _numinports; i++) {
+    Packet* p;
+    if (p = inports[i]->read()) {
+      DRIGEL(DB_XBAR, p->Dump();)
+      inbound[i].push(p);
+    }
+  }
+
+}
+
+void 
+CrossBar::setOutports() {
+  DPRINT(DB_XBAR,"%s\n",__func__);
+
+  for (int i = 0; i < _numoutports; i++) {
+    if (!outbound[i].empty()) {
+      Packet* p = outbound[i].front();
+      DRIGEL(DB_XBAR, p->Dump();)
+      if (outports[i]->sendMsg(p) == ACK) {
+        outbound[i].pop();
+      }
+    }
+  }
+
+}
