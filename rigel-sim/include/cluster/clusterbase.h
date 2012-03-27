@@ -13,6 +13,7 @@
 
 #include "sim.h"
 #include "sim/componentbase.h"
+#include "util/util.h"
 
 extern ComponentCount ClusterBaseCount;
 
@@ -20,6 +21,11 @@ extern ComponentCount ClusterBaseCount;
 class TileInterconnectBase;
 class BroadcastManager;
 class Profile;
+
+class Packet;
+template<class T> class InPortBase;
+template<class T> class OutPortBase;
+
 #include "util/construction_payload.h"
 #include "util/checkpointable.h"
 
@@ -45,6 +51,10 @@ class ClusterBase : public ComponentBase, public rigelsim::Checkpointable {
     virtual int   halted()       = 0;      /// Returns 1 if halted, 0 otherwise
     virtual void save_state() const = 0;
     virtual void restore_state() = 0;
+
+    // FIXME: replace with generic port connections
+    virtual InPortBase<Packet*>* get_inport() { throw ExitSim("illegal in this class"); return NULL; }
+    virtual OutPortBase<Packet*>* get_outport() { throw ExitSim("illegal in this class"); return NULL; }
 
     /// simple accessor implementations
     rigel::GlobalBackingStoreType * getBackingStore() { return backing_store; }

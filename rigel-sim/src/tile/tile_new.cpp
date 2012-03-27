@@ -38,8 +38,8 @@ TileNew::TileNew(
     cp.component_index = numclusters * id() + i; // remove this, cluster ID assigned via ComponentCounter
     clusters[i] = new rigel::ClusterType(cp);
     // connect to tree network
-    //interconnect->get_inport(i)->attach( clusters[i]->get_outport() );
-    //clusters[i]->get_inport()->attach( interconnect->get_outport(i) );
+    interconnect->get_inport(i)->attach( clusters[i]->get_outport() );
+    clusters[i]->get_inport()->attach( interconnect->get_outport(i) );
   }
 
   // contruct ports with Clusters

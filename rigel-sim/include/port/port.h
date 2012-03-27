@@ -9,6 +9,7 @@
 #include <sstream>
 #include <iomanip>
 #include <iostream>
+#include <cassert>
 
 /// this base class is meaningless, either get rid of or define a general port
 /// concept with meaning
@@ -141,6 +142,7 @@ class OutPortBase : public PortBase {
 
     virtual port_status_t sendMsg( T msg ) {
       //msg->Dump();   
+      assert(_connection != NULL && "sending message via unconnected port!");
       return _connection->recvMsg(msg);
     }
 

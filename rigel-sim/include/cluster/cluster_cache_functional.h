@@ -8,12 +8,6 @@
 #include "port/port.h"
 
 
-/// namespace rigel {
-/// 	class ConstructionPayload;
-/// 	class ComponentCount;
-/// }
-
-
 class ClusterCacheFunctional : public ClusterCacheBase {
 
   public:
@@ -31,18 +25,9 @@ class ClusterCacheFunctional : public ClusterCacheBase {
     void Dump();
     void Heartbeat();
 
-
-//    /// REMOVE ME: FIXME TODO HACK -- replace this with proper generic
-//    //connections
-//    InPortBase<Packet*>*  getCoreSideInPort(int p)  { return coreside_ins[p];  }
-//    OutPortBase<Packet*>* getCoreSideOutPort(int p) { return coreside_outs[p]; }
-
   protected:
 
     std::vector<clustercache::LDLSTC_entry_t> LinkTable;
-
- //   std::vector< InPortBase<Packet*>* > coreside_ins;
- //   std::vector< OutPortBase<Packet*>* > coreside_outs;
 
   private: // we don't want these visible to inherited classes
 

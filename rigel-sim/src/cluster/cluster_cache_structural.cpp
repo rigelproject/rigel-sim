@@ -19,6 +19,8 @@ ClusterCacheStructural::ClusterCacheStructural(
 ) : 
   ClusterCacheBase(cp.change_name("ClusterCacheStructural")),
   LinkTable(rigel::THREADS_PER_CLUSTER), // TODO FIXME dynamic
+  memside_in(in),
+  memside_out(out),
   // FIXME: resize these later
   coreside_requests(numcores, fifo<Packet*>(rigel::THREADS_PER_CLUSTER)),
   coreside_replies(numcores, fifo<Packet*>(rigel::THREADS_PER_CLUSTER)),
@@ -51,11 +53,15 @@ ClusterCacheStructural::PerCycle()  {
   //
   handleCCacheReplies();
   
-  // should consume memory-side inports...
-  handleMemorySideReplies();
+  //
+  handleMemsideReplies();
 
-  // handleMemsideRequests?
-  memsideBypass();
+  // should consume memory-side inports...
+  handleMemsideInputs();
+
+  // 
+  handleMemsideRequests();
+  //memsideBypass();
 
   // 
   handleCCacheRequests();
@@ -77,7 +83,7 @@ ClusterCacheStructural::PerCycle()  {
 /// if the L1 hits, then
 void
 ClusterCacheStructural::handleCoreSideInputs() {
-  DPRINT(DB_CC,"%s\n",__func__);
+  DPRINT(DB_CC,"%s\n",__PRETTY_FUNCTION__);
 
   for (int i = 0; i < numcores; i++) {
     Packet* p;
@@ -97,7 +103,7 @@ ClusterCacheStructural::handleCoreSideInputs() {
 
 void
 ClusterCacheStructural::handleCoreSideRequests() {
-  DPRINT(DB_CC,"%s\n",__func__);
+  DPRINT(DB_CC,"%s\n",__PRETTY_FUNCTION__);
 
   for (unsigned i = 0; i < coreside_requests.size(); i++) {
     if (!coreside_requests[i].empty()) {
@@ -112,11 +118,11 @@ ClusterCacheStructural::handleCoreSideRequests() {
 
 void 
 ClusterCacheStructural::handleCCacheRequests() {
-  DPRINT(DB_CC,"%s\n",__func__);
+  DPRINT(DB_CC,"%s\n",__PRETTY_FUNCTION__);
 
   while (!ccache_requests.empty()) {
     Packet* p = ccache_requests.front();
-    DRIGEL(DB_CC,p->Dump();)
+    DRIGEL(DB_CC, p->Dump();)
     memside_requests.push(p);
     ccache_requests.pop();
   }
@@ -124,12 +130,26 @@ ClusterCacheStructural::handleCCacheRequests() {
 }
 
 void
-ClusterCacheStructural::handleMemorySideReplies() {
-  DPRINT(DB_CC,"%s\n",__func__);
+ClusterCacheStructural::handleMemsideInputs() {
+  DPRINT(DB_CC,"%s\n",__PRETTY_FUNCTION__);
+
+  Packet* p;
+  if (p = memside_in->read()) {
+    // HACK: do the memory access here so it happens somewhere (for now)
+    doMemoryAccess(p);
+    DRIGEL(DB_CC,p->Dump();)
+    memside_replies.push(p);
+  }
+
+}
+
+void
+ClusterCacheStructural::handleMemsideReplies() {
+  DPRINT(DB_CC,"%s\n",__PRETTY_FUNCTION__);
 
   while (!memside_replies.empty()) {
     Packet* p = memside_replies.front();
-    DRIGEL(DB_CC,p->Dump();)
+    DRIGEL(DB_CC, p->Dump();)
     ccache_replies.push(p);
     memside_replies.pop();
   }
@@ -137,8 +157,21 @@ ClusterCacheStructural::handleMemorySideReplies() {
 }
 
 void
+ClusterCacheStructural::handleMemsideRequests() {
+
+  if (!memside_requests.empty()) {
+    Packet* p = memside_requests.front();
+    DRIGEL(DB_CC, p->Dump();)
+    if (memside_out->sendMsg(p) == ACK) {
+      memside_requests.pop();
+    }
+  }
+
+}
+
+void
 ClusterCacheStructural::handleCCacheReplies() {
-  DPRINT(DB_CC,"%s\n",__func__);
+  DPRINT(DB_CC,"%s\n",__PRETTY_FUNCTION__);
 
   while (!ccache_replies.empty()) {
     Packet* p = ccache_replies.front();
@@ -152,7 +185,7 @@ ClusterCacheStructural::handleCCacheReplies() {
 
 void
 ClusterCacheStructural::memsideBypass() {
-  DPRINT(DB_CC,"%s\n",__func__);
+  DPRINT(DB_CC,"%s\n",__PRETTY_FUNCTION__);
 
   while (!memside_requests.empty()) {
     Packet* p = memside_requests.front();
@@ -166,7 +199,7 @@ ClusterCacheStructural::memsideBypass() {
 
 void
 ClusterCacheStructural::handleCoreSideReplies() {
-  DPRINT(DB_CC,"%s\n",__func__);
+  DPRINT(DB_CC,"%s\n",__PRETTY_FUNCTION__);
 
   for (int i = 0; i < numcores; i++) {
     if (!coreside_replies[i].empty()) {
@@ -175,7 +208,7 @@ ClusterCacheStructural::handleCoreSideReplies() {
       if (coreside_outs[i]->sendMsg(p) == ACK) {
         coreside_replies[i].pop();
       } else {
-        printf("%s: sendMsg() failed on port %d\n", __func__, i);
+        printf("%s: sendMsg() failed on port %d\n", __PRETTY_FUNCTION__, i);
       }
     }
   }
@@ -256,7 +289,7 @@ ClusterCacheStructural::doLocalAtomic(PacketPtr p) {
   int tid; // cluster-level thread ID
   tid = p->cluster_tid();
   if(tid >= LinkTable.size() ) { 
-    printf("invalid tid size %d in %s\n", tid, __func__); 
+    printf("invalid tid size %d in %s\n", tid, __PRETTY_FUNCTION__); 
     throw ExitSim("invalid tid size");
   }
   assert(tid < LinkTable.size());

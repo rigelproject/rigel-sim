@@ -164,6 +164,10 @@ ChipTiled::init_gnet(rigel::ConstructionPayload &cp) {
   cp.change_name("CrossBarReply");
   _gnet_replies  = new CrossBar(cp);
 
+  for (int i = 0; i < rigel::NUM_TILES; i++) {
+    _gnet_replies->get_inport(i)->attach( _gnet_requests->get_outport(i) );
+  }
+
   cp.component_name.clear();
 }
 

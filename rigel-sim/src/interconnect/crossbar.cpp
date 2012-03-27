@@ -2,6 +2,7 @@
 #include "sim.h"
 #include "interconnect/crossbar.h"
 #include "port/port.h"
+#include "packet/packet.h"
 #include "util/fifo.h"
 
 #define DB_XBAR 1
@@ -51,7 +52,7 @@ CrossBar::PerCycle() {
 // this doesn't actually route right now
 void
 CrossBar::route() {
-  DPRINT(DB_XBAR,"%s\n",__func__);
+  DPRINT(DB_XBAR,"%s\n",__PRETTY_FUNCTION__);
 
   for (int i = 0; i < _numinports; i++) {
     if (!inbound[i].empty()) {
@@ -66,7 +67,7 @@ CrossBar::route() {
 
 void 
 CrossBar::readInports() {
-  DPRINT(DB_XBAR,"%s\n",__func__);
+  DPRINT(DB_XBAR,"%s\n",__PRETTY_FUNCTION__);
 
   for (int i = 0; i < _numinports; i++) {
     Packet* p;
@@ -80,7 +81,7 @@ CrossBar::readInports() {
 
 void 
 CrossBar::setOutports() {
-  DPRINT(DB_XBAR,"%s\n",__func__);
+  DPRINT(DB_XBAR,"%s\n",__PRETTY_FUNCTION__);
 
   for (int i = 0; i < _numoutports; i++) {
     if (!outbound[i].empty()) {

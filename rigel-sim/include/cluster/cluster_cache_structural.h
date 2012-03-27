@@ -46,13 +46,24 @@ class ClusterCacheStructural : public ClusterCacheBase {
     void doGlobalAtomic(Packet* p);
 
     void handleCoreSideInputs();
+    void handleMemsideInputs();
+
     void handleCoreSideRequests();
     void handleCoreSideReplies();
+
     void handleCCacheRequests();
     void handleCCacheReplies();
-    void memsideBypass();
-    void handleMemorySideReplies();
 
+    void memsideBypass();
+
+    void handleMemsideReplies();
+    void handleMemsideRequests();
+
+    // ports
+    InPortBase<Packet*>* memside_in;
+    OutPortBase<Packet*>* memside_out;
+
+    // internal FIFOs
     std::vector< fifo<Packet*> > coreside_requests;
     std::vector< fifo<Packet*> > coreside_replies;
 

@@ -17,7 +17,8 @@
 
 // FIXME: move to a debug print file
 #define DPRINTOLD(...) fprintf ( stdout, __VA_ARGS__ )
-#define DPRINT(cond,...) { if (cond) {fprintf ( stdout, __VA_ARGS__ );} }
+//#define DPRINT(cond,...) { if (cond) {fprintf ( stdout, __VA_ARGS__ );} }
+#define DPRINT(cond,...)
 //#define DRIGEL(blah) blah
 #define DRIGEL(p,blah)
 //#define DRIGEL(p,blah) if(p) {blah;}
