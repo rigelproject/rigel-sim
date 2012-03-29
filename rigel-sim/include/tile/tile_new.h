@@ -2,7 +2,7 @@
 #define __TILE_NEW_H__
 
 #include "sim.h"
-#include "tile/tilebase.h"
+#include "tile/tile_base.h"
 
 // forward declarations
 class TreeNetwork;

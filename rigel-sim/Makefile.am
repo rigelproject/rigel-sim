@@ -23,7 +23,7 @@ common_SOURCES = \
  src/isa/rigel_isa.cpp \
  src/tile/tile_legacy.cpp \
  src/tile/tile_new.cpp \
- src/tile/tilebase.cpp \
+ src/tile/tile_base.cpp \
  src/profile/profile.cpp \
  src/profile/profile_init.cpp \
  src/interconnect/icmsg.cpp \

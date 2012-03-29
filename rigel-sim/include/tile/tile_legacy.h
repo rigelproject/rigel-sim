@@ -11,7 +11,7 @@
 #define __TILE_LEGACY_H__
 
 #include "sim.h"
-#include "tilebase.h"
+#include "tile_base.h"
 
 class BroadcastManager;
 class TileInterconnectBase;
