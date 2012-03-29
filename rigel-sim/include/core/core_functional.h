@@ -2,7 +2,7 @@
 #ifndef __CORE_FUNCTIONAL_H__
 #define __CORE_FUNCTIONAL_H__
 
-#include "corebase.h"
+#include "core_base.h"
 #include "core/regfile.h"
 #include "sim.h"
 #include "port/port.h"

@@ -12,7 +12,7 @@
 #include <fstream>
 
 #include "sim.h"
-#include "corebase.h"
+#include "core_base.h"
 #include "util/syscall.h"
 #include "profile/profile.h"
 #include "btb.h"
