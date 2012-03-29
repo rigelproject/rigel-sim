@@ -17,7 +17,7 @@
 // There is a dependence between reg_file and instr and fixing it is probably
 // not worth the effort.
 #include "core/regfile_legacy.h"
-#include "instrbase.h"
+#include "instr_base.h"
 #include <string>
 
 ////////////////////////////////////////////////////////////////////////////////

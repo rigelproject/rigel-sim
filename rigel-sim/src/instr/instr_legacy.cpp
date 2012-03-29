@@ -27,7 +27,7 @@
 #include <dis-asm.h>
 #endif
 
-// in instrbase.h, put back later
+// in instr_base.h, put back later
 // struct string_descriptor {
 //   char *buf;
 //   char *ptr;

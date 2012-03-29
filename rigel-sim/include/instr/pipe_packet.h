@@ -4,7 +4,7 @@
 #include <cstring>
 #include <cassert>
 #include <map>
-#include "instr/instrbase.h"
+#include "instr/instr_base.h"
 #include "sim.h"
 #include "instr/static_decode_info.h"
 #include "core/regfile.h" // FIXME remove this dependence on regval32_t

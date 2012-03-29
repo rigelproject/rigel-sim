@@ -1,4 +1,4 @@
-#include "instr/instrbase.h"
+#include "instr/instr_base.h"
 
 InstrBase::InstrBase( 
   uint32_t pc, /// the program counter for this instr 

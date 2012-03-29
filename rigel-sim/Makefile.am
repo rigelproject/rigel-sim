@@ -86,7 +86,7 @@ common_SOURCES = \
  src/core/instrstats.cpp \
  src/core/btb.cpp \
  src/core/scoreboard.cpp \
- src/instr/instrbase.cpp \
+ src/instr/instr_base.cpp \
  src/instr/instr_legacy.cpp \
  src/instr/pipe_packet.cpp \
  src/instr/static_decode_info.cpp \
