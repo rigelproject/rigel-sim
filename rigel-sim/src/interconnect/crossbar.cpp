@@ -47,6 +47,7 @@ CrossBar::PerCycle() {
   // read input ports
   readInports();
 
+  return 0;
 }
 
 // this doesn't actually route right now
@@ -71,7 +72,7 @@ CrossBar::readInports() {
 
   for (int i = 0; i < _numinports; i++) {
     Packet* p;
-    if (p = inports[i]->read()) {
+    if ((p = inports[i]->read()) != NULL) {
       DRIGEL(DB_XBAR, p->Dump();)
       inbound[i].push(p);
     }

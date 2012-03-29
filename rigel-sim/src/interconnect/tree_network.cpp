@@ -59,7 +59,7 @@ TreeNetwork::handleLeafInputs() {
 
   for (unsigned i = 0; i < _num_leafnodes; i++) {
     Packet* p;
-    if (p = leaf_inports[i]->read()) {
+    if ((p = leaf_inports[i]->read()) != NULL) {
       DRIGEL(DB_TREE, p->Dump());
       inbound.push(p);
     }
@@ -115,7 +115,7 @@ TreeNetwork::handleRootInput() {
   DPRINT(DB_TREE,"%s\n",__PRETTY_FUNCTION__);
 
   Packet* p;
-  if (p = root_inport->read()) {
+  if ((p = root_inport->read()) != NULL) {
     DRIGEL(DB_TREE, p->Dump());
     outbound.push(p);
   }
@@ -144,7 +144,7 @@ TreeNetwork::LoopBack() {
   // loopback
   for (unsigned i = 0; i < _num_leafnodes; i++) {
     Packet* p;
-    if (p = leaf_inports[i]->read()) {
+    if ((p = leaf_inports[i]->read()) != NULL) {
       DRIGEL(DB_TREE, p->Dump());
       if (leaf_outports[i]->sendMsg(p) == ACK) {
       } else {

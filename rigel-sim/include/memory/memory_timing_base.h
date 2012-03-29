@@ -1,10 +1,13 @@
 #ifndef __MEMORY_TIMING_BASE_H__
 #define __MEMORY_TIMING_BASE_H__
 
+#include <set>
+#include <stdint.h>
+#include "sim.h" //For rigel::cache::LINESIZE
 #include "sim/component_base.h"
 
-typedef uint32_t addr_t;
-typedef uint32_t word_t;
+class CallbackInterface;
+template <int linesize> class MissHandlingEntry;
 
 class MemoryTimingBase : public ComponentBase {
   public:
@@ -17,6 +20,11 @@ class MemoryTimingBase : public ComponentBase {
     virtual void Dump()        = 0;
     virtual int  halted() { return 0; }
     virtual void Heartbeat()   = 0;
+    virtual bool Schedule(const std::set<uint32_t> addrs,
+                                             int size,
+                                             const MissHandlingEntry<rigel::cache::LINESIZE> & MSHR,
+                                             CallbackInterface *requestingEntity,
+                                             int requestIdentifier) = 0;
 };
 
 #endif //#ifndef __MEMORY_TIMING_BASE_H__

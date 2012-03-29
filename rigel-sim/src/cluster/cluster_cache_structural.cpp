@@ -86,8 +86,8 @@ ClusterCacheStructural::handleCoreSideInputs() {
   DPRINT(DB_CC,"%s\n",__PRETTY_FUNCTION__);
 
   for (int i = 0; i < numcores; i++) {
-    Packet* p;
-    if (p = coreside_ins[i]->read()) {
+    Packet* p = coreside_ins[i]->read();
+    if (p) {
       DRIGEL(DB_CC,p->Dump();)
       if (false) { //CheckL1(i, p)) { // HIT!
         // put in the L1 response queue  
@@ -133,8 +133,8 @@ void
 ClusterCacheStructural::handleMemsideInputs() {
   DPRINT(DB_CC,"%s\n",__PRETTY_FUNCTION__);
 
-  Packet* p;
-  if (p = memside_in->read()) {
+  Packet* p = memside_in->read();
+  if (p) {
     // HACK: do the memory access here so it happens somewhere (for now)
     doMemoryAccess(p);
     DRIGEL(DB_CC,p->Dump();)
@@ -286,9 +286,9 @@ ClusterCacheStructural::doGlobalAtomic(PacketPtr p) {
 /// side effect: updates p
 void
 ClusterCacheStructural::doLocalAtomic(PacketPtr p) {
-  int tid; // cluster-level thread ID
+  unsigned int tid; // cluster-level thread ID
   tid = p->cluster_tid();
-  if(tid >= LinkTable.size() ) { 
+  if(tid >= LinkTable.size()) { 
     printf("invalid tid size %d in %s\n", tid, __PRETTY_FUNCTION__); 
     throw ExitSim("invalid tid size");
   }

@@ -4,7 +4,9 @@
 #include <set>                          // for set, etc
 #include <vector>                       // for vector
 
+#include "sim/component_base.h"
 #include "memory/memory_timing_ideal.h"
+#include "memory/memory_timing_base.h"
 #include "memory/address_mapping.h"  // for AddressMapping
 #include "memory/dram.h"           // for CONTROLLERS
 #include "caches_legacy/mshr_legacy.h"           // for MissHandlingEntry
@@ -21,7 +23,7 @@
 #endif
 
 // constructor
-MemoryTimingIdeal::MemoryTimingIdeal()
+MemoryTimingIdeal::MemoryTimingIdeal(ComponentBase *parent) : MemoryTimingBase(parent)
 {
   config.max_bandwidth = 100000;
   config.max_latency = rigel::CMDLINE_IDEALIZED_DRAM_LATENCY;
@@ -37,7 +39,7 @@ MemoryTimingIdeal::PerCycle()
 {
   for (size_t ctrl = 0; ctrl < request_q.size(); ctrl++)
   {
-    if (request_q[ctrl].size())
+    if (!request_q[ctrl].empty())
     {
       PendingRequest pReq = request_q[ctrl].front();
       // If the top request for this controller is not ready, go to the next
@@ -69,15 +71,6 @@ MemoryTimingIdeal::Schedule(
   for (iter = addrs.begin(); iter != addrs.end(); ++iter)
   {
     uint64_t ready_cycle = rigel::CURR_CYCLE + config.max_latency + offset++;
-#if 0
-    PendingRequest req = {
-      // We assume only one address for now.
-      *iter,
-      requestIdentifier,
-      requestingEntity,
-      ready_cycle
-    };
-#endif
     PendingRequest req;
     req.addr = *iter;
     req.request_id = requestIdentifier;
