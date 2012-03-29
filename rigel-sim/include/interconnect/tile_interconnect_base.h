@@ -2,7 +2,7 @@
 #define __TILE_INTERCONNECT_BASE_H__
 
 #include "icmsg.h"
-#include "sim/componentbase.h"
+#include "sim/component_base.h"
 
 template <int linesize> class MissHandlingEntry;
 

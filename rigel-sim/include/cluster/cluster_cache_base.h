@@ -1,7 +1,7 @@
 #ifndef __CLUSTER_CACHE_BASE_H__
 #define __CLUSTER_CACHE_BASE_H__
 
-#include "sim/componentbase.h"
+#include "sim/component_base.h"
 #include "sim.h"
 #include "define.h"
 

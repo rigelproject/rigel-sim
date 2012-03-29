@@ -12,7 +12,7 @@
 #define __CLUSTER_BASE_H__
 
 #include "sim.h"
-#include "sim/componentbase.h"
+#include "sim/component_base.h"
 #include "util/util.h"
 
 extern ComponentCount ClusterBaseCount;

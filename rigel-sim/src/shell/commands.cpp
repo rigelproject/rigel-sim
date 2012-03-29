@@ -1,7 +1,7 @@
 
 #include "shell/shell.h"
 #include "util/util.h"
-#include "sim/componentbase.h"
+#include "sim/component_base.h"
 #include <string>
 #include <vector>
 #include <cstdlib>

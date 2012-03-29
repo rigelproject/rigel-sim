@@ -1,4 +1,4 @@
-#include "sim/componentbase.h"
+#include "sim/component_base.h"
 #include <cassert>
 
 uint32_t ComponentBase::COMPONENT_ID_COUNT = 0;

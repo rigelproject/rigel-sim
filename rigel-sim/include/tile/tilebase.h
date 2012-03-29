@@ -5,7 +5,7 @@
 #include <cassert>
 
 #include "sim.h"
-#include "sim/componentbase.h"
+#include "sim/component_base.h"
 #include "util/construction_payload.h"
 #include "util/checkpointable.h"
 

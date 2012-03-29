@@ -4,7 +4,7 @@
 
 /// abstract base class for cores
 
-#include "sim/componentbase.h"
+#include "sim/component_base.h"
 #include "sim.h"
 #include "util/checkpointable.h"
 #include "rigelsim.pb.h"

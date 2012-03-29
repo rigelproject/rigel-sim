@@ -1,7 +1,7 @@
 #ifndef __TREE_NETWORK_H__
 #define __TREE_NETWORK_H__
 
-#include "sim/componentbase.h"
+#include "sim/component_base.h"
 #include "util/construction_payload.h"
 
 #include "util/fifo.h"

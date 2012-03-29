@@ -2,7 +2,7 @@
 #define __CHIP_H__
 
 #include "util/construction_payload.h"
-#include "sim/componentbase.h"
+#include "sim/component_base.h"
 #include "sim.h"
 #include "util/checkpointable.h"
 

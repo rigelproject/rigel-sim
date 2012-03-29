@@ -33,7 +33,7 @@
 #include "util/util.h"           // for ELFAccess, ExitSim
 #include "tlb.h"            // for TLB
 #include "memory/backing_store.h" //for GlobalBackingStoreType definition
-#include "sim/componentbase.h"
+#include "sim/component_base.h"
 
 namespace rigel {
   extern RandomLib::Random RNG;

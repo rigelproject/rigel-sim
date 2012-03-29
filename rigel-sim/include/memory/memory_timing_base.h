@@ -1,7 +1,7 @@
 #ifndef __MEMORY_TIMING_BASE_H__
 #define __MEMORY_TIMING_BASE_H__
 
-#include "sim/componentbase.h"
+#include "sim/component_base.h"
 
 typedef uint32_t addr_t;
 typedef uint32_t word_t;

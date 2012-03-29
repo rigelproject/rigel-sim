@@ -15,7 +15,7 @@
 #include "memory/dram.h"           // for CONTROLLERS, RANKS, ROWS, etc
 #include "caches_legacy/global_cache.h"  // for GlobalCache, etc
 #include "memory/backing_store.h"
-#include "sim/componentbase.h"
+#include "sim/component_base.h"
 
 #include "util/construction_payload.h"
 #include "rigelsim.pb.h"
@@ -187,7 +187,8 @@ class RigelSim : ComponentBase {
     // PerCycle()
     ////////////////////////////////////////////////////////////////////////////////
     // Clock all of the subblocks of the design
-    // FIXME: only clock what we have, not what we might have...
+    // FIXME: only clock what we have, not what we might have
+		// FIXME: Should implement 
     ////////////////////////////////////////////////////////////////////////////////
     virtual int PerCycle () {
       

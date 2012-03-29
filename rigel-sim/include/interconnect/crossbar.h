@@ -1,7 +1,7 @@
 #ifndef __CROSSBAR_H__
 #define __CROSSBAR_H__
 
-#include "sim/componentbase.h"
+#include "sim/component_base.h"
 #include "util/construction_payload.h"
 
 extern ComponentCount CrossBarCount;
