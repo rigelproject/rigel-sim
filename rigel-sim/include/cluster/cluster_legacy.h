@@ -11,7 +11,7 @@
 #ifndef _CLUSTER_LEGACY_H_
 #define _CLUSTER_LEGACY_H_
 #include "sim.h"
-#include "clusterbase.h"
+#include "cluster_base.h"
 #include <cassert>
 #include <bitset>
 

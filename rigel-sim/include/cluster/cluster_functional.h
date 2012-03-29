@@ -3,7 +3,7 @@
 #define __CLUSTER_FUNCTIONAL_H__
 
 #include "sim.h" //For GlobalBackingStoreType
-#include "cluster/clusterbase.h"
+#include "cluster/cluster_base.h"
 #include "core.h"
 #include "cluster/cluster_cache.h"
 

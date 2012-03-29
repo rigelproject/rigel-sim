@@ -72,7 +72,7 @@ common_SOURCES = \
  src/chip/chip.cpp \
  src/chip/chip_legacy.cpp \
  src/cluster/cluster_legacy.cpp \
- src/cluster/clusterbase.cpp \
+ src/cluster/cluster_base.cpp \
  src/cluster/cluster_functional.cpp \
  src/cluster/cluster_structural.cpp \
  src/cluster/cluster_cache_base.cpp \

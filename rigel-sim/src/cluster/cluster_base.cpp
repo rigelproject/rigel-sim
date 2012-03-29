@@ -5,7 +5,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include <stdint.h>                     // for uint32_t
-#include "cluster/clusterbase.h"    // for ClusterBase, etc
+#include "cluster/cluster_base.h"    // for ClusterBase, etc
 #include "profile/profile.h"        // for Profile
 #include "sim.h"            // for MemoryModelType
 #include "util/construction_payload.h"
