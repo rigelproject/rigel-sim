@@ -105,7 +105,7 @@ common_SOURCES = \
  src/util/rigelprint.cpp \
  src/shell/shell.cpp \
  src/shell/commands.cpp \
- src/sim/componentbase.cpp \
+ src/sim/component_base.cpp \
  src/protobuf/rigelsim.pb.cc \
  src/protobuf/rigelsim.pb.h
 
