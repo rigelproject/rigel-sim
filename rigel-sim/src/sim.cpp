@@ -165,7 +165,7 @@ int main(int argc, char * argv[])
       if (RIGEL_CFG_NUM != 1) {
         sim.do_shell_loop();
       }
-      sim.clock_sim();
+      sim.PerCycle();
       //fprintf(stdout,"Cycle %llu \n",CURR_CYCLE);
       //if(CURR_CYCLE == 2000000) { rigel::GLOBAL_debug_sim.dump_all(); assert(0); }
       if (CURR_CYCLE == U64_MAX_VAL || CURR_CYCLE >= CYC_COUNT_MAX) {

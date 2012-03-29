@@ -3,6 +3,6 @@
 
 #include "memory/memory_timing_base.h"
 #include "memory/memory_timing_dram.h"
-//#include "memory/memory_timing_ideal.h"
+#include "memory/memory_timing_ideal.h"
 
 #endif

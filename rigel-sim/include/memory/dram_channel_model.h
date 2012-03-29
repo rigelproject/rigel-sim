@@ -3,8 +3,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
 //  (G)DDR DRAM checker model definition.  The class is used to check the requests
-//  of the memory controller (MemoryModelGDDR4 et al.) against timing parameters
-//  definined in sim.h.  A single instance of DRAMChannelModel models a single channel
+//  of the memory controller against timing parameters
+//  definined in dram.h.  A single instance of DRAMChannelModel models a single channel
 //  of DRAM, comprised of multiple ranks, multiple chips/rank. banks/chip, rows/bank,
 //  and columns/row.
 ////////////////////////////////////////////////////////////////////////////////
@@ -19,10 +19,10 @@
 
 using namespace rigel;
 
-// The rows are faulted in.  The result is 4 GiB takes up 2^32/2^11 = 2^21 bytes
-// or 2 MiB of overhead
+/// We allocate target memory as needed on a DRAM page basis.  This yields something
+/// like 2 words of overhead per page, or <1%.
 struct DRAMRow {
-  //Initialize memory(could be removed)
+  ///We initialize each word of target memory to rigel::memory::MEMORY_INIT_VALUE.
   DRAMRow() { for(unsigned int i = 0; i < DRAM::COLS; i++) { c[i] = rigel::memory::MEMORY_INIT_VALUE; } }
 
   uint32_t &Col(unsigned int i) { 
@@ -39,7 +39,7 @@ struct DRAMRow {
   uint32_t c[DRAM::COLS]; 
 };
 struct DRAMBank { 
-  // Fault in a new row if needed
+  /// Fault in a new row if needed
   DRAMRow *Row(unsigned int i) {
     assert(i < DRAM::ROWS);
     #ifdef DEBUG_DRAM
@@ -93,16 +93,11 @@ struct DRAMRank {
   DRAMBank *b[DRAM::BANKS];
 };
 
-// Models an 8 chip x 512Mbit GDDR4 array
-// Addresses are as follows:
-//    byte  : 00..01  (4)
-//    col   : 02..10  (512)
-//    row   : 11..22
-//    bank  : 23..25  
-//    chip  : 26..32
 class DRAMChannelModel {
   public:
-    // Commands for current cycle read by the FSM
+    ///We maintain a window of commands for each DRAM bus cycle.
+    ///The size of this window is bounded by the maximum latency of
+    ///any command.
     typedef struct _CmdWindowEntry{
       _CmdWindowEntry() {
         reset();
@@ -116,7 +111,6 @@ class DRAMChannelModel {
       int bank;
       // TODO: Add write masking
       uint8_t  write_mask;
-      // Set when scheduled, clear when consumed by controller
       bool valid;
 
       void reset() {

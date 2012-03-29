@@ -15,6 +15,7 @@
 #include "memory/dram.h"           // for CONTROLLERS, RANKS, ROWS, etc
 #include "caches_legacy/global_cache.h"  // for GlobalCache, etc
 #include "memory/backing_store.h"
+#include "sim/componentbase.h"
 
 #include "util/construction_payload.h"
 #include "rigelsim.pb.h"
@@ -34,7 +35,7 @@ namespace rigel {
 /// the main simulator object
 /// TODO: this should be a strictly singleton class
 ////////////////////////////////////////////////////////////////////////////////
-class RigelSim {
+class RigelSim : ComponentBase {
 
   public:
 
@@ -44,11 +45,13 @@ class RigelSim {
 
     /// constructor
     RigelSim(CommandLineArgs* cl) :
+			ComponentBase(NULL), ///<We have no parent
       _cmdline( cl ) 
     {
+			setRootComponent();       // the RigelSim object is the root of the Component hierarchy
       rigel::ConstructionPayload cp;
       cp.component_count = NULL;
-
+      
       // beware of order dependencies between initialization steps
       init_protobuf(cp); // Initialize protobuf object (possibly from a file), create ChipState
       setup_dram();      // Initialize parameters for the DRAM.
@@ -69,12 +72,18 @@ class RigelSim {
 
     static const int protobuf_compression_level = 9;
 
+		//Dummy versions of mandatory ComponentBase methods
+    virtual void PreSimInit() { }
+		virtual void Dump() { }
+		virtual int halted() { return 0; }
+		virtual void Heartbeat() { }
+
     ////////////////////////////////////////////////////////////////////////////
     // EndSim()
     ////////////////////////////////////////////////////////////////////////////
     /// called to clean up at the end of simulation, dump stats, etc.
     /// TODO: could this just be the destructor for RigelSim?
-    void EndSim() {
+    virtual void EndSim() {
 
       save_state();
 
@@ -175,12 +184,12 @@ class RigelSim {
 
 
     ////////////////////////////////////////////////////////////////////////////////
-    // clock_sim()
+    // PerCycle()
     ////////////////////////////////////////////////////////////////////////////////
     // Clock all of the subblocks of the design
     // FIXME: only clock what we have, not what we might have...
     ////////////////////////////////////////////////////////////////////////////////
-    void clock_sim() {
+    virtual int PerCycle () {
       
         using namespace rigel;
         using namespace rigel::cache;
@@ -202,7 +211,8 @@ class RigelSim {
 
         // Check for all cores being halted.
         if (halted) {
-          throw ExitSim((char *)"System-wide halt"); 
+          throw ExitSim((char *)"System-wide halt");
+					return 1;
         }
 
         // Print the heartbeat information.
@@ -214,7 +224,7 @@ class RigelSim {
             );
           if (_cmdline->get_val_bool((char *)"heartbeat_print_pcs")) { heartbeat(); }
         }
-
+      return 0;
     }
 
 
@@ -252,11 +262,10 @@ class RigelSim {
     /// instantiate and setup/configure the Chip object
     void init_chip(rigel::ConstructionPayload &cp) {
       // the chip has no parent, it's the root object
-      cp.parent = NULL;
+      cp.parent = this;
       cp.component_name = "Chip";
       cp.component_index = 0;
       chip_ = new rigel::ChipType(cp);
-      chip_->setRootComponent();       // designate this as a root component
     }
 
     /// memory model initialization helper
@@ -273,7 +282,8 @@ class RigelSim {
       ELFAccess Elf;
       Elf.LoadELF(_cmdline->get_val((char *)"objfile"), backing_store);
       //Initialize timing model
-      memory_timing = new rigel::MemoryTimingType(true); //we *do* want collision checking
+      memory_timing = new rigel::MemoryTimingType(this, ///< We are the parent object
+					                                        true); ///< We *do* want collision checking
       cp.memory_timing = memory_timing;
     };
 

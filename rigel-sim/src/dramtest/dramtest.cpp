@@ -163,7 +163,7 @@ int main(int argc, char ** argv)
   rigel::GLOBAL_BACKING_STORE_PTR = &backing_store;
 
   // We don't want collision checking if we're a DRAM simulator, so 2nd argument is false.
-  rigel::MemoryTimingType memory_timing(false);
+  rigel::MemoryTimingType memory_timing(NULL, false);
 
   DRAMDriver dd(memory_timing);
   StrideReadGenerator srg1(0x00000000, 32);

@@ -335,7 +335,6 @@ GlobalCache::pend(
 
   // Index of new request
   int idx;
-  bool vlat = MemoryTimingModel.CheckWaitOnMemSched();
   MissHandlingEntry<rigel::cache::LINESIZE> new_mshr;
   int addr =  ca_in.get_addr() & LINE_MASK;
 
@@ -372,7 +371,7 @@ GlobalCache::pend(
   //See the FIXME in CacheAccess_t about getting rid of separate _addr and _addrs.
   //ca_out.set_addr( addr );
   // Insert the new request.
-  new_mshr = PM_insert_new_request(ca_out, idx, ccache_pending_index, is_eviction, vlat);
+  new_mshr = PM_insert_new_request(ca_out, idx, ccache_pending_index, is_eviction, true);
   // Send request to memory controller
     // This returns a bool representing success or failure, but we ignore it
     // because it will set the ACK bit on the MSHR if it succeeds and we will

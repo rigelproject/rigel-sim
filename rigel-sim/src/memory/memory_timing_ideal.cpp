@@ -1,16 +1,12 @@
-////////////////////////////////////////////////////////////////////////////////
-// memory_model_ideal.cpp
-////////////////////////////////////////////////////////////////////////////////
-//
-
 #include <stddef.h>                     // for size_t
 #include <stdint.h>                     // for uint32_t, uint64_t
 #include <list>                         // for list
 #include <set>                          // for set, etc
 #include <vector>                       // for vector
+
+#include "memory/memory_timing_ideal.h"
 #include "memory/address_mapping.h"  // for AddressMapping
 #include "memory/dram.h"           // for CONTROLLERS
-#include "memory/memory_model_ideal.h"
 #include "caches_legacy/mshr_legacy.h"           // for MissHandlingEntry
 #include "sim.h"            // for CURR_CYCLE, etc
 #include "util/util.h"           // for CallbackInterface
@@ -25,19 +21,19 @@
 #endif
 
 // constructor
-IdealizedDRAMModel::IdealizedDRAMModel()
+MemoryTimingIdeal::MemoryTimingIdeal()
 {
   config.max_bandwidth = 100000;
   config.max_latency = rigel::CMDLINE_IDEALIZED_DRAM_LATENCY;
   request_q.resize(rigel::DRAM::CONTROLLERS);
 }
 
-/// IdealizedDRAMModel::PerCycl()
+/// MemoryTimingIdeal::PerCycle()
 ///
 /// Clock the ideal DRAM model and schedule any memory requests that come due
 /// this cycle.
-void
-IdealizedDRAMModel::PerCycle()
+int
+MemoryTimingIdeal::PerCycle()
 {
   for (size_t ctrl = 0; ctrl < request_q.size(); ctrl++)
   {
@@ -52,15 +48,16 @@ IdealizedDRAMModel::PerCycle()
       request_q[ctrl].pop_front();
     }
   }
+  return 0;
 }
 
-/// IdealizedDRAMModel::Schedule()
+/// MemoryTimingIdeal::Schedule()
 /// Try to add request from G$ to the idealized memory model.  If we are limiting
 /// requests per cycle, we could reject after N, which would put the limit on the
 /// request side.  If we wanted to do DRAM reply side bandwidth limiting, we need
 /// to handle it in PerCycle().
 bool
-IdealizedDRAMModel::Schedule(
+MemoryTimingIdeal::Schedule(
   const std::set<uint32_t> addrs,
   int size,
   const MissHandlingEntry<rigel::cache::LINESIZE> & MSHR,

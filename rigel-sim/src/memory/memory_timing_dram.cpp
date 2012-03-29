@@ -33,6 +33,7 @@
 #include "util/util.h"           // for ELFAccess, ExitSim
 #include "tlb.h"            // for TLB
 #include "memory/backing_store.h" //for GlobalBackingStoreType definition
+#include "sim/componentbase.h"
 
 namespace rigel {
   extern RandomLib::Random RNG;
@@ -42,7 +43,8 @@ namespace rigel {
 // MemoryModelGDDR4() (constructor)
 // RETURNS: ---
 ////////////////////////////////////////////////////////////////////////////////
-MemoryTimingDRAM::MemoryTimingDRAM(bool _collisionChecking)
+MemoryTimingDRAM::MemoryTimingDRAM(ComponentBase *parent, bool _collisionChecking) :
+  MemoryTimingBase(parent)
 {
   using namespace rigel::DRAM;
   DRAMModelArray = (DRAMChannelModel **) malloc(CONTROLLERS*sizeof(*DRAMModelArray));
@@ -229,9 +231,9 @@ bool MemoryTimingDRAM::alias_check()
 ////////////////////////////////////////////////////////////////////////////////
 // Called every cycle to clock the GDDR memory controller.  It selects requests
 // and schedules them.
-// RETURNS: ---
+// RETURNS: 0
 ////////////////////////////////////////////////////////////////////////////////
-void
+int
 MemoryTimingDRAM::PerCycle() {
   using namespace rigel::DRAM;
   using namespace rigel::cache;
@@ -241,10 +243,7 @@ MemoryTimingDRAM::PerCycle() {
 #endif
   int numClks = floor(CLK_RATIO);
   float fractionalPart = CLK_RATIO - (float) numClks;
-  //Use this implementation if you want to use rand()
-  //if(((float)(rand()) / (float)(RAND_MAX)) < fractionalPart)
-  //  numClks++;
-  //This implementation uses RandomLib (which uses a Mersenne Twister PRNG)
+
   if(RNG.Prob(fractionalPart))
     numClks++;
 
@@ -268,6 +267,7 @@ MemoryTimingDRAM::PerCycle() {
         DRAMModelArray[i]->PerCycle();
     }
   }
+  return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -387,7 +387,7 @@ bool MemoryTimingDRAM::Schedule(const std::set<uint32_t> addrs, int size,
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-void MemoryTimingDRAM::dump()
+void MemoryTimingDRAM::Dump()
 {
   using namespace rigel::DRAM;
   using namespace rigel::mem_sched;

@@ -36,8 +36,8 @@ common_SOURCES = \
  src/interconnect/tile_interconnect_bcast.cpp \
  src/interconnect/tree_network.cpp \
  src/interconnect/crossbar.cpp \
- src/memory/memory_model_ideal.cpp \
- src/memory/memory_model_gddr4.cpp \
+ src/memory/memory_timing_ideal.cpp \
+ src/memory/memory_timing_dram.cpp \
  src/memory/dram_controller.cpp \
  src/memory/dram_channel_model.cpp \
  src/memory/tlb.cpp \
