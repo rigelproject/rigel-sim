@@ -6,12 +6,11 @@
 #include "include/port/portmanager.h"
 
 #include <string>
-#include <sstream>
-#include <iomanip>
 #include <iostream>
 #include <cassert>
 
-/// this base class is meaningless, either get rid of or define a general port
+/// this base class is meaningless
+/// FIXME either get rid of or define a general port
 /// concept with meaning
 class PortBase {
     public:
@@ -19,16 +18,8 @@ class PortBase {
     private:
 };
 
-static std::string PortName( std::string parent, int id, std::string suffix, int index = -1) {
-
-    std::stringstream port_name;
-    port_name << parent << "[" << std::setw(4) << id << "]." << suffix;
-    if (index >= 0) {
-      port_name << "[" << std::setw(4) << index << "]";
-    }
-    return port_name.str();
-
-}
+//FIXME Use a function naming convention, not a class naming convention
+std::string PortName( std::string parent, int id, std::string suffix, int index = -1);
 
 // forward declarations
 template <class T> class OutPortBase;
