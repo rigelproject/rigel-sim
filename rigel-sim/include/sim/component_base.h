@@ -66,6 +66,7 @@ class ComponentBase {
     ////////////////////////////////////////////////////////////////////////////
 
     void printHierarchy( int indent = 0 );
+    void printGraphviz();
     void dumpHierarchy();
     void addChild( ComponentBase* c );
 

@@ -9,6 +9,8 @@
 #include <iostream>
 #include <cassert>
 
+class ComponentBase;
+
 /// this base class is meaningless
 /// FIXME either get rid of or define a general port
 /// concept with meaning
@@ -81,13 +83,17 @@ class InPortBase : public PortBase {
     
     friend class PortManager<T>;
 
+    ComponentBase* owner() { return _owner; }
+    void owner(ComponentBase* o) { _owner = o; }
+
     bool ready() { return _ready; }
 
   private:
-    bool _valid; /// data is valid
-    bool _ready; /// ready to accept a message
-    T    data;
-    std::string _name; ///< port name
+    T    data;             ///< templated data payload
+    std::string _name;     ///< port name
+    ComponentBase* _owner; ///< owning Component
+    bool _valid;           ///< data is valid
+    bool _ready;           ///< ready to accept a message
 
 };
 
@@ -147,6 +153,9 @@ class OutPortBase : public PortBase {
 
     std::string name() { return _name; }
 
+    ComponentBase* owner() { return _owner; }
+    void owner(ComponentBase* o) { _owner = o; }
+
     std::string connection_name() { 
       if (_connection) {
         return _connection->name(); 
@@ -158,6 +167,7 @@ class OutPortBase : public PortBase {
     friend class PortManager<T>;
 
   private:
+    ComponentBase*  _owner;
     std::string     _name; ///< port name
     InPortBase<T>* _connection;
 

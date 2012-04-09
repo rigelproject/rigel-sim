@@ -38,11 +38,13 @@ ClusterCacheFunctional::ClusterCacheFunctional(
   for (int i = 0; i < coreside_ins.size(); i++) {
     std::string n = PortName( name(), id(), "coreside_in", i );
     coreside_ins[i] = new InPortCallback<Packet*>(n, mcb);
+    coreside_ins[i]->owner(this);
   }
 
   for (int i = 0; i < coreside_outs.size(); i++) {
     std::string n = PortName( name(), id(), "coreside_out", i );
     coreside_outs[i] = new OutPortBase<Packet*>(n);
+    coreside_outs[i]->owner(this);
   }
 
 }

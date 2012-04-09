@@ -41,6 +41,17 @@ ComponentBase::printHierarchy( int indent ) {
   }
 }
 
+/// print object hierarchy in graphviz dot format
+void 
+ComponentBase::printGraphviz() {
+  for(size_t i=0; i<children_.size(); ++i) {
+    // print this node
+    fprintf(stderr,"%s_%d -> ", name_.c_str(), id_);
+    fprintf(stderr,"%s_%d\n", children_[i]->name().c_str(), children_[i]->id());
+    children_[i]->printGraphviz();
+  }
+}
+
 /// add a child object to this parent
 void 
 ComponentBase::addChild( ComponentBase* c ) {

@@ -33,11 +33,13 @@ ClusterCacheStructural::ClusterCacheStructural(
   for (unsigned i = 0; i < coreside_ins.size(); i++) {
     std::string pname = PortName( name(), id(), "coreside_in", i );
     coreside_ins[i] = new InPortBase<Packet*>(pname);
+    coreside_ins[i]->owner(this);
   }
 
   for (unsigned i = 0; i < coreside_outs.size(); i++) {
     std::string pname = PortName( name(), id(), "coreside_out", i );
     coreside_outs[i] = new OutPortBase<Packet*>(pname);
+    coreside_outs[i]->owner(this);
   }
 
 }

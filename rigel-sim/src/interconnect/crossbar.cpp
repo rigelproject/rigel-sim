@@ -28,9 +28,11 @@ CrossBar::CrossBar(
   // TODO: do elsewhere, and connect
   for (unsigned i = 0; i < inports.size(); i++) {
     inports[i] = new InPortBase<Packet*>( PortName(name(), id(), "in", i) );
+    inports[i]->owner(this);
   } 
   for (unsigned i = 0; i < outports.size(); i++) {
     outports[i] = new OutPortBase<Packet*>( PortName(name(), id(), "out", i) );
+    outports[i]->owner(this);
   }
 }
 

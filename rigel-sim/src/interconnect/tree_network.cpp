@@ -29,9 +29,11 @@ TreeNetwork::TreeNetwork(
   // construct ports
   for (unsigned i = 0; i < leaf_inports.size(); i++) {
     leaf_inports[i] = new InPortBase<Packet*>( PortName(name(), id(), "leaf_in", i) );
+    leaf_inports[i]->owner(this);
   } 
   for (unsigned i = 0; i < leaf_outports.size(); i++) {
     leaf_outports[i] = new OutPortBase<Packet*>( PortName(name(), id(), "leaf_out", i) );
+    leaf_outports[i]->owner(this);
   }
 }
 

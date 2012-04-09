@@ -93,13 +93,13 @@ class Packet {
     int          _gcoreid; ///< global core ID (should REMOVE, use TID)
     int          _gtid;    ///< global thread ID
 
-    uint32_t     _gatomic_operand; /// global atomic operand
+    uint32_t     _gatomic_operand; ///< global atomic operand
 
     uint64_t     _birthday; ///< cycle this was constructed
 
     uint64_t     _id;       ///< unique (modulo 2^64) identifier assigned at creation
 
-    bool         _completed; /// has been fully serviced
+    bool         _completed; ///< has been fully serviced
 
 };
 

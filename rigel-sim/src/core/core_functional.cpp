@@ -53,7 +53,9 @@ CoreFunctional::CoreFunctional(
   std::string pname_out = PortName(name(), id(), "cache_out");
   std::string pname_in  = PortName(name(), id(), "cache_in");
   to_ccache   =  new OutPortBase<Packet*>(pname_out);
+  to_ccache->owner(this);
   from_ccache =  new InPortBase<Packet*>(pname_in);
+  from_ccache->owner(this);
 
   // per thread init
   thread_state.resize(numthreads);

@@ -25,7 +25,9 @@ TileNew::TileNew(
   // contruct ports with outside world
   // TODO: relocate construction?
   from_gnet = new InPortBase<Packet*>( PortName(name(), id(), "memside_in") );
+  from_gnet->owner(this);
   to_gnet   = new OutPortBase<Packet*>( PortName(name(), id(), "memside_out") );
+  to_gnet->owner(this);
   //< end contruction of ports
 
   // new interconnect

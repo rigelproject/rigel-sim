@@ -23,7 +23,9 @@ ClusterFunctional::ClusterFunctional(
   // we like this because the cluster is contained, but the ccache is a separate object
   // we could instead try to use a DUMMY port object that basically does this assignment via attach
   from_interconnect = new InPortBase<Packet*>(  PortName(name(), id(), "in") );
+  from_interconnect->owner(this);
   to_interconnect   = new OutPortBase<Packet*>( PortName(name(), id(), "out") );
+  to_interconnect->owner(this);
 
   // the ccache will actually be responsible for reading, writing to the cluster's ports
   ccache = new ClusterCacheFunctional(cp, from_interconnect, to_interconnect);

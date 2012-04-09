@@ -1,6 +1,7 @@
 
 #include <map>
 #include <iostream>
+#include <fstream>
 #include "util/util.h" // for ExitSim
 
 // forward declarations
@@ -31,6 +32,35 @@ class PortManager {
           std::cout << "OutPort: " << (*it).first << " -> " << (*it).second->connection_name() << std::endl;
         }
       }
+
+    }
+
+    static void DumpGraphviz() {
+
+      std::fstream portgraph;
+
+      portgraph.open("ports.dot", std::fstream::out);
+
+      portgraph << "digraph PortGraph {" << std::endl;
+
+      {
+        typename std::map< std::string, OutPortBase<T>* >::iterator it;
+        for ( it = OutPorts.begin(); it != OutPorts.end(); ++it ) {
+          portgraph << (*it).second->owner()->name() << "_" << (*it).second->owner()->id() << " -> ";
+          portgraph << (*it).first << " -> " << (*it).second->connection_name() << std::endl;
+        }
+      }
+      {
+        typename std::map< std::string, InPortBase<T>* >::iterator it;
+        for ( it = InPorts.begin(); it != InPorts.end(); ++it ) {
+          portgraph << (*it).second->owner()->name() << "_" << (*it).second->owner()->id() << " -> ";
+          portgraph << (*it).first << std::endl;
+        }
+      }
+
+      portgraph << "}";
+
+      portgraph.close();
 
     }
 
