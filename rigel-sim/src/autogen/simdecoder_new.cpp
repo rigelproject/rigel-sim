@@ -2,11 +2,11 @@
 #include "sim.h"
 
 #include "instr.h"
-uint32_t StaticDecodeInfo::optype() {
+uint32_t StaticDecodeInfo::optype() const {
   return (raw_instr_bits & 0xF0000000) >> 28;
 }
 
-uint32_t StaticDecodeInfo::opcode() {
+uint32_t StaticDecodeInfo::opcode() const {
   switch(optype()) {
     // OPTYPE 0x0
     case 0x0:

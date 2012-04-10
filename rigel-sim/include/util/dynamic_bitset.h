@@ -23,8 +23,13 @@ class DynamicBitset64;
 
 //32-bit version
 
+class 
+class DynamicBitsetSetIter;
+class DynamicBitsetClearIter;
+
 class DynamicBitset32
 {
+
   public:
     DynamicBitset32(size_t numBits) : size(numBits), numSetBits(0)
     {
@@ -60,47 +65,47 @@ class DynamicBitset32
     
     ~DynamicBitset32() { delete[] data; } 
 
-//Small bitsets can print in binary, otherwise in hex
-void print(FILE *stream, bool alwaysInHex = false) const
-{
-  if(size <= 64 && !alwaysInHex)
-  {
-    size_t i = size-1;
-    while(1)
+    //Small bitsets can print in binary, otherwise in hex
+    void print(FILE *stream, bool alwaysInHex = false) const
     {
-      fprintf(stream, "%s", (test(i) ? "1" : "0"));
-      if(i == 0U) break;
-      else i--;
-    }
-  }
-  else
-  {
-    fprintf(stream, "0x");
-    uint32_t *walker = end-1;
-    //Print last word (may be unaligned)
-    if(size % 32 != 0)
-    {
-      uint32_t mask = ((uint32_t)1 << (size % 32))-1;
-      switch(((size % 32) + 3) / 4)
+      if(size <= 64 && !alwaysInHex)
       {
-        case 1: fprintf(stream, "%01x", *walker & mask); break;
-        case 2: fprintf(stream, "%02x", *walker & mask); break;
-        case 3: fprintf(stream, "%03x", *walker & mask); break;
-        case 4: fprintf(stream, "%04x", *walker & mask); break;
-        case 5: fprintf(stream, "%05x", *walker & mask); break;
-        case 6: fprintf(stream, "%06x", *walker & mask); break;
-        case 7: fprintf(stream, "%07x", *walker & mask); break;
-        case 8: fprintf(stream, "%08x", *walker & mask); break;
+        size_t i = size-1;
+        while(1)
+        {
+          fprintf(stream, "%s", (test(i) ? "1" : "0"));
+          if(i == 0U) break;
+          else i--;
+        }
       }
-      walker--;
+      else
+      {
+        fprintf(stream, "0x");
+        uint32_t *walker = end-1;
+        //Print last word (may be unaligned)
+        if(size % 32 != 0)
+        {
+          uint32_t mask = ((uint32_t)1 << (size % 32))-1;
+          switch(((size % 32) + 3) / 4)
+          {
+            case 1: fprintf(stream, "%01x", *walker & mask); break;
+            case 2: fprintf(stream, "%02x", *walker & mask); break;
+            case 3: fprintf(stream, "%03x", *walker & mask); break;
+            case 4: fprintf(stream, "%04x", *walker & mask); break;
+            case 5: fprintf(stream, "%05x", *walker & mask); break;
+            case 6: fprintf(stream, "%06x", *walker & mask); break;
+            case 7: fprintf(stream, "%07x", *walker & mask); break;
+            case 8: fprintf(stream, "%08x", *walker & mask); break;
+          }
+          walker--;
+        }
+        while(walker >= data)
+        {
+          fprintf(stream, "%08x", *walker);
+          walker--;
+        }
+      }
     }
-    while(walker >= data)
-    {
-      fprintf(stream, "%08x", *walker);
-      walker--;
-    }
-  }
-}
 
     void clearAll() { setUintValue(0x00000000U); numSetBits = 0; }
     void setAll() { setUintValue(0xFFFFFFFFU); numSetBits = size; }
