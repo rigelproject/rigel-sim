@@ -3,7 +3,7 @@
 
 #include <cstring>
 #include <cassert>
-#include <map>
+#include <tr1/unordered_map>
 #include "instr/instr_base.h"
 #include "sim.h"
 #include "instr/static_decode_info.h"
@@ -41,7 +41,7 @@ class PipePacket { // : public InstrBase { // maybe later...
       raw_instr_bits(raw),
       _tid(tid),
       _mem_request(0),
-      _sdInfo(decode()),
+      _sdInfo(decode(pc, raw)),
       _target_addr(0),
       _branch_predicate(0),
       _nextPC(0)
@@ -68,7 +68,7 @@ class PipePacket { // : public InstrBase { // maybe later...
 
     //uint32_t raw_instr_bits() { return raw_instr_bits; }
 
-    instr_t type() { return _sdInfo.type(); }  
+    instr_t type() const { return _sdInfo.type(); }  
 
     // passthrough to static decode packet
     bool    isBranch() const         { return _sdInfo.isBranch();         };
@@ -240,19 +240,27 @@ class PipePacket { // : public InstrBase { // maybe later...
     Packet* memRequest() { return _mem_request; }
     void memRequest(Packet* p) { _mem_request = p; }
     
+		///Resize decodedInstructions to the expected size
+		static void rehashInstrTable(size_t num_buckets) {
+			decodedInstructions.rehash(num_buckets);
+		}
+
   /// private methods
   private:
 
     /// decode
     /// decode the instruction into internal subfields as desired
-    StaticDecodeInfo& decode() {
+    static const StaticDecodeInfo& decode(uint32_t pc, uint32_t raw_instr_bits) {
       // use pre-existing decoded info when it exists
       // otherwise, decode the instruction
-      if (!decodedInstructions[_pc].valid()) {
-        DPRINT(DB_INSTR,"SDInfo:Decoding unseen pc %08x\n", _pc);
-        decodedInstructions[_pc].decode(_pc,raw_instr_bits);
-      }
-      return decodedInstructions[_pc];
+			std::tr1::unordered_map<uint32_t, StaticDecodeInfo>::const_iterator it; 
+			if((it = decodedInstructions.find(pc)) == decodedInstructions.end()) {
+				StaticDecodeInfo sdi(pc, raw_instr_bits);
+				DPRINT(DB_INSTR,"SDInfo:Decoding unseen pc %08x\n", pc);
+				return decodedInstructions.insert(it, std::pair<uint32_t,StaticDecodeInfo>(pc, sdi))->second;
+			}
+			else
+        return it->second;
     }
 
   /// private member data
@@ -271,7 +279,7 @@ class PipePacket { // : public InstrBase { // maybe later...
     Packet* _mem_request; ///< pointer to outstanding memory request
 
     /// pointer to static decode information
-    StaticDecodeInfo& _sdInfo;
+    const StaticDecodeInfo &_sdInfo;
 
 
     ///////////////////////////////////////////////////////////////////////////
@@ -288,7 +296,7 @@ class PipePacket { // : public InstrBase { // maybe later...
     regval32_t regvals[NUM_ISA_OPERAND_REGS]; /// for storing temporary register values
 
     /// static structure for holding STATIC instruction decode data
-    static std::map<uint32_t,StaticDecodeInfo> decodedInstructions;
+    static std::tr1::unordered_map<uint32_t,StaticDecodeInfo> decodedInstructions;
 
     ///////////////////////////////////////////////////////////////////////////
 

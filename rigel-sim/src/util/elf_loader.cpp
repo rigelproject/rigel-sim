@@ -26,6 +26,7 @@
 #include "sim.h"            // for DUMP_ELF_IMAGE, etc
 #include "util/util.h"           // for ExitSim, ELFAccess
 #include "memory/backing_store.h"
+#include "instr/pipe_packet.h"
 
 std::vector<uint32_t> rigel::ENTRY_POINTS;
 uint32_t rigel::CODEPAGE_LIBPAR_BEGIN = 0x0;
@@ -50,7 +51,7 @@ void ELFAccess::LoadELF(std::string bin_name, rigel::GlobalBackingStoreType *mem
   Elf32_Ehdr *ehdr;
   Elf32_Shdr *shdr;
 	GElf_Phdr phdr;
-
+  size_t num_static_instructions = 0;
   // Ignore LoadELF on dumps
 
   if ((fp = fopen(bin_name.c_str(), "rb")) == NULL) {
@@ -133,6 +134,8 @@ void ELFAccess::LoadELF(std::string bin_name, rigel::GlobalBackingStoreType *mem
       //FIXME MEM_WORD_SIZE is a bad name in the wrong place, colocate it with the rigel_word_t typedef
       mem->set_executable_region(shdr->sh_addr,
                                  shdr->sh_addr + shdr->sh_size + (3*rigel::ISSUE_WIDTH*rigel::MEM_WORD_SIZE) - 1);
+
+			num_static_instructions += (shdr->sh_size / rigel::MEM_WORD_SIZE);
     }
     else if(shdr->sh_flags & SHF_WRITE) {
       mem->set_writable_region(shdr->sh_addr, shdr->sh_addr + shdr->sh_size - 1);
@@ -171,6 +174,9 @@ void ELFAccess::LoadELF(std::string bin_name, rigel::GlobalBackingStoreType *mem
       }
     }
 	}
+  
+	//Heuristic to reserve the appropriate amount of space in the hash map of static instructions
+	PipePacket::rehashInstrTable(num_static_instructions);
 
     //fprintf(stderr, "sh_type %08X sh_flags %08X sh_addr %08X sh_offset %08X sh_size %08X sh_link %08X sh_info %08X sh_addralign %08X sh_entsize %08X\n", shdr->sh_type, shdr->sh_flags, shdr->sh_addr, shdr->sh_offset, shdr->sh_size, shdr->sh_link, shdr->sh_info, shdr->sh_addralign, shdr->sh_entsize);
     //fprintf(stderr, "p_type %08X p_offset %08X p_vaddr %08X p_paddr %08X p_filesz %08X p_memsz %08X p_flags %08X p_align %08X\n", shdr->p_type, shdr->p_offset, shdr->p_vaddr, shdr->p_paddr, shdr->p_filesz, shdr->p_memsz, shdr->p_flags, shdr->p_align);   
