@@ -22,11 +22,6 @@ class DynamicBitset64;
 #endif
 
 //32-bit version
-
-class 
-class DynamicBitsetSetIter;
-class DynamicBitsetClearIter;
-
 class DynamicBitset32
 {
 
